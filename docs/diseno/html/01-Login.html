@@ -1,0 +1,78 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=390"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&amp;family=Source+Sans+3:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+
+<style>
+body { margin: 0; font-family: 'Source Sans 3', system-ui, sans-serif; background: #F7F4EE; color: #1C2B2A; }
+a { color: #1F6B65; } a:hover { color: #164B47; }
+input { font-family: inherit; }
+</style>
+<title>01 · Login</title></head><body style="margin:0">
+
+
+
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F7F4EE; display: flex; flex-direction: column; overflow: hidden; position: relative">
+
+  <div style="position: absolute; top: -170px; left: -60px; width: 330px; height: 330px; border-radius: 999px; background: #2D938B; opacity: 0.14"></div>
+  <div style="position: absolute; top: -90px; right: -80px; width: 210px; height: 210px; border-radius: 999px; background: #F19700; opacity: 0.16"></div>
+
+  <div style="flex-grow: 1"></div>
+
+  <div style="flex-shrink: 0; position: relative; box-sizing: border-box; padding: 56px 28px 0; display: flex; flex-direction: column; gap: 8px; align-items: flex-start">
+    <img src="img/logo-asisco.png" alt="Asisco UP — Asociación de Interés Social Comunitario" style="width: 186px; height: auto; display: block">
+    <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px">
+      <span style="width: 26px; height: 4px; border-radius: 2px; background: #F19700"></span>
+      <span style="font-family: 'Nunito', system-ui, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.14em; color: #1F6B65">ASISCONNECTION</span>
+    </div>
+  </div>
+
+  <div style="flex-shrink: 0; position: relative; box-sizing: border-box; padding: 28px 28px 0">
+    <h1 style="margin: 0; font-family: 'Nunito', system-ui, sans-serif; font-weight: 800; font-size: 27px; line-height: 1.18; color: #16302E">Bienvenido a la<br>comunidad UP</h1>
+  </div>
+
+  <div style="flex-shrink: 0; position: relative; box-sizing: border-box; margin: 24px 20px 0; padding: 20px; background: #FFFFFF; border: 1px solid #E4DED2; border-radius: 22px; display: flex; flex-direction: column; gap: 14px">
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <label for="correo" style="font-size: 13px; font-weight: 600; color: #3E4F4D">Correo o documento</label>
+      <input id="correo" name="correo" type="text" placeholder="marcela.ramirez@correo.com" style="box-sizing: border-box; width: 100%; height: 48px; padding: 0 14px; font-size: 15px; color: #1C2B2A; background: #F7F4EE; border: 1px solid #DDD5C6; border-radius: 12px">
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <label for="clave" style="font-size: 13px; font-weight: 600; color: #3E4F4D">Contraseña</label>
+      <div style="position: relative; display: flex; align-items: center">
+        <input id="clave" name="clave" type="password" value="contrasena" style="box-sizing: border-box; width: 100%; height: 48px; padding: 0 48px 0 14px; font-size: 15px; color: #1C2B2A; background: #F7F4EE; border: 1px solid #DDD5C6; border-radius: 12px">
+        <button type="button" aria-label="Mostrar contraseña" style="position: absolute; right: 4px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: transparent; border: 0; border-radius: 10px; cursor: pointer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5A6B69" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"></path><circle cx="12" cy="12" r="2.8"></circle></svg>
+        </button>
+      </div>
+    </div>
+
+    <a href="#recuperar" style="align-self: flex-end; font-size: 13.5px; font-weight: 600; text-decoration: none">¿Olvidaste tu contraseña?</a>
+
+    <a href="Inicio.dc.html" style="box-sizing: border-box; height: 52px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #1F6B65; color: #FFFFFF; font-family: 'Nunito', system-ui, sans-serif; font-weight: 700; font-size: 16.5px; text-decoration: none; border-radius: 14px">
+      Iniciar sesión
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13"></path><path d="m12 5 7 7-7 7"></path></svg>
+    </a>
+  </div>
+
+  <div style="flex-shrink: 0; position: relative; box-sizing: border-box; padding: 20px 20px 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <span style="flex-grow: 1; height: 1px; background: #E0D9CC"></span>
+      <span style="font-size: 12.5px; color: #6B7A78">¿Primera vez aquí?</span>
+      <span style="flex-grow: 1; height: 1px; background: #E0D9CC"></span>
+    </div>
+    <a href="#registro" style="box-sizing: border-box; height: 50px; display: flex; align-items: center; justify-content: center; background: #FFFFFF; border: 2px solid #F19700; color: #8A4E00; font-family: 'Nunito', system-ui, sans-serif; font-weight: 700; font-size: 16px; text-decoration: none; border-radius: 14px">Crear cuenta</a>
+
+    <a href="Inicio.dc.html" style="box-sizing: border-box; height: 44px; display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 14.5px; font-weight: 600; color: #1F6B65; text-decoration: none">
+      Ingresar como invitado
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F6B65" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13"></path><path d="m12 5 7 7-7 7"></path></svg>
+    </a>
+  </div>
+
+  <div style="flex-grow: 5"></div>
+
+  <div style="flex-shrink: 0; position: relative; box-sizing: border-box; padding: 0 20px 34px; display: flex; justify-content: center">
+    <p style="margin: 0; font-size: 12.5px; color: #6B7A78">Fundación ASISCO UP · Manizales</p>
+  </div>
+
+</div>
+</body></html>
