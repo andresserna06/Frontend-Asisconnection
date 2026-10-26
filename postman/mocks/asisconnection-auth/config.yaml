@@ -1,0 +1,10 @@
+version: 1
+id: 0be4a3e1-c70d-4b75-b533-52b9ee78c336
+name: asisconnection-auth
+slug: asisconnection-auth
+protocol: http
+port: 4500
+scenarios:
+  - name: default
+    path: ./default.js
+    default: true

@@ -4,12 +4,16 @@ import { API_URL } from '@/shared/config/env';
 
 import { AuthProvider } from './application/AuthProvider';
 import { createHttpAuthRepository } from './data/httpAuthRepository';
-import { createMockAuthRepository } from './data/mockAuthRepository';
 import { createSecureTokenStorage } from './data/secureTokenStorage';
 
+if (API_URL === null) {
+  throw new Error(
+    'EXPO_PUBLIC_API_URL is not set. Copy .env.example to .env and use the backend or Postman mock URL (see postman/).',
+  );
+}
+
 // Composition root of the module: the only place that wires data into application.
-// Uses the real backend when EXPO_PUBLIC_API_URL is set, the mock otherwise.
-const repository = API_URL ? createHttpAuthRepository(API_URL) : createMockAuthRepository();
+const repository = createHttpAuthRepository(API_URL);
 const storage = createSecureTokenStorage();
 
 type AppAuthProviderProps = {

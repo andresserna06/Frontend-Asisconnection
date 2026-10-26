@@ -14,7 +14,7 @@ Solo con aviso «disponible pronto»: crear cuenta, recuperar contraseña e invi
 Módulo `src/modules/auth/` con las capas del `AGENTS.md`:
 
 - `domain/`: tipos `Role` (`'ADMIN' | 'ESTUDIANTE' | 'ACUDIENTE' | 'DONANTE' | 'TALLERISTA'`), `Session` (`token`, `user`), `User` (`username`, `email`, `roles`), `AuthRepository` (interfaz: `login`, `logout`, `getProfile`) y errores tipados (`InvalidCredentials`, `SessionExpired`, `Forbidden`, `Network`, `Validation` con detalle por campo).
-- `data/`: `HttpAuthRepository` (usa `fetch`, `EXPO_PUBLIC_API_URL`, encabezado `Authorization: Bearer`), `MockAuthRepository` (acepta un usuario de prueba, con retraso simulado) y un mapper de la respuesta a `Session`. Se elige cuál usar según exista `EXPO_PUBLIC_API_URL`. El almacenamiento del token usa `expo-secure-store`.
+- `data/`: `HttpAuthRepository` (usa `fetch`, `EXPO_PUBLIC_API_URL`, encabezado `Authorization: Bearer`), y un mapper de la respuesta a `Session`. Mientras no haya backend, `EXPO_PUBLIC_API_URL` apunta al mock de Postman (`postman/`). El almacenamiento del token usa `expo-secure-store`.
 - `application/`: `useAuth` (estado de sesión: `loading | signedOut | signedIn`), `useLogin` (envío, carga, errores) y la restauración de sesión al abrir la app.
 - `ui/`: `LoginScreen` y sus componentes; los átomos (`Button`, `Input`, etc.) van en `shared/ui`.
 - Rutas: `src/app/(auth)/login.tsx`; el `_layout.tsx` raíz decide a qué grupo ir según la sesión (`signedIn` → `(tabs)`, si no → `(auth)/login`). Mientras restaura la sesión, mostrar una pantalla de carga (no parpadear el login).

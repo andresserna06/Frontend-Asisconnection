@@ -53,4 +53,4 @@ Referencia para construir cada pantalla. Los nombres de archivo son los del prot
 
 ## Datos de ejemplo
 
-Los mocks (publicaciones, comentarios, notificaciones) salen de los mockups y son ficticios. Se guardan en `modules/<modulo>/data/mocks.ts` detrás de la misma interfaz que tendrá el servicio real.
+Los datos de ejemplo (publicaciones, comentarios, notificaciones) salen de los mockups y son ficticios. Se agregan como endpoints y ejemplos al mock de Postman (`postman/`), no en el código de la app.

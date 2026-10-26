@@ -15,6 +15,15 @@ Formato de cada entrada:
 
 ---
 
+## 2026-10-26 · Mock de Postman en lugar de mocks en el código
+- Qué se hizo: los datos simulados salen del código y pasan a Postman. Se borraron `auth/data/mockAuthRepository.ts` y `auth/data/mocks.ts`; la app siempre usa el repositorio HTTP y exige `EXPO_PUBLIC_API_URL` (si falta, error claro al arrancar).
+  - `postman/collections/asisconnection-auth.postman_collection.json`: colección con login de 5 cuentas de prueba (una por rol), perfil, logout, registro y creación de usuarios por admin, con ejemplos y scripts que guardan el token.
+  - `postman/mocks/asisconnection-auth/`: **Code Mock** (`postman mock generate` y reescrito a mano) que valida como el backend: credenciales (401), campos faltantes o extra (400), token por usuario en perfil, registro solo ACUDIENTE/DONANTE con clave de 12+ (409 si existe), creación de usuarios solo con token de ADMIN (403). Con CORS para web. Se levanta con `npm run mock` (puerto 4500).
+  - Mock **clásico** en Postman cloud creado desde la colección (URL en el `.env` local de cada quien): responde los ejemplos guardados y **no valida claves**.
+- Decisiones (y por qué): pedido del equipo, para no llenar `data/` de archivos de mocks y probar siempre la misma capa HTTP que usará el backend real. **Cambia AGENTS.md (sección 5), `pantallas.md`, `diseno/README.md` y `tarea-login.md`**: los datos de ejemplo de los demás módulos también van al mock de Postman. Las pruebas no dependen del mock (usan `testUtils.tsx`). Script nuevo `npm run mock`.
+- Cómo se probó: 19 verificaciones contra el Code Mock local (login por rol, clave mala, campos extra, perfil por token, registro, 409, 403 de admin, logout, 404); llamadas al mock clásico (login, perfil, logout responden 200); `npm test` (42), typecheck y lint sin errores.
+- Queda pendiente: publicar el Code Mock en Postman cloud (en `PENDIENTES.md`). No ejecutar `postman mock generate --update` sobre el Code Mock: sobrescribe la lógica.
+
 ## 2026-10-26 · T-03 Login
 - Qué se hizo: login completo según `tarea-login.md` y el mockup `01-Login`.
   - **domain**: modelos `Session`, `LoginCredentials` y `AuthError` (`invalidCredentials`, `sessionExpired`, `forbidden`, `network`, `validation` con detalle por campo, `unknown`); interfaces `AuthRepository` y `TokenStorage`; `validateLoginForm` (correo válido y contraseña no vacía, sin exigir 12 caracteres).

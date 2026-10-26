@@ -1,0 +1,1252 @@
+{
+  "info": {
+    "name": "ASISCONNECTION · Auth",
+    "description": "Endpoints de autenticación del backend de SAGA UP (ver `docs/api-auth.md` del repo móvil).\n\n**Datos ficticios, solo de prueba. No usar datos reales de la Fundación.**\n\n## Cuentas de prueba\n| Rol | Correo | Clave |\n|---|---|---|\n| Acudiente | maria@prueba.com | ClaveAcudiente2026 |\n| Donante | carlos@prueba.com | ClaveDonante2026 |\n| Tallerista | ana@prueba.com | ClaveTallerista2026 |\n| Estudiante | juan@prueba.com | ClaveEstudiante2026 |\n| Administrador | admin@prueba.com | ClaveAdmin2026 |\n\n## Cómo usar\n1. Define `url` (sin barra final): la del mock de Postman o la del backend en Render.\n2. Ejecuta un **Login**: guarda el token en `token` (o `adminToken` para el administrador).\n3. **Perfil** y **Logout** usan `token`; **Admin** usa `adminToken`.\n\n## Mock\nEl mock responde con los ejemplos guardados y no valida claves: siempre devuelve el primer ejemplo 200 del endpoint. Para ver un error en Postman agrega el header `x-mock-response-code` (por ejemplo `401`).\nLa forma de las respuestas es supuesta hasta confirmar con el backend real.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "url",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Sesión",
+      "item": [
+        {
+          "name": "Login · Acudiente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const token = json.token || json.accessToken || (json.data && json.data.token);",
+                  "if (token) {",
+                  "  pm.collectionVariables.set('token', token);",
+                  "}",
+                  "pm.test('responde 200 con token', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(token).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}/auth/login",
+              "host": ["{{url}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"maria@prueba.com\",\n  \"clave\": \"ClaveAcudiente2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/login",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "login"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"maria@prueba.com\",\n  \"clave\": \"ClaveAcudiente2026\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"token\": \"mock-token-acudiente\",\n  \"roles\": [\n    \"ACUDIENTE\"\n  ]\n}"
+            },
+            {
+              "name": "401 Credenciales inválidas",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/login",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "login"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"maria@prueba.com\",\n  \"clave\": \"ClaveIncorrecta1\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"mensaje\": \"Credenciales inválidas\"\n}"
+            },
+            {
+              "name": "400 Datos inválidos",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/login",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "login"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"correo-malo\",\n  \"clave\": \"x\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errores\": {\n    \"email\": \"El correo no es válido\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login · Donante",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const token = json.token || json.accessToken || (json.data && json.data.token);",
+                  "if (token) {",
+                  "  pm.collectionVariables.set('token', token);",
+                  "}",
+                  "pm.test('responde 200 con token', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(token).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}/auth/login",
+              "host": ["{{url}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"carlos@prueba.com\",\n  \"clave\": \"ClaveDonante2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/login",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "login"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"carlos@prueba.com\",\n  \"clave\": \"ClaveDonante2026\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"token\": \"mock-token-donante\",\n  \"roles\": [\n    \"DONANTE\"\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login · Tallerista",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const token = json.token || json.accessToken || (json.data && json.data.token);",
+                  "if (token) {",
+                  "  pm.collectionVariables.set('token', token);",
+                  "}",
+                  "pm.test('responde 200 con token', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(token).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}/auth/login",
+              "host": ["{{url}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana@prueba.com\",\n  \"clave\": \"ClaveTallerista2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/login",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "login"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"ana@prueba.com\",\n  \"clave\": \"ClaveTallerista2026\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"token\": \"mock-token-tallerista\",\n  \"roles\": [\n    \"TALLERISTA\"\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login · Estudiante",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const token = json.token || json.accessToken || (json.data && json.data.token);",
+                  "if (token) {",
+                  "  pm.collectionVariables.set('token', token);",
+                  "}",
+                  "pm.test('responde 200 con token', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(token).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}/auth/login",
+              "host": ["{{url}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"juan@prueba.com\",\n  \"clave\": \"ClaveEstudiante2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/login",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "login"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"juan@prueba.com\",\n  \"clave\": \"ClaveEstudiante2026\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"token\": \"mock-token-estudiante\",\n  \"roles\": [\n    \"ESTUDIANTE\"\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login · Administrador",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const token = json.token || json.accessToken || (json.data && json.data.token);",
+                  "if (token) {",
+                  "  pm.collectionVariables.set('adminToken', token);",
+                  "}",
+                  "pm.test('responde 200 con token', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(token).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}/auth/login",
+              "host": ["{{url}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@prueba.com\",\n  \"clave\": \"ClaveAdmin2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/login",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "login"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@prueba.com\",\n  \"clave\": \"ClaveAdmin2026\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"token\": \"mock-token-admin\",\n  \"roles\": [\n    \"ADMIN\"\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Perfil (usuario de la sesión)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}/auth/perfil",
+              "host": ["{{url}}"],
+              "path": ["auth", "perfil"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/perfil",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "perfil"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"username\": \"maria.acudiente\",\n  \"email\": \"maria@prueba.com\",\n  \"roles\": [\n    \"ACUDIENTE\"\n  ]\n}"
+            },
+            {
+              "name": "401 Sesión expirada",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer token-vencido"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/perfil",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "perfil"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"mensaje\": \"Token inválido o expirado\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}/auth/logout",
+              "host": ["{{url}}"],
+              "path": ["auth", "logout"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/logout",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "logout"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"mensaje\": \"Sesión cerrada\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Registro",
+      "item": [
+        {
+          "name": "Registro · Acudiente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}/auth/registro",
+              "host": ["{{url}}"],
+              "path": ["auth", "registro"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"maria.acudiente\",\n  \"email\": \"maria@prueba.com\",\n  \"clave\": \"ClaveAcudiente2026\",\n  \"rol\": \"ACUDIENTE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Creado",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/registro",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "registro"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"maria.acudiente\",\n  \"email\": \"maria@prueba.com\",\n  \"clave\": \"ClaveAcudiente2026\",\n  \"rol\": \"ACUDIENTE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"username\": \"maria.acudiente\",\n  \"email\": \"maria@prueba.com\",\n  \"roles\": [\n    \"ACUDIENTE\"\n  ]\n}"
+            },
+            {
+              "name": "409 Ya registrado",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/registro",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "registro"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"maria.acudiente\",\n  \"email\": \"maria@prueba.com\",\n  \"clave\": \"ClaveAcudiente2026\",\n  \"rol\": \"ACUDIENTE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"mensaje\": \"El usuario o el correo ya está registrado\"\n}"
+            },
+            {
+              "name": "400 Clave corta",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/registro",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "registro"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"maria.acudiente\",\n  \"email\": \"maria@prueba.com\",\n  \"clave\": \"corta\",\n  \"rol\": \"ACUDIENTE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errores\": {\n    \"clave\": \"La clave debe tener al menos 12 caracteres\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Registro · Donante",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}/auth/registro",
+              "host": ["{{url}}"],
+              "path": ["auth", "registro"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"carlos.donante\",\n  \"email\": \"carlos@prueba.com\",\n  \"clave\": \"ClaveDonante2026\",\n  \"rol\": \"DONANTE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Creado",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/registro",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "registro"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"carlos.donante\",\n  \"email\": \"carlos@prueba.com\",\n  \"clave\": \"ClaveDonante2026\",\n  \"rol\": \"DONANTE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"username\": \"carlos.donante\",\n  \"email\": \"carlos@prueba.com\",\n  \"roles\": [\n    \"DONANTE\"\n  ]\n}"
+            },
+            {
+              "name": "409 Ya registrado",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/registro",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "registro"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"carlos.donante\",\n  \"email\": \"carlos@prueba.com\",\n  \"clave\": \"ClaveDonante2026\",\n  \"rol\": \"DONANTE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"mensaje\": \"El usuario o el correo ya está registrado\"\n}"
+            },
+            {
+              "name": "400 Clave corta",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/registro",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "registro"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"carlos.donante\",\n  \"email\": \"carlos@prueba.com\",\n  \"clave\": \"corta\",\n  \"rol\": \"DONANTE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errores\": {\n    \"clave\": \"La clave debe tener al menos 12 caracteres\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Crear usuario · Tallerista",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}/auth/usuarios",
+              "host": ["{{url}}"],
+              "path": ["auth", "usuarios"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"ana.tallerista\",\n  \"email\": \"ana@prueba.com\",\n  \"clave\": \"ClaveTallerista2026\",\n  \"roles\": [\n    \"TALLERISTA\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Creado",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/usuarios",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "usuarios"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"ana.tallerista\",\n  \"email\": \"ana@prueba.com\",\n  \"clave\": \"ClaveTallerista2026\",\n  \"roles\": [\n    \"TALLERISTA\"\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"username\": \"ana.tallerista\",\n  \"email\": \"ana@prueba.com\",\n  \"roles\": [\n    \"TALLERISTA\"\n  ]\n}"
+            },
+            {
+              "name": "403 Sin permisos",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/usuarios",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "usuarios"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"ana.tallerista\",\n  \"email\": \"ana@prueba.com\",\n  \"clave\": \"ClaveTallerista2026\",\n  \"roles\": [\n    \"TALLERISTA\"\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"mensaje\": \"No tienes permisos para esta acción\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Crear usuario · Estudiante",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}/auth/usuarios",
+              "host": ["{{url}}"],
+              "path": ["auth", "usuarios"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"juan.estudiante\",\n  \"email\": \"juan@prueba.com\",\n  \"clave\": \"ClaveEstudiante2026\",\n  \"roles\": [\n    \"ESTUDIANTE\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Creado",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/usuarios",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "usuarios"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"juan.estudiante\",\n  \"email\": \"juan@prueba.com\",\n  \"clave\": \"ClaveEstudiante2026\",\n  \"roles\": [\n    \"ESTUDIANTE\"\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"username\": \"juan.estudiante\",\n  \"email\": \"juan@prueba.com\",\n  \"roles\": [\n    \"ESTUDIANTE\"\n  ]\n}"
+            },
+            {
+              "name": "403 Sin permisos",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/usuarios",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "usuarios"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"juan.estudiante\",\n  \"email\": \"juan@prueba.com\",\n  \"clave\": \"ClaveEstudiante2026\",\n  \"roles\": [\n    \"ESTUDIANTE\"\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"mensaje\": \"No tienes permisos para esta acción\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Crear usuario · Administrador",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}/auth/usuarios",
+              "host": ["{{url}}"],
+              "path": ["auth", "usuarios"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin.asisco\",\n  \"email\": \"admin@prueba.com\",\n  \"clave\": \"ClaveAdmin2026\",\n  \"roles\": [\n    \"ADMIN\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Creado",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/usuarios",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "usuarios"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"admin.asisco\",\n  \"email\": \"admin@prueba.com\",\n  \"clave\": \"ClaveAdmin2026\",\n  \"roles\": [\n    \"ADMIN\"\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"username\": \"admin.asisco\",\n  \"email\": \"admin@prueba.com\",\n  \"roles\": [\n    \"ADMIN\"\n  ]\n}"
+            },
+            {
+              "name": "403 Sin permisos",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/auth/usuarios",
+                  "host": ["{{url}}"],
+                  "path": ["auth", "usuarios"]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"admin.asisco\",\n  \"email\": \"admin@prueba.com\",\n  \"clave\": \"ClaveAdmin2026\",\n  \"roles\": [\n    \"ADMIN\"\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"mensaje\": \"No tienes permisos para esta acción\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
