@@ -53,8 +53,7 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",
-    "format": "prettier --write .",
-    "mock": "postman mock run postman/mocks/asisconnection-auth --no-history"
+    "format": "prettier --write ."
   },
   "jest": {
     "preset": "jest-expo",

@@ -64,7 +64,7 @@ src/
       ui/                   Pantallas y componentes propios del módulo
       application/          Hooks y casos de uso (useForumFeed, useFollow…)
       domain/               Modelos (models/), interfaces y reglas puras (sin React, sin red)
-      data/                 Servicios, repositorios y mocks
+      data/                 Servicios, repositorios y mappers
       index.ts              API pública del módulo
   shared/
     ui/                     Atomic Design (ver sección 4)
@@ -118,7 +118,7 @@ Un componente sube a `shared/ui` cuando lo usan **dos o más módulos**. Antes d
 
 **Estado y datos**
 - Estado local con `useState`/`useReducer`. Estado global **solo** para la sesión, con React Context (`AuthProvider`). No agregues Redux, Zustand ni similares sin aprobación.
-- Los datos del servidor se piden con `fetch` desde hooks de `application/` (estados `loading`, `error`, `data`). TanStack Query entra en T-06 (Foro) para las listas; hasta entonces, solo `fetch`. No agregues axios ni otras librerías de datos sin aprobación. Mientras no haya backend, los datos simulados **no viven en el código**: se sirven desde el mock de Postman (`postman/collections` y `postman/mocks`, ver `docs/BITACORA.md`) y la app los pide por HTTP con el mismo repositorio que usará el backend real. Cambiar de mock a backend es solo cambiar `EXPO_PUBLIC_API_URL`. Las pruebas usan dobles propios (`testUtils.tsx`), no el mock.
+- Los datos del servidor se piden con `fetch` desde hooks de `application/` (estados `loading`, `error`, `data`). TanStack Query entra en T-06 (Foro) para las listas; hasta entonces, solo `fetch`. No agregues axios ni otras librerías de datos sin aprobación. Mientras no haya backend, los datos simulados **no viven en el código**: se sirven desde el mock server de Postman creado a partir de `postman/collections` (ver `docs/BITACORA.md`) y la app los pide por HTTP con el mismo repositorio que usará el backend real. Cambiar de mock a backend es solo cambiar `EXPO_PUBLIC_API_URL`. Las pruebas usan dobles propios (`testUtils.tsx`), no el mock.
 - Nada de `fetch` fuera de `data/`. URL base desde `process.env.EXPO_PUBLIC_API_URL` (ver `.env.example`).
 
 **Accesibilidad (requisito, no extra)**

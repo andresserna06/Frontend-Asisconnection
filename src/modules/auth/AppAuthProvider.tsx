@@ -8,7 +8,7 @@ import { createSecureTokenStorage } from './data/secureTokenStorage';
 
 if (API_URL === null) {
   throw new Error(
-    'EXPO_PUBLIC_API_URL is not set. Copy .env.example to .env and use the backend or Postman mock URL (see postman/).',
+    'EXPO_PUBLIC_API_URL is not set. Copy .env.example to .env and use the backend or Postman mock server URL.',
   );
 }
 

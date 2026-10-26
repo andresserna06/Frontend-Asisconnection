@@ -10,9 +10,7 @@ Cómo se usa:
 
 ## En orden de trabajo
 
-- [ ] **T-03b Probar el login en Expo Go** contra el mock de Postman (cuentas de prueba en la descripción de la colección) y, cuando llegue la URL, contra el backend real; confirmar los nombres de campos de `/auth/login` y `/auth/perfil` y ajustar `auth/data/authMappers.ts` y el mock.
-- [ ] **Publicar el Code Mock en Postman cloud** (`postman login`, `postman mock push`, `postman mock deploy --public`) para que todo el equipo tenga una URL que valide claves y roles sin depender de un computador.
-- [ ] **T-04 Estructura de pestañas.** Barra inferior con Foros, Ecosistema, Asistente y Perfil (avatar), pantallas vacías y rutas protegidas.
+- [ ] **T-03b Probar el login en Expo Go** contra el mock de Postman (cuentas de prueba en la descripción de la colección) y, cuando llegue la URL, contra el backend real; confirmar los nombres de campos de `/auth/login` y `/auth/perfil` y ajustar `auth/data/authMappers.ts` y el mock.- [ ] **T-04 Estructura de pestañas.** Barra inferior con Foros, Ecosistema, Asistente y Perfil (avatar), pantallas vacías y rutas protegidas.
 - [ ] **T-05 Componentes base** (`shared/ui`): `Button`, `Input`, `Avatar`, `CategoryChip`, `ToggleRow`, `HeaderTeal` (con ocultar al hacer scroll).
 - [ ] **T-06 Foro.** Feed con `snapToInterval`, filtros por tema, tipos imagen, video y texto. Aquí se instala TanStack Query y se monta su proveedor. Reemplaza el `ForumScreen` provisional. Las peticiones autenticadas deben cerrar la sesión ante un 401 (`useAuth().signOut`); exponer el token desde `auth` cuando haga falta.
 - [ ] **T-07 Comentarios** (modal inferior).

@@ -15,6 +15,12 @@ Formato de cada entrada:
 
 ---
 
+## 2026-10-26 · Solo el mock server de Postman
+- Qué se hizo: el equipo trabaja de forma momentánea con el mock server de Postman creado desde la colección (URL en el `.env` de cada quien). Se borró el Code Mock local (`postman/mocks/`) y el script `npm run mock`. En el repo solo queda `postman/collections/asisconnection-auth.postman_collection.json`, que es la fuente del mock server. Se limpiaron las menciones en `.env.example`, `env.ts`, `AuthRepository.ts`, `AppAuthProvider.tsx` y AGENTS.md.
+- Decisiones (y por qué): pedido del equipo. Las pruebas de Jest mantienen sus dobles (`testUtils.tsx`, `jest.spyOn(fetch)`): verifican el código, no simulan el backend para la app.
+- Ojo: el mock server responde los ejemplos guardados y **no valida claves** (cualquier clave entra como María, Acudiente).
+- Cómo se probó: `npm test`, typecheck y lint sin errores.
+
 ## 2026-10-26 · Mock de Postman en lugar de mocks en el código
 - Qué se hizo: los datos simulados salen del código y pasan a Postman. Se borraron `auth/data/mockAuthRepository.ts` y `auth/data/mocks.ts`; la app siempre usa el repositorio HTTP y exige `EXPO_PUBLIC_API_URL` (si falta, error claro al arrancar).
   - `postman/collections/asisconnection-auth.postman_collection.json`: colección con login de 5 cuentas de prueba (una por rol), perfil, logout, registro y creación de usuarios por admin, con ejemplos y scripts que guardan el token.

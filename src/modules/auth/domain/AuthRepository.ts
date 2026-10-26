@@ -1,7 +1,7 @@
 import type { LoginCredentials } from './models/LoginCredentials';
 import type { User } from './models/User';
 
-// Contract implemented by the data layer (HTTP or mock). Methods reject with AuthError.
+// Contract implemented by the data layer (HTTP). Methods reject with AuthError.
 export type AuthRepository = {
   // Returns the session token.
   login(credentials: LoginCredentials): Promise<string>;
