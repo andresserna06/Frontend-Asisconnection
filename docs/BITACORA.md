@@ -15,6 +15,27 @@ Formato de cada entrada:
 
 ---
 
+## 2026-10-26 · T-03 Login
+- Qué se hizo: login completo según `tarea-login.md` y el mockup `01-Login`.
+  - **domain**: modelos `Session`, `LoginCredentials` y `AuthError` (`invalidCredentials`, `sessionExpired`, `forbidden`, `network`, `validation` con detalle por campo, `unknown`); interfaces `AuthRepository` y `TokenStorage`; `validateLoginForm` (correo válido y contraseña no vacía, sin exigir 12 caracteres).
+  - **data**: `createHttpAuthRepository` (`fetch`, timeout de 30 s, `Authorization: Bearer`, manda solo `email` y `clave`); `createMockAuthRepository` con la cuenta ficticia del mockup; mappers defensivos (`authMappers.ts`); `createSecureTokenStorage` con `expo-secure-store`.
+  - **application**: `AuthProvider` / `useAuth` (estados `loading | signedOut | signedIn`, restaura la sesión al abrir; un 401 borra el token, sin conexión lo conserva) y `useLogin` (validación, carga, errores, sin doble envío).
+  - **ui**: `LoginScreen` igual al mockup; «Crear cuenta», «¿Olvidaste tu contraseña?» e «Ingresar como invitado» muestran el aviso único `showComingSoonNotice`.
+  - **shared/ui**: átomos `Icon`, `Button` (primary / outline, con carga), `TextButton`, `IconButton`, `Input`, y la molécula `TextField`.
+  - **Rutas**: `(auth)/login` y `(tabs)/index` con `Stack.Protected`. El splash se mantiene hasta cargar fuentes y sesión (el login no parpadea). `(tabs)` muestra un Foro provisional con saludo, `RoleBadge` y «Cerrar sesión» para probar el flujo completo.
+- Archivos principales: `src/modules/auth/**`, `src/modules/forum/ui/ForumScreen.tsx`, `src/shared/ui/{atoms,molecules}/*`, `src/shared/lib/showComingSoonNotice.ts`, `src/shared/config/env.ts`, `src/shared/hooks/useHideSplashScreen.ts`, `src/app/_layout.tsx`, `src/app/(auth)/*`, `src/app/(tabs)/*`, `assets/images/logo-asisco-up.png`.
+- Decisiones (y por qué):
+  - Dependencias nuevas, ambas en `STACK.md`: `expo-secure-store` (token de sesión; agrega su config plugin a `app.json`) y `@expo/vector-icons` (Feather), declarada aunque venga con Expo.
+  - `AppAuthProvider.tsx`, en la raíz del módulo, es el único punto que conecta `data` con `application`: usa el backend si existe `EXPO_PUBLIC_API_URL` y el mock si no. `AuthProvider` recibe el repositorio por props, así se prueba con dobles.
+  - Repositorios como funciones fábrica (`createHttpAuthRepository`), no clases.
+  - El aviso «disponible pronto» es un `Alert` nativo (una función, no un componente): simple y accesible.
+  - `app.json` → `userInterfaceStyle: "light"`: el diseño solo tiene modo claro.
+  - Medidas propias del mockup del login (logo y círculos de fondo) quedan como constantes con nombre en `LoginScreen.tsx`; lo reutilizable va al tema (`OPACITY`, `BORDER_WIDTH`, `LINE_HEIGHT`, `LETTER_SPACING`, tamaños de íconos y botón secundario).
+  - Jest: `moduleNameMapper` explícito para `@/` y `@/assets/` (el mapeo de `jest-expo` falla en Windows) y `testTimeout` de 15 s (el primer render en frío pasa de 5 s).
+  - El error de un campo se muestra con `COLORS.danger` (más contraste que `alert`); el borde del campo usa `alert`.
+- Cómo se probó: `npm test` (42 pruebas: dominio, mappers, repositorio HTTP con `fetch` simulado, `AuthProvider`, `useLogin` y `LoginScreen`: mostrar/ocultar contraseña, errores por campo, botón deshabilitado mientras carga, credenciales incorrectas y aviso «disponible pronto»); `npm run typecheck` y `npm run lint` sin errores. **No se probó en Expo Go** (queda como T-03b).
+- Queda pendiente: T-03b (probar en Expo Go y confirmar la respuesta real del backend); el 401 en peticiones autenticadas de otros módulos (anotado en T-06); mover «Cerrar sesión» a Ajustes (T-12).
+
 ## 2026-10-26 · Nombres en inglés y modelos de dominio
 - Qué se hizo: los módulos pasan a inglés (`forum`, `comments`, `notifications`, `posts`, `profile`, `settings`, `assistant`, `ecosystem`; `auth` se queda). Las claves de categoría también (`announcements`, `questions`, `guides`, `achievements`). Los roles pasan a ser un modelo: `auth/domain/models/Role.ts` (`RoleCode` + `Role` con `code`, `label` y `priority`, y el registro `ROLES`) y se agrega `auth/domain/models/User.ts` (`username`, `email`, `roles`), que pide `tarea-login.md`. Se borró `roles.ts`.
 - Archivos principales: `src/modules/*`, `src/modules/auth/domain/models/{Role,Role.test,User}.ts`, `src/modules/auth/ui/RoleBadge.tsx`, `src/modules/auth/index.ts`, `src/shared/theme/colors.ts`.

@@ -39,4 +39,20 @@ export const SIZE = {
   header: 108,
   input: 48,
   button: 52,
+  buttonSecondary: 50,
+  icon: 20,
+  iconSmall: 16,
+  iconButton: 19,
+} as const;
+
+export const BORDER_WIDTH = {
+  hairline: 1,
+  strong: 2,
+} as const;
+
+export const OPACITY = {
+  disabled: 0.6,
+  pressed: 0.7,
+  decorPrimary: 0.14,
+  decorAccent: 0.16,
 } as const;

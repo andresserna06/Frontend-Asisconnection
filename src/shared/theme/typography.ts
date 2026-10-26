@@ -45,3 +45,13 @@ export const FONT_SIZE = {
   s27: 27,
   s30: 30,
 } as const;
+
+export const LINE_HEIGHT = {
+  // 27 px title at 1.18.
+  display: 32,
+} as const;
+
+export const LETTER_SPACING = {
+  // 0.14em on 13 px uppercase labels.
+  wide: 1.8,
+} as const;

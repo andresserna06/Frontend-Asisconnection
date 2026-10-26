@@ -10,16 +10,16 @@ Cómo se usa:
 
 ## En orden de trabajo
 
-- [ ] **T-03 Login** (pantalla igual al mockup; crear cuenta, olvidé contraseña e invitado visibles con aviso «disponible pronto»). Detalle en `tarea-login.md`. Depende de T-01 y T-02.
+- [ ] **T-03b Probar el login en Expo Go** con la cuenta simulada (`marcela.ramirez@correo.com` / `contrasena`) y, cuando llegue la URL, contra el backend real; confirmar los nombres de campos de `/auth/login` y `/auth/perfil` y ajustar `auth/data/authMappers.ts`.
 - [ ] **T-04 Estructura de pestañas.** Barra inferior con Foros, Ecosistema, Asistente y Perfil (avatar), pantallas vacías y rutas protegidas.
 - [ ] **T-05 Componentes base** (`shared/ui`): `Button`, `Input`, `Avatar`, `CategoryChip`, `ToggleRow`, `HeaderTeal` (con ocultar al hacer scroll).
-- [ ] **T-06 Foro.** Feed con `snapToInterval`, filtros por tema, tipos imagen, video y texto. Aquí se instala TanStack Query y se monta su proveedor.
+- [ ] **T-06 Foro.** Feed con `snapToInterval`, filtros por tema, tipos imagen, video y texto. Aquí se instala TanStack Query y se monta su proveedor. Reemplaza el `ForumScreen` provisional. Las peticiones autenticadas deben cerrar la sesión ante un 401 (`useAuth().signOut`); exponer el token desde `auth` cuando haga falta.
 - [ ] **T-07 Comentarios** (modal inferior).
 - [ ] **T-08 Nueva publicación.**
 - [ ] **T-09 Notificaciones** agrupadas por fecha.
 - [ ] **T-10 Perfil propio.**
 - [ ] **T-11 Perfil de otra persona** (seguir / siguiendo).
-- [ ] **T-12 Ajustes** (visibilidad de datos, quién puede seguirte, cerrar sesión).
+- [ ] **T-12 Ajustes** (visibilidad de datos, quién puede seguirte, cerrar sesión). Mover aquí el «Cerrar sesión» provisional del Foro (`useAuth().signOut`).
 - [ ] **T-13 Asistente** (preguntas frecuentes por reglas).
 - [ ] **T-14 Ecosistema** (tarjetas con enlaces externos).
 - [ ] **T-15 Ícono y splash de la app.** Reemplazar los de la plantilla en `app.json` (`icon`, `adaptiveIcon`, `splash`) por los de ASISCO UP.
