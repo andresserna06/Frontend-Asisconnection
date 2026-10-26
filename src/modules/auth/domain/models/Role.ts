@@ -18,10 +18,6 @@ export const ROLES: Record<RoleCode, Role> = {
   DONANTE: { code: 'DONANTE', label: 'Donante', priority: 5 },
 };
 
-export function isRoleCode(value: string): value is RoleCode {
-  return Object.prototype.hasOwnProperty.call(ROLES, value);
-}
-
 // Role shown next to a user's name.
 export function getPrimaryRole(codes: readonly RoleCode[]): Role | null {
   return codes

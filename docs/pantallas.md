@@ -53,4 +53,4 @@ Referencia para construir cada pantalla. Los nombres de archivo son los del prot
 
 ## Datos de ejemplo
 
-Los datos de ejemplo (publicaciones, comentarios, notificaciones) salen de los mockups y son ficticios. Se agregan como endpoints y ejemplos al mock de Postman (`postman/`), no en el código de la app.
+Los datos de ejemplo (publicaciones, comentarios, notificaciones) salen de los mockups y son ficticios. La app no los simula: los recibe del backend (o, de momento, del mock server de Postman del equipo).

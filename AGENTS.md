@@ -64,7 +64,7 @@ src/
       ui/                   Pantallas y componentes propios del módulo
       application/          Hooks y casos de uso (useForumFeed, useFollow…)
       domain/               Modelos (models/), interfaces y reglas puras (sin React, sin red)
-      data/                 Servicios, repositorios y mappers
+      data/                 Repositorios HTTP (llamadas al backend)
       index.ts              API pública del módulo
   shared/
     ui/                     Atomic Design (ver sección 4)
@@ -103,7 +103,7 @@ Un componente sube a `shared/ui` cuando lo usan **dos o más módulos**. Antes d
 **TypeScript**
 - `strict: true`. Prohibido `any` (usa `unknown` y estrecha). Evita `as` salvo en el borde de la capa `data`.
 - Las props se tipan con `type XProps = {...}`. Cada entidad del dominio es un **modelo** en `domain/models/<Name>.ts` (`Role.ts`, `User.ts`) que reúne todos sus atributos; si cambia su estructura, se cambia solo ahí y se reutiliza en todo el código.
-- Los datos que llegan del backend se validan y convierten a modelos del dominio en `data/` (mappers). La UI nunca ve el formato crudo de la API.
+- **Este repo es solo frontend.** Validar, transformar y dar forma a los datos (DTOs) es responsabilidad del backend. La capa `data/` solo hace la petición HTTP, tipa la respuesta según el contrato (`docs/api-auth.md`) y traduce los códigos de error a errores del dominio. No se escriben mappers que adivinen o corrijan respuestas.
 
 **React Native**
 - Componentes funcionales y hooks. Sin clases.
@@ -118,7 +118,7 @@ Un componente sube a `shared/ui` cuando lo usan **dos o más módulos**. Antes d
 
 **Estado y datos**
 - Estado local con `useState`/`useReducer`. Estado global **solo** para la sesión, con React Context (`AuthProvider`). No agregues Redux, Zustand ni similares sin aprobación.
-- Los datos del servidor se piden con `fetch` desde hooks de `application/` (estados `loading`, `error`, `data`). TanStack Query entra en T-06 (Foro) para las listas; hasta entonces, solo `fetch`. No agregues axios ni otras librerías de datos sin aprobación. Mientras no haya backend, los datos simulados **no viven en el código**: se sirven desde el mock server de Postman creado a partir de `postman/collections` (ver `docs/BITACORA.md`) y la app los pide por HTTP con el mismo repositorio que usará el backend real. Cambiar de mock a backend es solo cambiar `EXPO_PUBLIC_API_URL`. Las pruebas usan dobles propios (`testUtils.tsx`), no el mock.
+- Los datos del servidor se piden con `fetch` desde hooks de `application/` (estados `loading`, `error`, `data`). TanStack Query entra en T-06 (Foro) para las listas; hasta entonces, solo `fetch`. No agregues axios ni otras librerías de datos sin aprobación. Mientras no haya backend, no se simula nada en el código: `EXPO_PUBLIC_API_URL` apunta de momento al mock server de Postman del equipo, y cambiar al backend real es solo cambiar esa URL. Las pruebas usan dobles propios (`testUtils.tsx`).
 - Nada de `fetch` fuera de `data/`. URL base desde `process.env.EXPO_PUBLIC_API_URL` (ver `.env.example`).
 
 **Accesibilidad (requisito, no extra)**

@@ -14,7 +14,7 @@ Solo con aviso «disponible pronto»: crear cuenta, recuperar contraseña e invi
 Módulo `src/modules/auth/` con las capas del `AGENTS.md`:
 
 - `domain/`: tipos `Role` (`'ADMIN' | 'ESTUDIANTE' | 'ACUDIENTE' | 'DONANTE' | 'TALLERISTA'`), `Session` (`token`, `user`), `User` (`username`, `email`, `roles`), `AuthRepository` (interfaz: `login`, `logout`, `getProfile`) y errores tipados (`InvalidCredentials`, `SessionExpired`, `Forbidden`, `Network`, `Validation` con detalle por campo).
-- `data/`: `HttpAuthRepository` (usa `fetch`, `EXPO_PUBLIC_API_URL`, encabezado `Authorization: Bearer`), y un mapper de la respuesta a `Session`. Mientras no haya backend, `EXPO_PUBLIC_API_URL` apunta al mock de Postman (`postman/`). El almacenamiento del token usa `expo-secure-store`.
+- `data/`: `HttpAuthRepository` (usa `fetch`, `EXPO_PUBLIC_API_URL`, encabezado `Authorization: Bearer`), que tipa la respuesta según `api-auth.md` (la forma la da el backend). Mientras no haya backend, `EXPO_PUBLIC_API_URL` apunta al mock server de Postman del equipo. El almacenamiento del token usa `expo-secure-store`.
 - `application/`: `useAuth` (estado de sesión: `loading | signedOut | signedIn`), `useLogin` (envío, carga, errores) y la restauración de sesión al abrir la app.
 - `ui/`: `LoginScreen` y sus componentes; los átomos (`Button`, `Input`, etc.) van en `shared/ui`.
 - Rutas: `src/app/(auth)/login.tsx`; el `_layout.tsx` raíz decide a qué grupo ir según la sesión (`signedIn` → `(tabs)`, si no → `(auth)/login`). Mientras restaura la sesión, mostrar una pantalla de carga (no parpadear el login).
@@ -47,7 +47,7 @@ El login se construye **igual que el mockup** (`docs/diseno/pantallas/01-Login.p
 3. **«Crear cuenta»:** visible, sin funcionalidad. Mismo aviso. (El registro y su pantalla quedan en `PENDIENTES.md`.)
 4. **«Ingresar como invitado»:** visible, sin funcionalidad. Mismo aviso. (Falta decidir qué vería un invitado; Ley 1581.)
 5. **Roles:** son los del backend (ver `api-auth.md`). Guardarlos tal como llegan y mostrar la etiqueta en español con la tabla de ese archivo.
-6. **Respuesta del login:** tipar de forma defensiva y confirmar los nombres exactos de los campos cuando llegue la URL.
+6. **Respuesta del login:** se tipa según `api-auth.md`; si el backend responde distinto, se ajustan los tipos de `httpAuthRepository.ts`.
 
 El aviso de «disponible pronto» es un componente único y reutilizable (por ejemplo `ComingSoonNotice`), para quitarlo fácil cuando cada función exista. Cuando una de estas funciones se implemente, se registra en `BITACORA.md` y se quita de `PENDIENTES.md`.
 

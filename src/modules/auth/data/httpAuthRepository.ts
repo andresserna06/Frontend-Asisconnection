@@ -1,10 +1,15 @@
 import type { AuthRepository } from '@/modules/auth/domain/AuthRepository';
 import { AuthError, type AuthErrorKind } from '@/modules/auth/domain/models/AuthError';
-
-import { mapFieldErrors, mapLoginResponse, mapProfileResponse } from './authMappers';
+import type { User } from '@/modules/auth/domain/models/User';
 
 // Render may take a while to wake up on the first request.
 const REQUEST_TIMEOUT_MS = 30_000;
+
+// Response bodies as the backend sends them (docs/api-auth.md). The backend owns their
+// validation (DTOs), so the app only types them here.
+type LoginResponse = { token: string };
+type ProfileResponse = User;
+type ValidationErrorResponse = { errores?: { email?: string; clave?: string } } | null;
 
 type RequestOptions = {
   method: 'GET' | 'POST';
@@ -15,7 +20,7 @@ type RequestOptions = {
 };
 
 export function createHttpAuthRepository(baseUrl: string): AuthRepository {
-  async function request(path: string, options: RequestOptions): Promise<unknown> {
+  async function request<T>(path: string, options: RequestOptions): Promise<T> {
     const headers: Record<string, string> = { Accept: 'application/json' };
     if (options.body) {
       headers['Content-Type'] = 'application/json';
@@ -42,11 +47,13 @@ export function createHttpAuthRepository(baseUrl: string): AuthRepository {
 
     const json: unknown = await response.json().catch(() => null);
     if (response.ok) {
-      return json;
+      return json as T;
     }
     switch (response.status) {
-      case 400:
-        throw new AuthError('validation', mapFieldErrors(json));
+      case 400: {
+        const errores = (json as ValidationErrorResponse)?.errores;
+        throw new AuthError('validation', { email: errores?.email, password: errores?.clave });
+      }
       case 401:
         throw new AuthError(options.unauthorizedKind);
       case 403:
@@ -59,12 +66,12 @@ export function createHttpAuthRepository(baseUrl: string): AuthRepository {
   return {
     async login({ email, password }) {
       // The backend rejects any extra field: send exactly these two.
-      const json = await request('/auth/login', {
+      const { token } = await request<LoginResponse>('/auth/login', {
         method: 'POST',
         body: { email, clave: password },
         unauthorizedKind: 'invalidCredentials',
       });
-      return mapLoginResponse(json);
+      return token;
     },
 
     async logout(token) {
@@ -72,12 +79,11 @@ export function createHttpAuthRepository(baseUrl: string): AuthRepository {
     },
 
     async getProfile(token) {
-      const json = await request('/auth/perfil', {
+      return request<ProfileResponse>('/auth/perfil', {
         method: 'GET',
         token,
         unauthorizedKind: 'sessionExpired',
       });
-      return mapProfileResponse(json);
     },
   };
 }

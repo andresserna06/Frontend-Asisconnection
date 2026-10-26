@@ -72,6 +72,12 @@ describe('createHttpAuthRepository', () => {
     expect(init?.headers).toMatchObject({ Authorization: 'Bearer tok' });
   });
 
+  it('returns the profile sent by the backend', async () => {
+    const user = { username: 'maria', email: 'maria@prueba.com', roles: ['ACUDIENTE'] };
+    fetchMock.mockResolvedValue(jsonResponse(200, user));
+    await expect(repository.getProfile('tok')).resolves.toEqual(user);
+  });
+
   it('maps 403 to forbidden', async () => {
     fetchMock.mockResolvedValue(jsonResponse(403, {}));
     await expectAuthError(repository.getProfile('tok'), 'forbidden');

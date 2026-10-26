@@ -15,6 +15,11 @@ Formato de cada entrada:
 
 ---
 
+## 2026-10-26 · Repo solo frontend
+- Qué se hizo: se retiró del front todo lo que es responsabilidad del backend. Se borraron `auth/data/authMappers.ts` (y su prueba), que adivinaba formas de respuesta, normalizaba roles y traducía nombres de campos, y `isRoleCode` de `Role.ts`. `httpAuthRepository.ts` ahora solo hace la petición, tipa la respuesta según `api-auth.md` (`LoginResponse`, `ProfileResponse`, `ValidationErrorResponse`) y traduce códigos HTTP a `AuthError`. Se borró la carpeta `postman/` del repo.
+- Decisiones (y por qué): pedido del equipo. Este repo es **solo frontend**: las vistas y su lógica de UI. Validar y dar forma a los datos (DTOs) lo hace el backend. Tampoco se simula nada en el código; de momento `EXPO_PUBLIC_API_URL` (en el `.env` de cada quien) apunta al mock server de Postman del equipo. **Cambia AGENTS.md (sección 5)**, `api-auth.md`, `tarea-login.md`, `pantallas.md` y `diseno/README.md`.
+- Cómo se probó: `npm test`, typecheck y lint sin errores.
+
 ## 2026-10-26 · Solo el mock server de Postman
 - Qué se hizo: el equipo trabaja de forma momentánea con el mock server de Postman creado desde la colección (URL en el `.env` de cada quien). Se borró el Code Mock local (`postman/mocks/`) y el script `npm run mock`. En el repo solo queda `postman/collections/asisconnection-auth.postman_collection.json`, que es la fuente del mock server. Se limpiaron las menciones en `.env.example`, `env.ts`, `AuthRepository.ts`, `AppAuthProvider.tsx` y AGENTS.md.
 - Decisiones (y por qué): pedido del equipo. Las pruebas de Jest mantienen sus dobles (`testUtils.tsx`, `jest.spyOn(fetch)`): verifican el código, no simulan el backend para la app.

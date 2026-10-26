@@ -42,7 +42,7 @@ Son imágenes de ejemplo para los mocks. No son datos reales de la fundación.
 
 ## Datos de ejemplo (mocks)
 
-Los textos de los HTML (nombres, publicaciones, comentarios, notificaciones, fechas relativas) son los datos ficticios que debe servir el mock de Postman (`postman/`). Cópialos de ahí para que la app se vea igual que el mockup.
+Los textos de los HTML (nombres, publicaciones, comentarios, notificaciones, fechas relativas) son datos ficticios de referencia para comparar cómo se ve la app; la app no los simula en el código.
 
 Ojo: los mockups muestran «Familia» y «Profesional» como etiqueta de rol. En la app la etiqueta sale del rol del backend (ver `../api-auth.md`); en los mocks usa roles reales (Acudiente, Donante, Tallerista…).
 
