@@ -15,15 +15,15 @@ Referencia para construir cada pantalla. Los nombres de archivo son los del prot
 | # | Pantalla | Ruta | Módulo | Mockup |
 |---|---|---|---|---|
 | 1 | Inicio de sesión | `(auth)/login` | auth | Main |
-| 2 | Foro | `(tabs)/index` | foro | Inicio |
-| 2a | Nueva publicación (modal) | `publicaciones/nueva` | publicaciones | NuevaPublicacion |
-| 2b | Comentarios (hoja inferior) | `comentarios/[postId]` | comentarios | Comentarios |
-| 2c | Notificaciones | `notificaciones` | notificaciones | Notificaciones |
-| 3 | Ecosistema | `(tabs)/ecosistema` | ecosistema | Modulos |
-| 4 | Asistente | `(tabs)/asistente` | asistente | Chat |
-| 5 | Perfil propio | `(tabs)/perfil` | perfil | Perfil |
-| 5b | Perfil de otra persona | `usuarios/[userId]` | perfil | PerfilUsuario |
-| 5c | Ajustes del perfil | `perfil/ajustes` | ajustes | Ajustes |
+| 2 | Foro | `(tabs)/index` | forum | Inicio |
+| 2a | Nueva publicación (modal) | `posts/new` | posts | NuevaPublicacion |
+| 2b | Comentarios (hoja inferior) | `comments/[postId]` | comments | Comentarios |
+| 2c | Notificaciones | `notifications` | notifications | Notificaciones |
+| 3 | Ecosistema | `(tabs)/ecosystem` | ecosystem | Modulos |
+| 4 | Asistente | `(tabs)/assistant` | assistant | Chat |
+| 5 | Perfil propio | `(tabs)/profile` | profile | Perfil |
+| 5b | Perfil de otra persona | `users/[userId]` | profile | PerfilUsuario |
+| 5c | Ajustes del perfil | `profile/settings` | settings | Ajustes |
 
 ## Detalle por pantalla
 

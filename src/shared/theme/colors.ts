@@ -42,7 +42,8 @@ export const COLORS = {
   danger: '#8A2F2F',
 } as const;
 
-export type CategoryKey = 'avisos' | 'preguntas' | 'guias' | 'logros';
+// Forum categories: Avisos, Preguntas, Guías, Logros.
+export type CategoryKey = 'announcements' | 'questions' | 'guides' | 'achievements';
 
 type CategoryPalette = {
   main: string;
@@ -52,10 +53,10 @@ type CategoryPalette = {
 
 // Forum categories always pair color with a text label (never color alone).
 export const CATEGORY_COLORS: Record<CategoryKey, CategoryPalette> = {
-  avisos: { main: COLORS.accent, soft: COLORS.accentSoft, onSoft: COLORS.onAccentSoft },
-  preguntas: { main: COLORS.info, soft: COLORS.infoSoft, onSoft: COLORS.onInfoSoft },
-  guias: { main: COLORS.secondary, soft: COLORS.secondarySoft, onSoft: COLORS.onSecondarySoft },
-  logros: {
+  announcements: { main: COLORS.accent, soft: COLORS.accentSoft, onSoft: COLORS.onAccentSoft },
+  questions: { main: COLORS.info, soft: COLORS.infoSoft, onSoft: COLORS.onInfoSoft },
+  guides: { main: COLORS.secondary, soft: COLORS.secondarySoft, onSoft: COLORS.onSecondarySoft },
+  achievements: {
     main: COLORS.achievement,
     soft: COLORS.achievementSoft,
     onSoft: COLORS.onAchievementSoft,

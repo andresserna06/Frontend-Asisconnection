@@ -1,8 +1,8 @@
-import { getPrimaryRole, ROLE_LABELS, type Role } from '@/modules/auth/domain/roles';
+import { getPrimaryRole, type RoleCode } from '@/modules/auth/domain/models/Role';
 import { Badge, type BadgeSize, type BadgeTone } from '@/shared/ui/atoms/Badge';
 
 // Mockup styles: "Familia" -> neutral, "Profesional" -> accent, foundation -> primary.
-const ROLE_TONES: Record<Role, BadgeTone> = {
+const ROLE_TONES: Record<RoleCode, BadgeTone> = {
   ADMIN: 'primary',
   TALLERISTA: 'accent',
   ESTUDIANTE: 'accent',
@@ -11,7 +11,7 @@ const ROLE_TONES: Record<Role, BadgeTone> = {
 };
 
 type RoleBadgeProps = {
-  roles: readonly Role[];
+  roles: readonly RoleCode[];
   size?: BadgeSize;
 };
 
@@ -20,5 +20,5 @@ export function RoleBadge({ roles, size }: RoleBadgeProps) {
   if (role === null) {
     return null;
   }
-  return <Badge label={ROLE_LABELS[role]} tone={ROLE_TONES[role]} size={size} />;
+  return <Badge label={role.label} tone={ROLE_TONES[role.code]} size={size} />;
 }

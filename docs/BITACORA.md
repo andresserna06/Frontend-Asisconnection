@@ -15,6 +15,13 @@ Formato de cada entrada:
 
 ---
 
+## 2026-10-26 · Nombres en inglés y modelos de dominio
+- Qué se hizo: los módulos pasan a inglés (`forum`, `comments`, `notifications`, `posts`, `profile`, `settings`, `assistant`, `ecosystem`; `auth` se queda). Las claves de categoría también (`announcements`, `questions`, `guides`, `achievements`). Los roles pasan a ser un modelo: `auth/domain/models/Role.ts` (`RoleCode` + `Role` con `code`, `label` y `priority`, y el registro `ROLES`) y se agrega `auth/domain/models/User.ts` (`username`, `email`, `roles`), que pide `tarea-login.md`. Se borró `roles.ts`.
+- Archivos principales: `src/modules/*`, `src/modules/auth/domain/models/{Role,Role.test,User}.ts`, `src/modules/auth/ui/RoleBadge.tsx`, `src/modules/auth/index.ts`, `src/shared/theme/colors.ts`.
+- Decisiones (y por qué): pedido del equipo. Carpetas, archivos, rutas, código y commits van en inglés, y los textos visibles en español. Cada entidad es un modelo en `domain/models/` con todos sus atributos, para cambiar su estructura en un solo lugar. **Cambia AGENTS.md** (secciones 3, 4 y 5), `pantallas.md` (rutas y módulos en inglés: `posts/new`, `comments/[postId]`, `(tabs)/profile`…) y `api-auth.md`. Hay que avisar al equipo.
+- Cómo se probó: `npm test` (5 pruebas), `npm run typecheck` y `npm run lint` sin errores.
+- Queda pendiente: nada nuevo.
+
 ## 2026-10-26 · T-02b Roles en la app
 - Qué se hizo: tipo `Role`, etiquetas en español y orden de prioridad en `modules/auth/domain/roles.ts` (con `getPrimaryRole`). Átomo genérico `Badge` en `shared/ui/atoms` (píldora con tonos `neutral`, `accent`, `primary` y tamaños `small` 10.5 px para foro y comentarios, `medium` 12 px para perfil). `RoleBadge` en `modules/auth/ui` elige el rol principal y su tono. Todo se exporta por `modules/auth/index.ts`.
 - Archivos principales: `src/modules/auth/domain/roles.ts`, `roles.test.ts`, `src/modules/auth/ui/RoleBadge.tsx`, `src/shared/ui/atoms/Badge.tsx`, `src/modules/auth/index.ts`; tokens nuevos `COLORS.onSurfaceMuted` (`#40514F`), `SPACING.s1` y `SPACING.s11`; `tsconfig.json` con `"types": ["jest"]`.

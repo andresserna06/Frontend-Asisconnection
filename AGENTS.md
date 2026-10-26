@@ -59,11 +59,11 @@ Cada funcionalidad es un **módulo** con cuatro capas. Lo compartido vive en `sh
 src/
   app/                      Rutas de Expo Router. Delgadas: solo importan la pantalla del módulo.
   modules/
-    auth/  foro/  comentarios/  notificaciones/  publicaciones/
-    perfil/  ajustes/  asistente/  ecosistema/
+    auth/  forum/  comments/  notifications/  posts/
+    profile/  settings/  assistant/  ecosystem/
       ui/                   Pantallas y componentes propios del módulo
-      application/          Hooks y casos de uso (useForoFeed, useSeguir…)
-      domain/               Tipos, modelos y reglas puras (sin React, sin red)
+      application/          Hooks y casos de uso (useForumFeed, useFollow…)
+      domain/               Modelos (models/), interfaces y reglas puras (sin React, sin red)
       data/                 Servicios, repositorios y mocks
       index.ts              API pública del módulo
   shared/
@@ -76,7 +76,7 @@ src/
 
 1. `ui → application → domain`. `data` implementa lo que `domain` define. `domain` no importa nada del resto.
 2. `ui` nunca llama a la red ni lee mocks directamente: pide todo a `application`.
-3. Un módulo solo usa a otro a través de su `index.ts`. Prohibido importar rutas internas (`modules/foro/ui/...` desde otro módulo).
+3. Un módulo solo usa a otro a través de su `index.ts`. Prohibido importar rutas internas (`modules/forum/ui/...` desde otro módulo).
 4. `shared/` no importa de `modules/`.
 5. Las rutas de `src/app/` no contienen lógica ni estilos: solo componen.
 6. Alias de importación `@/` apunta a `src/`. Nada de rutas relativas largas (`../../..`).
@@ -84,7 +84,7 @@ src/
 ## 4. Atomic Design (solo en `shared/ui` y en componentes de módulo)
 
 - **atoms/**: elementos mínimos sin lógica de negocio. `Text`, `Button`, `Avatar`, `Chip`, `Badge`, `Switch`, `Icon`, `Input`.
-- **molecules/**: combinación pequeña de átomos. `CategoryChip`, `AvatarNombreRol`, `FilaDato`, `CampoTexto`.
+- **molecules/**: combinación pequeña de átomos. `CategoryChip`, `AvatarNameRole`, `DataRow`, `TextField`.
 - **organisms/**: bloques completos y reutilizables. `PostCard`, `CommentItem`, `NotificationRow`, `BottomNavBar`, `HeaderTeal`.
 - **templates/**: esqueletos de pantalla sin datos. `ScreenWithCollapsingHeader`, `ModalSheet`.
 - **pages** = las pantallas de cada módulo (`modules/*/ui/*Screen.tsx`). Reciben datos de `application` y los pasan a la plantilla.
@@ -94,15 +94,15 @@ Un componente sube a `shared/ui` cuando lo usan **dos o más módulos**. Antes d
 ## 5. Convenciones de código
 
 **Nombres**
-- Código (variables, funciones, tipos, archivos) en **inglés**; textos visibles al usuario en **español**. Los textos van en `shared/config/strings.ts` o en el módulo, nunca repartidos como literales dentro de JSX largos.
-- Componentes y pantallas: `PascalCase.tsx` (`PostCard.tsx`, `ForoScreen.tsx`). Un componente por archivo, con su `export` nombrado; `export default` solo en las rutas de `src/app/`.
+- Código, comentarios, nombres de carpetas y archivos, rutas y commits en **inglés**; textos visibles al usuario en **español**. Los textos van en `shared/config/strings.ts` o en el módulo, nunca repartidos como literales dentro de JSX largos.
+- Componentes y pantallas: `PascalCase.tsx` (`PostCard.tsx`, `ForumScreen.tsx`). Un componente por archivo, con su `export` nombrado; `export default` solo en las rutas de `src/app/`.
 - Hooks: `useCamelCase.ts`. Tipos e interfaces: `PascalCase`, sin prefijo `I`. Constantes: `UPPER_SNAKE_CASE`.
-- Archivos de rutas de Expo Router: minúsculas y guiones (`nueva.tsx`, `[postId].tsx`).
+- Archivos de rutas de Expo Router: minúsculas y guiones (`new.tsx`, `[postId].tsx`).
 - Booleanos con prefijo `is/has/can`. Handlers: `handleX` en el componente, `onX` en las props.
 
 **TypeScript**
 - `strict: true`. Prohibido `any` (usa `unknown` y estrecha). Evita `as` salvo en el borde de la capa `data`.
-- Las props se tipan con `type XProps = {...}`. Los modelos del dominio se definen una vez en `domain/` y se reutilizan.
+- Las props se tipan con `type XProps = {...}`. Cada entidad del dominio es un **modelo** en `domain/models/<Name>.ts` (`Role.ts`, `User.ts`) que reúne todos sus atributos; si cambia su estructura, se cambia solo ahí y se reutiliza en todo el código.
 - Los datos que llegan del backend se validan y convierten a modelos del dominio en `data/` (mappers). La UI nunca ve el formato crudo de la API.
 
 **React Native**

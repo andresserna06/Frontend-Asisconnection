@@ -18,7 +18,7 @@ Cómo se muestran en la app (etiqueta del rol junto al nombre, antes «Familia»
 | `ESTUDIANTE` | Estudiante |
 | `ADMIN` | Administrador |
 
-Si una persona tiene varios roles, la etiqueta muestra el primero según este orden: ADMIN, TALLERISTA, ESTUDIANTE, ACUDIENTE, DONANTE. Las etiquetas y el orden viven en un solo lugar (`modules/auth/domain/roles.ts`), no repartidas por la UI. Propuesta inicial: el equipo puede cambiarla.
+Si una persona tiene varios roles, la etiqueta muestra el primero según este orden: ADMIN, TALLERISTA, ESTUDIANTE, ACUDIENTE, DONANTE. Las etiquetas y el orden viven en un solo lugar (el modelo `modules/auth/domain/models/Role.ts`), no repartidas por la UI. Propuesta inicial: el equipo puede cambiarla.
 
 ## Endpoints
 
