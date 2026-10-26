@@ -15,6 +15,16 @@ Formato de cada entrada:
 
 ---
 
+## 2026-10-26 · T-02b Roles en la app
+- Qué se hizo: tipo `Role`, etiquetas en español y orden de prioridad en `modules/auth/domain/roles.ts` (con `getPrimaryRole`). Átomo genérico `Badge` en `shared/ui/atoms` (píldora con tonos `neutral`, `accent`, `primary` y tamaños `small` 10.5 px para foro y comentarios, `medium` 12 px para perfil). `RoleBadge` en `modules/auth/ui` elige el rol principal y su tono. Todo se exporta por `modules/auth/index.ts`.
+- Archivos principales: `src/modules/auth/domain/roles.ts`, `roles.test.ts`, `src/modules/auth/ui/RoleBadge.tsx`, `src/shared/ui/atoms/Badge.tsx`, `src/modules/auth/index.ts`; tokens nuevos `COLORS.onSurfaceMuted` (`#40514F`), `SPACING.s1` y `SPACING.s11`; `tsconfig.json` con `"types": ["jest"]`.
+- Decisiones (y por qué):
+  - `Badge` vive en `shared` y no conoce los roles, porque `shared/` no puede importar de módulos. La traducción rol → tono vive en `RoleBadge` (auth).
+  - Tonos (propuesta, el equipo puede cambiarla): Acudiente y Donante → neutro (el «Familia» del mockup); Tallerista y Estudiante → naranja (el «Profesional»); Administrador → verde (el sello «Fundación»).
+  - TypeScript 6 ya no incluye los `@types` automáticamente; por eso `tsconfig.json` declara `jest`.
+- Cómo se probó: `npm test` (4 pruebas de `getPrimaryRole` y etiquetas), `npm run typecheck` y `npm run lint` sin errores. `RoleBadge` todavía no se muestra en ninguna pantalla.
+- Queda pendiente: validar los roles que llegan del backend (mapper en `auth/data`) cuando se haga el login (T-03).
+
 ## 2026-10-26 · T-02 Tema y fuentes
 - Qué se hizo: tokens del diseño en `src/shared/theme` (colores, colores por categoría, tamaños de letra, espaciados, radios y medidas fijas) y carga de Nunito y Source Sans 3 con el splash visible hasta que terminan. La pantalla provisional del login ya usa el tema.
 - Archivos principales: `src/shared/theme/{colors,typography,layout,index}.ts`, `src/shared/hooks/useAppFonts.ts`, `src/app/_layout.tsx`, `src/modules/auth/ui/LoginScreen.tsx`.

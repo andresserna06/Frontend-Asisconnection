@@ -26,6 +26,7 @@ export const COLORS = {
   background: '#F7F4EE',
   surface: '#FFFFFF',
   surfaceMuted: '#EFE9DC',
+  onSurfaceMuted: '#40514F',
   border: '#E4DED2',
   divider: '#E0D9CC',
   inputBackground: '#F7F4EE',

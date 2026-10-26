@@ -1,5 +1,6 @@
 // Keys mirror the px values in docs/diseno/html so spacing can be copied 1:1.
 export const SPACING = {
+  s1: 1,
   s2: 2,
   s3: 3,
   s4: 4,
@@ -9,6 +10,7 @@ export const SPACING = {
   s8: 8,
   s9: 9,
   s10: 10,
+  s11: 11,
   s12: 12,
   s14: 14,
   s16: 16,

@@ -10,7 +10,6 @@ Cómo se usa:
 
 ## En orden de trabajo
 
-- [ ] **T-02b Roles en la app.** Tipo `Role`, etiquetas en español y `RoleBadge` (ver `api-auth.md`). Depende de T-02.
 - [ ] **T-03 Login** (pantalla igual al mockup; crear cuenta, olvidé contraseña e invitado visibles con aviso «disponible pronto»). Detalle en `tarea-login.md`. Depende de T-01 y T-02.
 - [ ] **T-04 Estructura de pestañas.** Barra inferior con Foros, Ecosistema, Asistente y Perfil (avatar), pantallas vacías y rutas protegidas.
 - [ ] **T-05 Componentes base** (`shared/ui`): `Button`, `Input`, `Avatar`, `CategoryChip`, `ToggleRow`, `HeaderTeal` (con ocultar al hacer scroll).
