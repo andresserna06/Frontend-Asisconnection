@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
 
 import { API_URL } from '@/shared/config/env';
+import { createHttpClient } from '@/shared/lib/http';
 
 import { AuthProvider } from './application/AuthProvider';
-import { createHttpAuthRepository } from './data/httpAuthRepository';
-import { createSecureTokenStorage } from './data/secureTokenStorage';
+import { createAuthService } from './services/authService';
+import { createSecureTokenStorage } from './services/secureTokenStorage';
 
 if (API_URL === null) {
   throw new Error(
@@ -12,8 +13,9 @@ if (API_URL === null) {
   );
 }
 
-// Composition root of the module: the only place that wires data into application.
-const repository = createHttpAuthRepository(API_URL);
+// Composition root of the module: the only place that wires services into application.
+const httpClient = createHttpClient(API_URL);
+const service = createAuthService(httpClient);
 const storage = createSecureTokenStorage();
 
 type AppAuthProviderProps = {
@@ -22,7 +24,7 @@ type AppAuthProviderProps = {
 
 export function AppAuthProvider({ children }: AppAuthProviderProps) {
   return (
-    <AuthProvider repository={repository} storage={storage}>
+    <AuthProvider service={service} storage={storage} httpClient={httpClient}>
       {children}
     </AuthProvider>
   );

@@ -1,6 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 
-import type { TokenStorage } from '@/modules/auth/domain/AuthRepository';
+import type { TokenStorage } from '@/modules/auth/domain/AuthService';
 
 // The session token lives only in SecureStore (never AsyncStorage). Never log it.
 const TOKEN_KEY = 'asisconnection.session-token';

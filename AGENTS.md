@@ -9,7 +9,7 @@ Este archivo manda sobre cualquier hábito por defecto. Si algo aquí choca con 
 - Expo (SDK 57) + React Native + **TypeScript estricto**, creado con `create-expo-app`.
 - Navegación: **Expo Router**. Las rutas viven en `src/app/`: cada archivo es una pantalla y los `_layout.tsx` definen los navegadores. Importa `Link`, `router` y `useLocalSearchParams` desde `expo-router`. Fuera de `src/app/` va todo lo que no sea ruta.
 - Gestor de paquetes: **npm** (hay `package-lock.json`; no uses bun, yarn ni pnpm).
-- Backend: repositorio aparte (`proyecto-integrador-backend`, equipo SAGA UP), desplegado en Render. La app solo habla con él desde la capa `data` (ver `docs/api-auth.md`).
+- Backend: repositorio aparte (`proyecto-integrador-backend`, equipo SAGA UP), desplegado en Render. La app solo habla con él desde la capa `services` (ver `docs/api-auth.md`).
 
 ### Expo cambia mucho: no confíes en tu memoria
 
@@ -64,22 +64,48 @@ src/
       ui/                   Pantallas y componentes propios del módulo
       application/          Hooks y casos de uso (useForumFeed, useFollow…)
       domain/               Modelos (models/), interfaces y reglas puras (sin React, sin red)
-      data/                 Repositorios HTTP (llamadas al backend)
+      services/             Services HTTP del módulo (llamadas al backend)
       index.ts              API pública del módulo
   shared/
     ui/                     Atomic Design (ver sección 4)
     theme/                  Tokens: colores, tipografía, espaciado, radios
+    lib/http/               Cliente HTTP único (fetch, timeout, token, HttpError)
     hooks/  lib/  config/   Utilidades transversales
 ```
 
 **Reglas de dependencia (obligatorias):**
 
-1. `ui → application → domain`. `data` implementa lo que `domain` define. `domain` no importa nada del resto.
+1. `ui → application → domain`. `services` implementa lo que `domain` define. `domain` no importa nada del resto.
 2. `ui` nunca llama a la red ni lee mocks directamente: pide todo a `application`.
 3. Un módulo solo usa a otro a través de su `index.ts`. Prohibido importar rutas internas (`modules/forum/ui/...` desde otro módulo).
 4. `shared/` no importa de `modules/`.
 5. Las rutas de `src/app/` no contienen lógica ni estilos: solo componen.
 6. Alias de importación `@/` apunta a `src/`. Nada de rutas relativas largas (`../../..`).
+7. ESLint hace cumplir estas reglas y las de Atomic Design (`eslint.config.js`): si `npx expo lint` marca un import, se corrige la arquitectura, no la regla.
+
+**Cómo se arma un service** (ejemplo con el foro):
+
+```ts
+// domain/ForumService.ts — el contrato, sin saber de HTTP
+export type ForumService = { listPosts(topic: Topic): Promise<Post[]> };
+
+// services/forumService.ts — la implementación: endpoints, tipos de respuesta y errores
+export function createForumService(client: HttpClient): ForumService {
+  return {
+    async listPosts(topic) {
+      try {
+        return await client.request<Post[]>(`/posts?tema=${topic}`);
+      } catch (error) {
+        throw toForumError(error); // HttpError -> error del dominio
+      }
+    },
+  };
+}
+```
+
+- Ningún service llama a `fetch`: recibe un `HttpClient` de `@/shared/lib/http`.
+- Las rutas protegidas usan el cliente de `useAuthorizedHttpClient()` (de `@/modules/auth`): pone el token y cierra la sesión ante un 401. El token nunca sale del módulo `auth`.
+- Nombres: interfaz `XService` en `domain/`, fábrica `createXService` en `services/xService.ts`, doble de prueba `createFakeXService` en `testUtils.tsx`.
 
 ## 4. Atomic Design (solo en `shared/ui` y en componentes de módulo)
 
@@ -101,9 +127,9 @@ Un componente sube a `shared/ui` cuando lo usan **dos o más módulos**. Antes d
 - Booleanos con prefijo `is/has/can`. Handlers: `handleX` en el componente, `onX` en las props.
 
 **TypeScript**
-- `strict: true`. Prohibido `any` (usa `unknown` y estrecha). Evita `as` salvo en el borde de la capa `data`.
+- `strict: true`. Prohibido `any` (usa `unknown` y estrecha). Evita `as` salvo en el borde de la capa `services`.
 - Las props se tipan con `type XProps = {...}`. Cada entidad del dominio es un **modelo** en `domain/models/<Name>.ts` (`Role.ts`, `User.ts`) que reúne todos sus atributos; si cambia su estructura, se cambia solo ahí y se reutiliza en todo el código.
-- **Este repo es solo frontend.** Validar, transformar y dar forma a los datos (DTOs) es responsabilidad del backend. La capa `data/` solo hace la petición HTTP, tipa la respuesta según el contrato (`docs/api-auth.md`) y traduce los códigos de error a errores del dominio. No se escriben mappers que adivinen o corrijan respuestas.
+- **Este repo es solo frontend.** Validar, transformar y dar forma a los datos (DTOs) es responsabilidad del backend. La capa `services/` solo hace la petición HTTP (con el `HttpClient` compartido), tipa la respuesta según el contrato (`docs/api-auth.md`) y traduce los códigos de error a errores del dominio. No se escriben mappers que adivinen o corrijan respuestas.
 
 **React Native**
 - Componentes funcionales y hooks. Sin clases.
@@ -118,8 +144,8 @@ Un componente sube a `shared/ui` cuando lo usan **dos o más módulos**. Antes d
 
 **Estado y datos**
 - Estado local con `useState`/`useReducer`. Estado global **solo** para la sesión, con React Context (`AuthProvider`). No agregues Redux, Zustand ni similares sin aprobación.
-- Los datos del servidor se piden con `fetch` desde hooks de `application/` (estados `loading`, `error`, `data`). TanStack Query entra en T-06 (Foro) para las listas; hasta entonces, solo `fetch`. No agregues axios ni otras librerías de datos sin aprobación. Mientras no haya backend, no se simula nada en el código: `EXPO_PUBLIC_API_URL` apunta de momento al mock server de Postman del equipo, y cambiar al backend real es solo cambiar esa URL. Las pruebas usan dobles propios (`testUtils.tsx`).
-- Nada de `fetch` fuera de `data/`. URL base desde `process.env.EXPO_PUBLIC_API_URL` (ver `.env.example`).
+- Los datos del servidor se piden desde hooks de `application/`, que usan los services del módulo (estados `loading`, `error`, `data`). TanStack Query entra en T-06 (Foro) para las listas; hasta entonces, solo `fetch`. No agregues axios ni otras librerías de datos sin aprobación. Mientras no haya backend, no se simula nada en el código: `EXPO_PUBLIC_API_URL` apunta de momento al mock server de Postman del equipo, y cambiar al backend real es solo cambiar esa URL. Las pruebas usan dobles propios (`testUtils.tsx`).
+- Nada de `fetch` fuera de `shared/lib/http` (lo vigila ESLint). URL base desde `process.env.EXPO_PUBLIC_API_URL` (ver `.env.example`).
 
 **Accesibilidad (requisito, no extra)**
 - Área táctil mínima 44×44. `accessibilityRole` y `accessibilityLabel` en todo elemento interactivo; los íconos sin texto siempre llevan etiqueta.

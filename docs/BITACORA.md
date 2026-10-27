@@ -15,6 +15,17 @@ Formato de cada entrada:
 
 ---
 
+## 2026-10-26 · Capa services y cliente HTTP compartido
+- Qué se hizo:
+  - La capa `data/` de cada módulo pasa a llamarse **`services/`** (pedido del equipo: nombre más familiar). En auth: `httpAuthRepository` → `services/authService.ts` (`createAuthService`) y la interfaz `AuthRepository` → `domain/AuthService.ts` (`AuthService`); `secureTokenStorage` se mueve a `services/`.
+  - **`shared/lib/http`**: `createHttpClient(baseUrl)` y `HttpError` (`status` null si no hubo respuesta, más el cuerpo del error). Es el único lugar que llama a `fetch` y maneja URL base, timeout de 30 s, JSON y `Authorization: Bearer`. Los services lo reciben y solo conocen sus endpoints y sus errores de dominio.
+  - **`useAuthorizedHttpClient()`** (exportado por `@/modules/auth`): cliente para los services de los demás módulos; pone el token de la sesión y cierra la sesión ante un 401. El token no sale de `auth`.
+  - **ESLint** (`eslint.config.js`) hace cumplir la arquitectura con reglas nativas (`no-restricted-imports`, `no-restricted-globals`): módulos solo por su `index.ts`, `ui` sin services, `domain` sin React/Expo ni otras capas, `shared` sin módulos, rutas sin `StyleSheet`, átomos sin moléculas y moléculas sin organismos, y `fetch` solo en `shared/lib/http`.
+- Archivos principales: `src/shared/lib/http/*`, `src/modules/auth/{services,domain/AuthService.ts,application/AuthProvider.tsx,AppAuthProvider.tsx,testUtils.tsx}`, `eslint.config.js`.
+- Decisiones (y por qué): sin dependencias nuevas (no axios). **Cambia AGENTS.md (secciones 1, 3 y 5)**: `services/` en lugar de `data/`, ejemplo de cómo se arma un service y regla 7 (ESLint vigila las capas). Se ajustaron `STACK.md`, `api-auth.md`, `tarea-login.md` y `PENDIENTES.md` (T-06 ya no necesita resolver el 401).
+- Cómo se probó: `npm test` (pruebas nuevas del cliente HTTP y del cliente autenticado: token, 401 cierra sesión, otros errores no); las del service de auth pasan por el cliente real con `fetch` simulado. Typecheck y lint sin errores. Se verificó con archivos temporales que cada regla de ESLint salta. No se probó en Expo Go.
+- Queda pendiente: nada nuevo.
+
 ## 2026-10-26 · Repo solo frontend
 - Qué se hizo: se retiró del front todo lo que es responsabilidad del backend. Se borraron `auth/data/authMappers.ts` (y su prueba), que adivinaba formas de respuesta, normalizaba roles y traducía nombres de campos, y `isRoleCode` de `Role.ts`. `httpAuthRepository.ts` ahora solo hace la petición, tipa la respuesta según `api-auth.md` (`LoginResponse`, `ProfileResponse`, `ValidationErrorResponse`) y traduce códigos HTTP a `AuthError`. Se borró la carpeta `postman/` del repo.
 - Decisiones (y por qué): pedido del equipo. Este repo es **solo frontend**: las vistas y su lógica de UI. Validar y dar forma a los datos (DTOs) lo hace el backend. Tampoco se simula nada en el código; de momento `EXPO_PUBLIC_API_URL` (en el `.env` de cada quien) apunta al mock server de Postman del equipo. **Cambia AGENTS.md (sección 5)**, `api-auth.md`, `tarea-login.md`, `pantallas.md` y `diseno/README.md`.
