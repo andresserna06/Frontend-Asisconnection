@@ -1,6 +1,7 @@
 import { AuthError } from '@/modules/auth/domain/models/AuthError';
+import { createHttpClient } from '@/shared/lib/http';
 
-import { createHttpAuthRepository } from './httpAuthRepository';
+import { createAuthService } from './authService';
 
 const BASE_URL = 'https://api.example.test';
 const fetchMock = jest.spyOn(globalThis, 'fetch');
@@ -25,15 +26,15 @@ afterAll(() => {
   fetchMock.mockRestore();
 });
 
-describe('createHttpAuthRepository', () => {
-  const repository = createHttpAuthRepository(BASE_URL);
+describe('createAuthService', () => {
+  const service = createAuthService(createHttpClient(BASE_URL));
 
   it('logs in sending exactly email and clave', async () => {
     fetchMock.mockResolvedValue(jsonResponse(200, { token: 'abc' }));
 
-    await expect(
-      repository.login({ email: 'maria@prueba.com', password: 'secreta' }),
-    ).resolves.toBe('abc');
+    await expect(service.login({ email: 'maria@prueba.com', password: 'secreta' })).resolves.toBe(
+      'abc',
+    );
 
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe(`${BASE_URL}/auth/login`);
@@ -43,15 +44,12 @@ describe('createHttpAuthRepository', () => {
 
   it('maps 401 on login to invalid credentials', async () => {
     fetchMock.mockResolvedValue(jsonResponse(401, { mensaje: 'No autorizado' }));
-    await expectAuthError(
-      repository.login({ email: 'a@b.co', password: 'x' }),
-      'invalidCredentials',
-    );
+    await expectAuthError(service.login({ email: 'a@b.co', password: 'x' }), 'invalidCredentials');
   });
 
   it('maps 400 to a validation error with field details', async () => {
     fetchMock.mockResolvedValue(jsonResponse(400, { errores: { email: 'Correo inválido' } }));
-    const promise = repository.login({ email: 'a@b.co', password: 'x' });
+    const promise = service.login({ email: 'a@b.co', password: 'x' });
     await expect(promise).rejects.toMatchObject({
       kind: 'validation',
       fieldErrors: { email: 'Correo inválido' },
@@ -60,12 +58,12 @@ describe('createHttpAuthRepository', () => {
 
   it('maps a failed request to a network error', async () => {
     fetchMock.mockRejectedValue(new TypeError('Network request failed'));
-    await expectAuthError(repository.login({ email: 'a@b.co', password: 'x' }), 'network');
+    await expectAuthError(service.login({ email: 'a@b.co', password: 'x' }), 'network');
   });
 
   it('sends the bearer token and maps 401 on profile to an expired session', async () => {
     fetchMock.mockResolvedValue(jsonResponse(401, {}));
-    await expectAuthError(repository.getProfile('tok'), 'sessionExpired');
+    await expectAuthError(service.getProfile('tok'), 'sessionExpired');
 
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe(`${BASE_URL}/auth/perfil`);
@@ -75,11 +73,11 @@ describe('createHttpAuthRepository', () => {
   it('returns the profile sent by the backend', async () => {
     const user = { username: 'maria', email: 'maria@prueba.com', roles: ['ACUDIENTE'] };
     fetchMock.mockResolvedValue(jsonResponse(200, user));
-    await expect(repository.getProfile('tok')).resolves.toEqual(user);
+    await expect(service.getProfile('tok')).resolves.toEqual(user);
   });
 
   it('maps 403 to forbidden', async () => {
     fetchMock.mockResolvedValue(jsonResponse(403, {}));
-    await expectAuthError(repository.getProfile('tok'), 'forbidden');
+    await expectAuthError(service.getProfile('tok'), 'forbidden');
   });
 });

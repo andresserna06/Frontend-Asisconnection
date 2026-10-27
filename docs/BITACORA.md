@@ -15,6 +15,17 @@ Formato de cada entrada:
 
 ---
 
+## 2026-10-26 · Capa services y cliente HTTP compartido
+- Qué se hizo:
+  - La capa `data/` de cada módulo pasa a llamarse **`services/`** (pedido del equipo: nombre más familiar). En auth: `httpAuthRepository` → `services/authService.ts` (`createAuthService`) y la interfaz `AuthRepository` → `domain/AuthService.ts` (`AuthService`); `secureTokenStorage` se mueve a `services/`.
+  - **`shared/lib/http`**: `createHttpClient(baseUrl)` y `HttpError` (`status` null si no hubo respuesta, más el cuerpo del error). Es el único lugar que llama a `fetch` y maneja URL base, timeout de 30 s, JSON y `Authorization: Bearer`. Los services lo reciben y solo conocen sus endpoints y sus errores de dominio.
+  - **`useAuthorizedHttpClient()`** (exportado por `@/modules/auth`): cliente para los services de los demás módulos; pone el token de la sesión y cierra la sesión ante un 401. El token no sale de `auth`.
+  - **ESLint** (`eslint.config.js`) hace cumplir la arquitectura con reglas nativas (`no-restricted-imports`, `no-restricted-globals`): módulos solo por su `index.ts`, `ui` sin services, `domain` sin React/Expo ni otras capas, `shared` sin módulos, rutas sin `StyleSheet`, átomos sin moléculas y moléculas sin organismos, y `fetch` solo en `shared/lib/http`.
+- Archivos principales: `src/shared/lib/http/*`, `src/modules/auth/{services,domain/AuthService.ts,application/AuthProvider.tsx,AppAuthProvider.tsx,testUtils.tsx}`, `eslint.config.js`.
+- Decisiones (y por qué): sin dependencias nuevas (no axios). **Cambia AGENTS.md (secciones 1, 3 y 5)**: `services/` en lugar de `data/`, ejemplo de cómo se arma un service y regla 7 (ESLint vigila las capas). Se ajustaron `STACK.md`, `api-auth.md`, `tarea-login.md` y `PENDIENTES.md` (T-06 ya no necesita resolver el 401).
+- Cómo se probó: `npm test` (pruebas nuevas del cliente HTTP y del cliente autenticado: token, 401 cierra sesión, otros errores no); las del service de auth pasan por el cliente real con `fetch` simulado. Typecheck y lint sin errores. Se verificó con archivos temporales que cada regla de ESLint salta. No se probó en Expo Go.
+- Queda pendiente: nada nuevo.
+
 ## 2026-10-26 · T-06 Base visual del Foro
 
 - Qué se hizo: se reemplazó el foro provisional por el header responsive, filtros por tema, feed `FlatList` con ajuste de desplazamiento, tarjetas preparadas para publicaciones de texto/imagen/video y estados de carga, error, vacío y servicio no conectado. El header se oculta al bajar y vuelve al subir.

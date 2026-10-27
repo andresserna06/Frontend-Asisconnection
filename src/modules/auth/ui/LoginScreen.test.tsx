@@ -5,7 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthError } from '@/modules/auth/domain/models/AuthError';
 import {
   createAuthWrapper,
-  createFakeRepository,
+  createFakeAuthService,
   createMemoryStorage,
 } from '@/modules/auth/testUtils';
 
@@ -16,8 +16,8 @@ const SAFE_AREA_METRICS = {
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
-async function renderScreen(repository = createFakeRepository()) {
-  const AuthWrapper = createAuthWrapper(repository, createMemoryStorage());
+async function renderScreen(service = createFakeAuthService()) {
+  const AuthWrapper = createAuthWrapper(service, createMemoryStorage());
   await render(
     <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
       <AuthWrapper>
@@ -25,7 +25,7 @@ async function renderScreen(repository = createFakeRepository()) {
       </AuthWrapper>
     </SafeAreaProvider>,
   );
-  return repository;
+  return service;
 }
 
 async function fillAndSubmit(email: string, password: string) {
@@ -45,17 +45,17 @@ describe('LoginScreen', () => {
   });
 
   it('shows field messages and does not submit an invalid form', async () => {
-    const repository = await renderScreen();
+    const service = await renderScreen();
     await fillAndSubmit('1053123456', '');
 
     expect(screen.getByText('Por ahora ingresa con tu correo.')).toBeOnTheScreen();
     expect(screen.getByText('Ingresa tu contraseña.')).toBeOnTheScreen();
-    expect(repository.login).not.toHaveBeenCalled();
+    expect(service.login).not.toHaveBeenCalled();
   });
 
   it('disables the button while signing in', async () => {
     await renderScreen(
-      createFakeRepository({ login: jest.fn(() => new Promise<string>(() => {})) }),
+      createFakeAuthService({ login: jest.fn(() => new Promise<string>(() => {})) }),
     );
     await fillAndSubmit('maria@prueba.com', 'secreta');
 
@@ -65,7 +65,7 @@ describe('LoginScreen', () => {
 
   it('shows a clear message for wrong credentials', async () => {
     await renderScreen(
-      createFakeRepository({
+      createFakeAuthService({
         login: jest.fn(async () => {
           throw new AuthError('invalidCredentials');
         }),

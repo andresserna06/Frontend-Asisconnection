@@ -11,9 +11,10 @@ Cómo se usa:
 
 ## En orden de trabajo
 
-- [ ] **T-03b Probar el login en Expo Go** contra el mock server de Postman y, cuando haya backend, contra el real; si su respuesta difiere de `api-auth.md`, ajustar los tipos de `auth/data/httpAuthRepository.ts`.
+- [ ] **T-03b Probar el login en Expo Go** contra el mock server de Postman y, cuando haya backend, contra el real; si su respuesta difiere de `api-auth.md`, ajustar los tipos de `auth/services/authService.ts`.
 - [ ] **T-04 Estructura de pestañas.** Barra inferior con Foros, Ecosistema, Asistente y Perfil (avatar), pantallas vacías y rutas protegidas.
 - [ ] **T-05 Componentes base** (`shared/ui`): `Button`, `Input`, `Avatar`, `CategoryChip`, `ToggleRow`, `HeaderTeal` (con ocultar al hacer scroll).
+- [ ] **T-06 Foro.** Feed con `snapToInterval`, filtros por tema, tipos imagen, video y texto. Aquí se instala TanStack Query y se monta su proveedor. Reemplaza el `ForumScreen` provisional. El `forumService` usa `useAuthorizedHttpClient()` de `auth` (token y cierre de sesión ante un 401 ya resueltos).
 - [ ] **T-07 Comentarios** (modal inferior).
 - [ ] **T-08 Nueva publicación.**
 - [ ] **T-09 Notificaciones** agrupadas por fecha.

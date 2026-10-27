@@ -53,7 +53,7 @@ Crear usuario (admin; varios roles, campo `roles` como arreglo):
 
 - La clave debe tener **al menos 12 caracteres** (al registrar; en el login no se valida longitud en el cliente).
 - El cuerpo solo admite los campos indicados: **cualquier campo extra se rechaza**. No mandes campos de más.
-- La forma exacta de la respuesta del login (nombres de campos del token y de los roles) **no está documentada**: se sabe que incluye `token` y los roles. La app asume `{ "token": "..." }` para el login, `{ "username", "email", "roles" }` para el perfil y `{ "errores": { "email", "clave" } }` para un 400 (`auth/data/httpAuthRepository.ts`); dar forma a la respuesta es trabajo del backend. Si el backend responde distinto, se ajustan esos tipos.
+- La forma exacta de la respuesta del login (nombres de campos del token y de los roles) **no está documentada**: se sabe que incluye `token` y los roles. La app asume `{ "token": "..." }` para el login, `{ "username", "email", "roles" }` para el perfil y `{ "errores": { "email", "clave" } }` para un 400 (`auth/services/authService.ts`); dar forma a la respuesta es trabajo del backend. Si el backend responde distinto, se ajustan esos tipos.
 
 ## Respuestas
 

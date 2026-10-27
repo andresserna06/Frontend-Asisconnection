@@ -28,7 +28,7 @@ Principio: **lo mínimo que cubre las funcionalidades de los diseños**. Casi to
 | Interruptores, chips, pestañas, botones | Componentes propios (`shared/ui`, Atomic Design) | No |
 | Guardar el token de sesión | `expo-secure-store` | Sí |
 | Estado de la sesión | React Context (`AuthProvider`) | No |
-| Llamadas al backend (login, sesión) | `fetch` en la capa `data/` | No |
+| Llamadas al backend (login, sesión) | `fetch` en `shared/lib/http`, usado por los services de cada módulo | No |
 | Listas que vienen del servidor (Foro, comentarios, notificaciones): carga, error, recargar, «me gusta» y «seguir» al instante | **TanStack Query** (`@tanstack/react-query`) | Sí. Se instala en T-06 (Foro), no antes |
 | Teclado que no tapa el campo (Comentarios, Nueva publicación, Login) | `KeyboardAvoidingView` de React Native | No |
 | Pantalla de arranque hasta que carguen fuentes y sesión | `expo-splash-screen` | No, viene en la plantilla |
