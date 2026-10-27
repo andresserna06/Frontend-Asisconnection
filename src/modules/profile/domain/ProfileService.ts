@@ -1,5 +1,4 @@
-import type { Post } from '@/modules/posts';
-
+import type { Post } from '@/shared/domain/models/Post';
 import type { MyProfile } from './models/MyProfile';
 
 // Contract implemented by the services layer (HTTP). Methods reject with ProfileError.

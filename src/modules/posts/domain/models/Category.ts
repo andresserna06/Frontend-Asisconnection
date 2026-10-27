@@ -1,5 +1,7 @@
+import type { CategoryCode } from '@/shared/domain/models/CategoryCode';
+
 // Forum topics. Keys match CategoryKey in shared/theme (colors) and the backend codes.
-export type CategoryCode = 'announcements' | 'questions' | 'guides' | 'achievements';
+export type { CategoryCode } from '@/shared/domain/models/CategoryCode';
 
 export type Category = {
   code: CategoryCode;

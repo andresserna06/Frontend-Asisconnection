@@ -1,4 +1,4 @@
-import type { RoleCode } from '@/modules/auth';
+import type { RoleCode } from '@/shared/domain/models/RoleCode';
 
 // The signed-in person's own profile. Every field is visible only to them (Ley 1581):
 // what others see is decided in Settings. Shape follows docs/api-profile.md.

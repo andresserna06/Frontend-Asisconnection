@@ -15,15 +15,13 @@ Cómo se usa:
 - [ ] **T-05 Componentes base** (`shared/ui`): `Button`, `Input`, `Avatar`, `CategoryChip`, `ToggleRow`, `HeaderTeal` (con ocultar al hacer scroll).
 - [!] **T-06 Foro — servicio de publicaciones pendiente del backend.** La vista, los filtros, el feed y la caché están listos; falta conectar `forumService` con `useAuthorizedHttpClient()` cuando el backend publique sus endpoints y DTOs de publicaciones. No inventar rutas ni usar datos ficticios.
 - [ ] **T-07 Comentarios** (modal inferior).
-- [ ] **T-10b Conectar el Perfil.** Cuando existan el header verde (con ocultar al bajar) y la barra inferior: envolver `ProfileScreen` en esa plantilla con el título «Mi perfil» y el engranaje (Ajustes, T-12), quitar el `insets.top` de la pantalla y el botón provisional «Mi perfil» del Foro. Cuando el backend publique los endpoints de `api-profile.md`, ajustar `profile/services/profileService.ts`.
+- [ ] **T-10b Integrar el Perfil.** La ruta `(tabs)/profile` y el footer ya apuntan a la pantalla de Perfil integrada desde `main`; queda envolverla en el header verde con título «Mi perfil» y engranaje cuando el header compartido esté disponible, retirar su `insets.top` y conectar Ajustes (T-12). Cuando el backend publique los endpoints de `api-profile.md`, ajustar `profile/services/profileService.ts`.
 - [ ] **T-11 Perfil de otra persona** (seguir / siguiendo).
 - [ ] **T-12 Ajustes** (visibilidad de datos, quién puede seguirte, cerrar sesión). Mover aquí el «Cerrar sesión» provisional del Foro (`useAuth().signOut`).
-- [ ] **T-14 Ecosistema** (tarjetas con enlaces externos).
 - [ ] **T-15 Ícono y splash de la app.** Reemplazar los de la plantilla en `app.json` (`icon`, `adaptiveIcon`, `splash`) por los de ASISCO UP.
 
 ## Bloqueadas o por decidir
 
-- [!] **T-06 Foro — integración de publicaciones.** La vista, el modelo interno y el contrato de repositorio están listos; falta conectar el service cuando backend publique el contrato de publicaciones (endpoints y respuesta). No usar datos de ejemplo en la app.
 - [!] **Registro de cuenta** (el botón «Crear cuenta» ya está en el login, sin función). El backend lo permite (solo ACUDIENTE y DONANTE), pero falta diseñar la pantalla. Campos: `username`, `email`, `clave` de 12+ caracteres, `rol`.
 - [!] **Recuperar contraseña** (enlace visible en el login, sin función). El backend no tiene endpoint.
 - [!] **Ingresar como invitado** (botón visible en el login, sin función). No existe en el backend y hay que decidir qué ve un invitado (Ley 1581).

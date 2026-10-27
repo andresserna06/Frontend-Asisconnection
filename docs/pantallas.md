@@ -37,7 +37,7 @@ Referencia para construir cada pantalla. Los nombres de archivo son los del prot
 
 **2c · Notificaciones.** Se abre con la campana y conserva el footer. Agrupadas por fecha: **Hoy, Ayer, Últimos 7 días, Últimos 30 días**; lo anterior a 30 días no se muestra. Tipos: comentaron tu publicación, me gusta a tu publicación, me gusta a tu comentario, respondieron tu comentario y avisos de la fundación (ASISCO UP, arriba de Hoy). «Marcar leídas»; al tocar una se marca como leída (punto naranja = sin leer). El header se oculta al bajar. La vista actual muestra los cuatro periodos vacíos hasta que exista el servicio; no inventa notificaciones ni confirma acciones del backend.
 
-**3 · Ecosistema.** Solo redirige: cada tarjeta lleva a un sistema que gestiona otro equipo (ícono de enlace externo). Columna con flexbox. No se opera nada aquí.
+**3 · Ecosistema.** Muestra las tarjetas de SUMA 21, AULA UP, SAGA-UP, SON UP y LUPE, con sus descripciones e íconos de enlace externo. Por ahora son solo visuales: no navegan porque aún no se han definido las URL de los otros sistemas.
 
 **4 · Asistente.** Preguntas frecuentes basadas en reglas, **sin texto libre**: la persona elige tema, luego pregunta, y recibe una respuesta fija (con enlace al sistema que corresponda). Las respuestas aparecen una a una (con indicador «escribiendo») y la pantalla baja sola. Si no le sirve, o con «Hablar con una persona», se deriva a un gestor con un resumen para no repetir. Algunas respuestas de política son provisionales: **confirmar con la fundación**. La vista inicial está disponible; opciones, respuestas y derivación muestran que aún falta confirmar el contenido y conectar sus flujos.
 

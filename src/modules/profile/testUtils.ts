@@ -1,6 +1,6 @@
-import type { Post } from '@/modules/posts';
 import type { MyProfile } from '@/modules/profile/domain/models/MyProfile';
 import type { ProfileService } from '@/modules/profile/domain/ProfileService';
+import type { Post } from '@/shared/domain/models/Post';
 
 // Test doubles for the profile module (fictitious data). Only imported from *.test.ts(x).
 

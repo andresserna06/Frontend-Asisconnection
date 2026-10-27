@@ -32,6 +32,8 @@ export const RADIUS = {
   button: 14,
   card: 18,
   cardLarge: 22,
+  ecosystemCard: 20,
+  ecosystemIcon: 15,
   pill: 999,
 } as const;
 
@@ -50,6 +52,10 @@ export const SIZE = {
   avatarAction: 32,
   thumbnail: 72,
   tab: 46,
+  ecosystemIcon: 52,
+  ecosystemAction: 34,
+  ecosystemCardMin: 92,
+  ecosystemCardMax: 118,
 } as const;
 
 export const BORDER_WIDTH = {

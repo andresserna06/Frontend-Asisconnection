@@ -2,4 +2,4 @@
 export { NewPostScreen } from './ui/NewPostScreen';
 export { CATEGORIES } from './domain/models/Category';
 export type { Category, CategoryCode } from './domain/models/Category';
-export type { Post, PostAuthor } from './domain/models/Post';
+export type { Post, PostAuthor } from '@/shared/domain/models/Post';

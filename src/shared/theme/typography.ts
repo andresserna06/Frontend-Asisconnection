@@ -43,6 +43,7 @@ export const FONT_SIZE = {
   s20: 20,
   s21: 21,
   s22: 22,
+  s25: 25,
   s27: 27,
   s30: 30,
 } as const;

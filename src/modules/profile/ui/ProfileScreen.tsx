@@ -1,9 +1,9 @@
 import { FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { Post } from '@/modules/posts';
 import { useMyProfile } from '@/modules/profile/application/useMyProfile';
 import { toProfileError } from '@/modules/profile/domain/models/ProfileError';
+import type { Post } from '@/shared/domain/models/Post';
 import { PROFILE_ERROR_MESSAGES, PROFILE_STRINGS } from '@/modules/profile/ui/strings';
 import { useProfileService } from '@/modules/profile/useProfileService';
 import { showComingSoonNotice } from '@/shared/lib/showComingSoonNotice';

@@ -1,4 +1,4 @@
-import type { Post } from '@/modules/posts';
+import type { Post } from '@/shared/domain/models/Post';
 import type { MyProfile } from '@/modules/profile/domain/models/MyProfile';
 import { ProfileError } from '@/modules/profile/domain/models/ProfileError';
 import type { ProfileService } from '@/modules/profile/domain/ProfileService';

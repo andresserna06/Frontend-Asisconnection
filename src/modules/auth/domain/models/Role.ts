@@ -1,5 +1,7 @@
+import type { RoleCode } from '@/shared/domain/models/RoleCode';
+
 // Backend role codes (same for every course project).
-export type RoleCode = 'ADMIN' | 'TALLERISTA' | 'ESTUDIANTE' | 'ACUDIENTE' | 'DONANTE';
+export type { RoleCode } from '@/shared/domain/models/RoleCode';
 
 export type Role = {
   code: RoleCode;

@@ -15,6 +15,19 @@ Formato de cada entrada:
 
 ---
 
+## 2026-10-27 · T-10b y T-14 Integración del Perfil y Ecosistema
+- Qué se hizo:
+  - Se resolvieron los conflictos del merge preservando la pantalla completa de Perfil integrada desde `main`; `(tabs)/profile` y la pestaña del footer llegan a `ProfileScreen` a través del `index.ts` público del módulo.
+  - Se implementó Ecosistema según `03-Ecosistema`: cinco tarjetas con íconos, descripciones, tokens del tema y layout adaptable. El indicador de enlace es visual; no hay destinos inventados ni navegación externa.
+  - Se restauró el feed completo del Foro, que había quedado reemplazado por un placeholder durante el merge, y se combinaron las cadenas del feed con las del estado provisional.
+  - `AppAuthProvider` construye cliente, service y almacenamiento al montar el provider, de modo que importar auth no exige configurar la URL; valida `EXPO_PUBLIC_API_URL` al crear la composición.
+  - `RoleCode`, `CategoryCode` y el modelo `Post` pasaron a `shared/domain/models` por ser contratos compartidos; así los modelos de dominio no dependen de otro módulo. Se actualizó `AGENTS.md` para documentar esa capa compartida.
+  - Se retiraron los `.gitkeep` que mantenían capas vacías en Ecosistema. La prueba del compositor consulta el `TextInput` por su etiqueta accesible.
+- Archivos principales: `src/modules/ecosystem/ui/**`, `src/modules/profile/ui/ProfileScreen.tsx`, `src/app/(tabs)/profile.tsx`, `src/modules/auth/AppAuthProvider.tsx`, `src/modules/forum/ui/ForumScreen.tsx`, `src/modules/posts/ui/NewPostScreen.test.tsx`, `src/shared/domain/models/**`, `src/shared/theme/{colors,layout,typography}.ts`, `.prettierrc`, `AGENTS.md`, `docs/pantallas.md`, `docs/PENDIENTES.md`.
+- Decisiones (y por qué): se deja la navegación externa de Ecosistema sin configurar hasta tener las URL. Perfil conserva su service y estados; la envoltura con header verde y Ajustes queda pendiente de T-10b/T-12.
+- Cómo se probó: `npx tsc --noEmit` pasó; `npm test -- --runInBand` pasó (19 suites, 85 tests); ESLint y Prettier pasaron en los archivos de código modificados. `npx expo lint` sigue reportando errores de finales de línea mezclados en archivos preexistentes y no modificados del repo (4,524 errores) y una advertencia de import no usado en `NotificationsScreen.test.tsx`. No se probó en Expo Go en este turno; no se abrió navegador.
+- Queda pendiente: header verde y Ajustes para Perfil (T-10b/T-12); la integración de endpoints de Perfil y publicaciones cuando backend los publique; configurar destinos externos si el equipo define sus URL.
+
 ## 2026-10-26 · T-10 Perfil propio (contenido y conexión)
 - Qué se hizo: pantalla «Mi perfil» según `05-Perfil` y `05c-Perfil-guardados`, sin el header verde ni la barra inferior (los hace otro compañero en T-04/T-05; queda T-10b).
   - **posts/domain**: modelos `Post` (con `PostAuthor`) y `Category` (`CATEGORIES` con sus etiquetas), exportados por `@/modules/posts` para que el Foro los reutilice.

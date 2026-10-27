@@ -1,3 +1,5 @@
+import type { CategoryCode } from '@/shared/domain/models/CategoryCode';
+
 // Palette taken from the mockups (docs/diseno/README.md). Contrast is already checked: do not change values.
 export const COLORS = {
   primary: '#1F6B65',
@@ -45,7 +47,7 @@ export const COLORS = {
 } as const;
 
 // Forum categories: Avisos, Preguntas, Guías, Logros.
-export type CategoryKey = 'announcements' | 'questions' | 'guides' | 'achievements';
+export type CategoryKey = CategoryCode;
 
 type CategoryPalette = {
   // Card stripe.

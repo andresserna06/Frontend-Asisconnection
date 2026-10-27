@@ -67,6 +67,7 @@ src/
       services/             Services HTTP del módulo (llamadas al backend)
       index.ts              API pública del módulo
   shared/
+    domain/models/         Tipos de dominio compartidos por dos o más módulos
     ui/                     Atomic Design (ver sección 4)
     theme/                  Tokens: colores, tipografía, espaciado, radios
     lib/http/               Cliente HTTP único (fetch, timeout, token, HttpError)

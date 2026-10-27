@@ -3,7 +3,7 @@ import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { RoleBadge } from '@/modules/auth';
-import type { Post } from '@/modules/posts';
+import type { Post } from '@/shared/domain/models/Post';
 import { PROFILE_STRINGS } from '@/modules/profile/ui/strings';
 import { formatRelativeTime } from '@/shared/lib/formatRelativeTime';
 import {

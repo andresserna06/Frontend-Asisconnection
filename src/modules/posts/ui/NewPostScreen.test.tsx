@@ -1,14 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { NewPostScreen } from './NewPostScreen';
+
 jest.mock('@/modules/auth', () => ({
   getPrimaryRole: () => ({ label: 'Acudiente' }),
   useAuth: () => ({
     user: { username: 'test.user', roles: ['ACUDIENTE'] },
   }),
 }));
-
-import { NewPostScreen } from './NewPostScreen';
 
 const SAFE_AREA_METRICS = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -24,7 +24,7 @@ describe('NewPostScreen', () => {
     );
 
     expect(screen.getByRole('header', { name: 'Nueva publicación' })).toBeOnTheScreen();
-    expect(screen.getByRole('textbox', { name: 'Escribe tu publicación' })).toBeOnTheScreen();
+    expect(screen.getByLabelText('Escribe tu publicación')).toBeOnTheScreen();
 
     await fireEvent.press(screen.getByRole('radio', { name: 'Logros' }));
 
@@ -40,7 +40,7 @@ describe('NewPostScreen', () => {
       </SafeAreaProvider>,
     );
 
-    const input = screen.getByRole('textbox', { name: 'Escribe tu publicación' });
+    const input = screen.getByLabelText('Escribe tu publicación');
     await fireEvent.changeText(input, 'Una idea para la comunidad');
 
     expect(input).toHaveProp('value', 'Una idea para la comunidad');
