@@ -55,6 +55,8 @@ export const LINE_HEIGHT = {
   name: 25,
   // 14 px post text at 1.42.
   body: 20,
+  // 14.5 px comment text at 1.42.
+  comment: 21,
   // 12.5 px note at 1.35.
   note: 17,
 } as const;

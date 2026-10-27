@@ -23,8 +23,8 @@ export const FORUM_STRINGS = {
   filterAccessibilityLabel: (label: string) => `Filtrar por ${label}`,
   photoOf: (name: string) => `Foto de ${name}`,
   videoDuration: (duration: string) => `Video, duración ${duration}`,
-  interactionSummary: (likes: number, comments: number) =>
-    `${likes} Me gusta, ${comments} comentarios`,
+  likeSummary: (likes: number) => `${likes} Me gusta`,
+  openComments: (comments: number) => `Ver comentarios (${comments})`,
   unavailableTitle: 'Estamos preparando el foro',
   unavailableMessage: 'Las publicaciones aparecerán cuando esté conectado el servicio del foro.',
   loading: 'Cargando publicaciones',

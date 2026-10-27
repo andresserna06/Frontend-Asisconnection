@@ -42,6 +42,10 @@ export const COLORS = {
   textSecondary: '#5A6B69',
   textTertiary: '#6B7A78',
 
+  // Dimmed screen behind bottom sheets.
+  backdrop: 'rgba(22, 48, 46, 0.55)',
+  sheetHandle: '#D5CDBD',
+
   alert: '#D9534F',
   danger: '#8A2F2F',
 } as const;

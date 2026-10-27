@@ -21,6 +21,7 @@ export const SPACING = {
   s28: 28,
   s30: 30,
   s34: 34,
+  s50: 50,
   s56: 56,
 } as const;
 
@@ -32,6 +33,7 @@ export const RADIUS = {
   button: 14,
   card: 18,
   cardLarge: 22,
+  sheet: 24,
   ecosystemCard: 20,
   ecosystemIcon: 15,
   pill: 999,
@@ -50,6 +52,12 @@ export const SIZE = {
   avatarLarge: 84,
   avatarSmall: 26,
   avatarAction: 32,
+  avatarComment: 38,
+  avatarReply: 30,
+  avatarComposer: 36,
+  likeColumn: 40,
+  sheetHandleWidth: 40,
+  sheetHandleHeight: 5,
   thumbnail: 72,
   tab: 46,
   ecosystemIcon: 52,
