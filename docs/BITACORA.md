@@ -15,6 +15,27 @@ Formato de cada entrada:
 
 ---
 
+## 2026-10-26 · T-10 Perfil propio (contenido y conexión)
+- Qué se hizo: pantalla «Mi perfil» según `05-Perfil` y `05c-Perfil-guardados`, sin el header verde ni la barra inferior (los hace otro compañero en T-04/T-05; queda T-10b).
+  - **posts/domain**: modelos `Post` (con `PostAuthor`) y `Category` (`CATEGORIES` con sus etiquetas), exportados por `@/modules/posts` para que el Foro los reutilice.
+  - **profile/domain**: `MyProfile`, `ProfileError` (`network`, `unknown`) y la interfaz `ProfileService`.
+  - **profile/services**: `createProfileService(client)` con los endpoints **propuestos** en `docs/api-profile.md` (no existen aún en el backend).
+  - **profile/useProfileService.ts**: composición; usa `useAuthorizedHttpClient()` de auth.
+  - **profile/application**: `useMyProfile(service)` (perfil y lista de la pestaña activa; cada pestaña carga al mostrarse).
+  - **profile/ui**: `ProfileScreen` (FlatList; estados de carga, error con Reintentar y vacío) y componentes del módulo `Avatar`, `CategoryLabel`, `ProfileSummary`, `StatsCard`, `InfoCard`, `DataRow`, `ProfileTabs`, `ProfilePostCard` (con autor y miniatura en Guardados), `StatusMessage`.
+  - **shared**: `useAsyncData` (carga con `loading/error/success` y `reload`, hasta que llegue TanStack Query), `formatLongDate`/`formatMonthYear`, `formatRelativeTime` («hace 2 días») y `getInitials`.
+  - **Tema**: `textBody`, colores de la etiqueta de categoría (`label`/`onLabel`: el chip de Guías es `#1F6B65` y el de Avisos lleva texto oscuro, como en el diseño), tamaños de avatar, miniatura y pestaña, bordes de 1.5, 3 y 4 px, interlineados.
+  - **Ruta** `(tabs)/profile`. Botón provisional «Mi perfil» en el Foro provisional para llegar a ella mientras no haya barra inferior.
+- Archivos principales: `src/modules/profile/**`, `src/modules/posts/{index.ts,domain/models/*}`, `src/shared/hooks/useAsyncData.ts`, `src/shared/lib/{formatDate,formatRelativeTime,getInitials}.ts`, `src/shared/theme/*`, `src/app/(tabs)/profile.tsx`, `docs/api-profile.md`.
+- Decisiones (y por qué):
+  - Pedido del equipo: dejar vistas y conexión listas; el líder conecta el backend. Los modelos usan los mismos nombres de campo que el contrato propuesto, así no hacen falta mappers.
+  - `Avatar`, `CategoryLabel` y la tarjeta viven en `profile/ui/components` porque por ahora solo los usa el Perfil (AGENTS §4); suben a `shared/ui` cuando el Foro los necesite (T-05/T-06).
+  - «Editar», la cámara y el enlace «Ajustes» muestran «Disponible pronto» (Ajustes llega en T-12).
+  - Diferencias con el mockup por accesibilidad: «Editar» mide 44 px de alto (el diseño, 36) y la cámara (32 px) tiene `hitSlop` hasta 44. El enlace «Ajustes» dentro del texto no llega a 44 px; el engranaje del header será el acceso principal.
+  - `AppAuthProvider` ahora valida `EXPO_PUBLIC_API_URL` al montarse y no al importarse: antes, cualquier prueba que importara `@/modules/auth` (por ejemplo `RoleBadge`) fallaba.
+- Cómo se probó: `npm test` (69 + 5 de la pantalla: datos y cifras, cambio a Guardados con autor, «Sin agregar» y lista vacía, error con Reintentar, avisos «Disponible pronto»; además service con `fetch` simulado, `useMyProfile`, `useAsyncData` y formateadores). Typecheck y lint sin errores. **No se probó en Expo Go**: el mock de Postman aún no tiene estos endpoints, así que hoy la pantalla mostraría el error con Reintentar.
+- Queda pendiente: T-10b (header, barra inferior y backend) y los endpoints en «Pendiente del backend».
+
 ## 2026-10-26 · Capa services y cliente HTTP compartido
 - Qué se hizo:
   - La capa `data/` de cada módulo pasa a llamarse **`services/`** (pedido del equipo: nombre más familiar). En auth: `httpAuthRepository` → `services/authService.ts` (`createAuthService`) y la interfaz `AuthRepository` → `domain/AuthService.ts` (`AuthService`); `secureTokenStorage` se mueve a `services/`.

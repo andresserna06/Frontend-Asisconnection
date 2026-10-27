@@ -1,37 +1,120 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { COLORS, FONT_FAMILY, FONT_SIZE } from '@/shared/theme';
-import { PROFILE_STRINGS } from './strings';
+import type { Post } from '@/modules/posts';
+import { useMyProfile } from '@/modules/profile/application/useMyProfile';
+import { toProfileError } from '@/modules/profile/domain/models/ProfileError';
+import { PROFILE_ERROR_MESSAGES, PROFILE_STRINGS } from '@/modules/profile/ui/strings';
+import { useProfileService } from '@/modules/profile/useProfileService';
+import { showComingSoonNotice } from '@/shared/lib/showComingSoonNotice';
+import { COLORS, SPACING } from '@/shared/theme';
+
+import { InfoCard } from './components/InfoCard';
+import { ProfilePostCard } from './components/ProfilePostCard';
+import { ProfileSummary } from './components/ProfileSummary';
+import { ProfileTabs } from './components/ProfileTabs';
+import { StatsCard } from './components/StatsCard';
+import { StatusMessage } from './components/StatusMessage';
 
 export function ProfileScreen() {
-  return (
-    <View style={styles.container}>
-      <Text accessibilityRole="header" style={styles.title}>
-        {PROFILE_STRINGS.title}
-      </Text>
-      <Text style={styles.message}>{PROFILE_STRINGS.unavailable}</Text>
+  const insets = useSafeAreaInsets();
+  const service = useProfileService();
+  const { profile, posts, activeTab, selectTab } = useMyProfile(service);
+
+  if (profile.status !== 'success') {
+    return (
+      <View style={[styles.screen, styles.centered, { paddingTop: insets.top }]}>
+        {profile.status === 'loading' ? (
+          <StatusMessage kind="loading" />
+        ) : (
+          <StatusMessage
+            kind="error"
+            message={PROFILE_ERROR_MESSAGES[toProfileError(profile.error).kind]}
+            onRetry={profile.reload}
+          />
+        )}
+      </View>
+    );
+  }
+
+  const me = profile.data;
+  const isSavedTab = activeTab === 'saved';
+
+  const header = (
+    <View style={styles.header}>
+      <ProfileSummary
+        fullName={me.fullName}
+        roles={me.roles}
+        photoUrl={me.photoUrl}
+        onChangePhoto={showComingSoonNotice}
+      />
+      <StatsCard
+        postCount={me.postCount}
+        followerCount={me.followerCount}
+        followingCount={me.followingCount}
+      />
+      <InfoCard profile={me} onEdit={showComingSoonNotice} onOpenSettings={showComingSoonNotice} />
+      <ProfileTabs
+        activeTab={activeTab}
+        postCount={me.postCount}
+        savedCount={me.savedCount}
+        onSelect={selectTab}
+      />
     </View>
+  );
+
+  let listStatus;
+  if (posts.status === 'loading') {
+    listStatus = <StatusMessage kind="loading" />;
+  } else if (posts.status === 'error') {
+    listStatus = (
+      <StatusMessage kind="error" message={PROFILE_STRINGS.listError} onRetry={posts.reload} />
+    );
+  } else {
+    listStatus = (
+      <StatusMessage
+        kind="message"
+        message={isSavedTab ? PROFILE_STRINGS.empty.saved : PROFILE_STRINGS.empty.posts}
+      />
+    );
+  }
+
+  return (
+    <FlatList<Post>
+      style={styles.screen}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + SPACING.s18 }]}
+      data={posts.status === 'success' ? posts.data : []}
+      keyExtractor={(post) => post.id}
+      renderItem={({ item }) => <ProfilePostCard post={item} isAuthorShown={isSavedTab} />}
+      ListHeaderComponent={header}
+      ListEmptyComponent={listStatus}
+      ItemSeparatorComponent={Separator}
+      showsVerticalScrollIndicator={false}
+    />
   );
 }
 
+function Separator() {
+  return <View style={styles.separator} />;
+}
+
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 24,
     backgroundColor: COLORS.background,
   },
-  title: {
-    color: COLORS.textTitle,
-    fontFamily: FONT_FAMILY.heading,
-    fontSize: FONT_SIZE.s22,
+  centered: {
+    justifyContent: 'center',
   },
-  message: {
-    color: COLORS.textSecondary,
-    fontFamily: FONT_FAMILY.body,
-    fontSize: FONT_SIZE.s16,
-    textAlign: 'center',
+  content: {
+    paddingHorizontal: SPACING.s20,
+    paddingBottom: SPACING.s24,
+  },
+  header: {
+    gap: SPACING.s14,
+    paddingBottom: SPACING.s14,
+  },
+  separator: {
+    height: SPACING.s14,
   },
 });

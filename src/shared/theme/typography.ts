@@ -25,6 +25,7 @@ export const FONT_ASSETS = {
 // Keys mirror the px values in docs/diseno/html so sizes can be copied 1:1.
 export const FONT_SIZE = {
   s9_5: 9.5,
+  s10: 10,
   s10_5: 10.5,
   s11: 11,
   s11_5: 11.5,
@@ -49,6 +50,12 @@ export const FONT_SIZE = {
 export const LINE_HEIGHT = {
   // 27 px title at 1.18.
   display: 32,
+  // 22 px name at 1.15.
+  name: 25,
+  // 14 px post text at 1.42.
+  body: 20,
+  // 12.5 px note at 1.35.
+  note: 17,
 } as const;
 
 export const LETTER_SPACING = {

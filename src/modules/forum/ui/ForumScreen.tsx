@@ -30,11 +30,11 @@ import { Icon } from '@/shared/ui/atoms/Icon';
 import { ForumPostCard } from './components/ForumPostCard';
 import { TopicFilters } from './components/TopicFilters';
 import { FORUM_STRINGS } from '@/modules/forum/ui/strings';
+import { COLORS, FONT_FAMILY, FONT_SIZE, SPACING } from '@/shared/theme';
+import { Button } from '@/shared/ui/atoms/Button';
 
-const HEADER_ROW_HEIGHT = 58;
-const FILTER_BAR_HEIGHT = 61;
-const POST_GAP = SPACING.s12;
-
+// Placeholder until T-06 builds the forum. "Cerrar sesión" moves to Settings in T-12;
+// it is here only so the login flow can be tested end to end.
 export function ForumScreen() {
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
@@ -57,57 +57,13 @@ export function ForumScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      <Animated.View style={[styles.headerClip, { height: headerHeight }]}>
-        <View style={[styles.header, { paddingTop: insets.top }]}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={FORUM_STRINGS.createPost}
-            onPress={() => router.push('/posts/new')}
-            style={({ pressed }) => [
-              styles.headerButton,
-              styles.createButton,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Icon name="plus" size={SIZE.icon} color={COLORS.text} />
-          </Pressable>
-          <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
-            {FORUM_STRINGS.title}
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={FORUM_STRINGS.notifications}
-            onPress={() => router.push('/notifications')}
-            style={({ pressed }) => [
-              styles.headerButton,
-              styles.notificationButton,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Icon name="bell" size={SIZE.icon} color={COLORS.onPrimary} />
-          </Pressable>
-        </View>
-      </Animated.View>
-
-      <TopicFilters selected={selectedFilter} onSelect={setSelectedFilter} />
-
-      <FlatList
-        data={feed.status === 'success' ? feed.posts : []}
-        keyExtractor={(post) => post.id}
-        renderItem={renderPost}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        snapToInterval={postHeight + POST_GAP}
-        snapToAlignment="start"
-        decelerationRate="fast"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.feedContent, { paddingBottom: insets.bottom + SPACING.s16 }]}
-        ItemSeparatorComponent={() => <View style={{ height: POST_GAP }} />}
-        refreshing={feed.status === 'success' && feed.isRefreshing}
-        onRefresh={feed.status === 'success' ? feed.refresh : undefined}
-        ListEmptyComponent={<FeedState feed={feed} />}
-      />
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <Text accessibilityRole="header" style={styles.title}>
+        {FORUM_STRINGS.greeting(user?.username ?? '')}
+      </Text>
+      {user && <RoleBadge roles={user.roles} size="medium" />}
+      <Text style={styles.body}>{FORUM_STRINGS.comingSoon}</Text>
+      <Button label={FORUM_STRINGS.signOut} variant="outline" onPress={signOut} />
     </View>
   );
 }

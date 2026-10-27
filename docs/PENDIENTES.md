@@ -15,7 +15,7 @@ Cómo se usa:
 - [ ] **T-05 Componentes base** (`shared/ui`): `Button`, `Input`, `Avatar`, `CategoryChip`, `ToggleRow`, `HeaderTeal` (con ocultar al hacer scroll).
 - [!] **T-06 Foro — servicio de publicaciones pendiente del backend.** La vista, los filtros, el feed y la caché están listos; falta conectar `forumService` con `useAuthorizedHttpClient()` cuando el backend publique sus endpoints y DTOs de publicaciones. No inventar rutas ni usar datos ficticios.
 - [ ] **T-07 Comentarios** (modal inferior).
-- [ ] **T-10 Perfil propio.**
+- [ ] **T-10b Conectar el Perfil.** Cuando existan el header verde (con ocultar al bajar) y la barra inferior: envolver `ProfileScreen` en esa plantilla con el título «Mi perfil» y el engranaje (Ajustes, T-12), quitar el `insets.top` de la pantalla y el botón provisional «Mi perfil» del Foro. Cuando el backend publique los endpoints de `api-profile.md`, ajustar `profile/services/profileService.ts`.
 - [ ] **T-11 Perfil de otra persona** (seguir / siguiendo).
 - [ ] **T-12 Ajustes** (visibilidad de datos, quién puede seguirte, cerrar sesión). Mover aquí el «Cerrar sesión» provisional del Foro (`useAuth().signOut`).
 - [ ] **T-14 Ecosistema** (tarjetas con enlaces externos).
@@ -40,4 +40,4 @@ Lo que la app necesita y todavía no existe. Nadie edita el contrato del backend
 - [ ] Notificaciones (listar, agrupar por fecha, marcar leídas y conservar máximo 30 días).
 - [ ] Seguir y dejar de seguir (con aprobación opcional).
 - [ ] Preferencias de visibilidad del perfil.
-- [ ] Datos del usuario en el perfil (correo, fecha de nacimiento, ciudad, miembro desde).
+- [ ] Perfil propio, publicaciones propias y guardados: propuesta en `api-profile.md` (`/usuarios/me`, `/usuarios/me/publicaciones`, `/usuarios/me/guardados`). Mientras tanto, agregarlos al mock server de Postman.
