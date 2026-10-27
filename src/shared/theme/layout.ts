@@ -12,6 +12,7 @@ export const SPACING = {
   s10: 10,
   s11: 11,
   s12: 12,
+  s13: 13,
   s14: 14,
   s16: 16,
   s18: 18,
@@ -43,11 +44,20 @@ export const SIZE = {
   icon: 20,
   iconSmall: 16,
   iconButton: 19,
+  iconTiny: 15,
+  avatarLarge: 84,
+  avatarSmall: 26,
+  avatarAction: 32,
+  thumbnail: 72,
+  tab: 46,
 } as const;
 
 export const BORDER_WIDTH = {
   hairline: 1,
+  medium: 1.5,
   strong: 2,
+  indicator: 3,
+  stripe: 4,
 } as const;
 
 export const OPACITY = {

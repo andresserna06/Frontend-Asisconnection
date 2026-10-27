@@ -33,6 +33,8 @@ export const COLORS = {
   inputBorder: '#DDD5C6',
 
   textTitle: '#16302E',
+  // Post body text.
+  textBody: '#2E4341',
   text: '#1C2B2A',
   textStrong: '#3E4F4D',
   textSecondary: '#5A6B69',
@@ -46,19 +48,43 @@ export const COLORS = {
 export type CategoryKey = 'announcements' | 'questions' | 'guides' | 'achievements';
 
 type CategoryPalette = {
+  // Card stripe.
   main: string;
   soft: string;
   onSoft: string;
+  // Solid category label on cards (background and text).
+  label: string;
+  onLabel: string;
 };
 
 // Forum categories always pair color with a text label (never color alone).
 export const CATEGORY_COLORS: Record<CategoryKey, CategoryPalette> = {
-  announcements: { main: COLORS.accent, soft: COLORS.accentSoft, onSoft: COLORS.onAccentSoft },
-  questions: { main: COLORS.info, soft: COLORS.infoSoft, onSoft: COLORS.onInfoSoft },
-  guides: { main: COLORS.secondary, soft: COLORS.secondarySoft, onSoft: COLORS.onSecondarySoft },
+  announcements: {
+    main: COLORS.accent,
+    soft: COLORS.accentSoft,
+    onSoft: COLORS.onAccentSoft,
+    label: COLORS.accent,
+    onLabel: COLORS.text,
+  },
+  questions: {
+    main: COLORS.info,
+    soft: COLORS.infoSoft,
+    onSoft: COLORS.onInfoSoft,
+    label: COLORS.info,
+    onLabel: COLORS.onPrimary,
+  },
+  guides: {
+    main: COLORS.secondary,
+    soft: COLORS.secondarySoft,
+    onSoft: COLORS.onSecondarySoft,
+    label: COLORS.primary,
+    onLabel: COLORS.onPrimary,
+  },
   achievements: {
     main: COLORS.achievement,
     soft: COLORS.achievementSoft,
     onSoft: COLORS.onAchievementSoft,
+    label: COLORS.achievement,
+    onLabel: COLORS.onPrimary,
   },
 };

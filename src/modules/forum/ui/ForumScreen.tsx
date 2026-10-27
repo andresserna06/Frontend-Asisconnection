@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -5,9 +6,11 @@ import { RoleBadge, useAuth } from '@/modules/auth';
 import { FORUM_STRINGS } from '@/modules/forum/ui/strings';
 import { COLORS, FONT_FAMILY, FONT_SIZE, SPACING } from '@/shared/theme';
 import { Button } from '@/shared/ui/atoms/Button';
+import { TextButton } from '@/shared/ui/atoms/TextButton';
 
 // Placeholder until T-06 builds the forum. "Cerrar sesión" moves to Settings in T-12;
-// it is here only so the login flow can be tested end to end.
+// it is here only so the login flow can be tested end to end. "Mi perfil" opens the
+// profile until the bottom tab bar exists (T-04).
 export function ForumScreen() {
   const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
@@ -19,6 +22,7 @@ export function ForumScreen() {
       </Text>
       {user && <RoleBadge roles={user.roles} size="medium" />}
       <Text style={styles.body}>{FORUM_STRINGS.comingSoon}</Text>
+      <TextButton label={FORUM_STRINGS.openProfile} onPress={() => router.push('/profile')} />
       <Button label={FORUM_STRINGS.signOut} variant="outline" onPress={signOut} />
     </View>
   );
