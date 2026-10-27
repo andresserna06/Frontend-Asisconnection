@@ -2,7 +2,6 @@ import type { ForumFilter } from './models/ForumCategory';
 import type { ForumPost } from './models/ForumPost';
 
 export type ForumFeedRequest = {
-  token: string;
   filter: ForumFilter;
 };
 

@@ -12,16 +12,12 @@ Cómo se usa:
 ## En orden de trabajo
 
 - [ ] **T-03b Probar el login en Expo Go** contra el mock server de Postman y, cuando haya backend, contra el real; si su respuesta difiere de `api-auth.md`, ajustar los tipos de `auth/services/authService.ts`.
-- [ ] **T-04 Estructura de pestañas.** Barra inferior con Foros, Ecosistema, Asistente y Perfil (avatar), pantallas vacías y rutas protegidas.
 - [ ] **T-05 Componentes base** (`shared/ui`): `Button`, `Input`, `Avatar`, `CategoryChip`, `ToggleRow`, `HeaderTeal` (con ocultar al hacer scroll).
-- [ ] **T-06 Foro.** Feed con `snapToInterval`, filtros por tema, tipos imagen, video y texto. Aquí se instala TanStack Query y se monta su proveedor. Reemplaza el `ForumScreen` provisional. El `forumService` usa `useAuthorizedHttpClient()` de `auth` (token y cierre de sesión ante un 401 ya resueltos).
+- [!] **T-06 Foro — servicio de publicaciones pendiente del backend.** La vista, los filtros, el feed y la caché están listos; falta conectar `forumService` con `useAuthorizedHttpClient()` cuando el backend publique sus endpoints y DTOs de publicaciones. No inventar rutas ni usar datos ficticios.
 - [ ] **T-07 Comentarios** (modal inferior).
-- [ ] **T-08 Nueva publicación.**
-- [ ] **T-09 Notificaciones** agrupadas por fecha.
 - [ ] **T-10 Perfil propio.**
 - [ ] **T-11 Perfil de otra persona** (seguir / siguiendo).
 - [ ] **T-12 Ajustes** (visibilidad de datos, quién puede seguirte, cerrar sesión). Mover aquí el «Cerrar sesión» provisional del Foro (`useAuth().signOut`).
-- [ ] **T-13 Asistente** (preguntas frecuentes por reglas).
 - [ ] **T-14 Ecosistema** (tarjetas con enlaces externos).
 - [ ] **T-15 Ícono y splash de la app.** Reemplazar los de la plantilla en `app.json` (`icon`, `adaptiveIcon`, `splash`) por los de ASISCO UP.
 
@@ -41,7 +37,7 @@ Lo que la app necesita y todavía no existe. Nadie edita el contrato del backend
 
 - [ ] Publicaciones (crear, listar por tema, tipos imagen, video y texto).
 - [ ] Comentarios y respuestas.
-- [ ] Notificaciones (agrupables por fecha, máximo 30 días).
+- [ ] Notificaciones (listar, agrupar por fecha, marcar leídas y conservar máximo 30 días).
 - [ ] Seguir y dejar de seguir (con aprobación opcional).
 - [ ] Preferencias de visibilidad del perfil.
 - [ ] Datos del usuario en el perfil (correo, fecha de nacimiento, ciudad, miembro desde).

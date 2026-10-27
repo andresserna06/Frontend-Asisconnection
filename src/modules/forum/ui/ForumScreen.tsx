@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -8,15 +8,14 @@ import {
   Text,
   View,
   useWindowDimensions,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 import { useForumFeed } from '@/modules/forum/application/useForumFeed';
 import type { ForumFilter } from '@/modules/forum/domain/models/ForumCategory';
 import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
-import { showComingSoonNotice } from '@/shared/lib/showComingSoonNotice';
+import { useCollapsingHeader } from '@/shared/hooks/useCollapsingHeader';
 import {
   COLORS,
   FONT_FAMILY,
@@ -42,38 +41,10 @@ export function ForumScreen() {
   const [selectedFilter, setSelectedFilter] = useState<ForumFilter>('all');
   const feed = useForumFeed(selectedFilter);
   const expandedHeaderHeight = insets.top + HEADER_ROW_HEIGHT;
-  const [headerHeight] = useState(() => new Animated.Value(expandedHeaderHeight));
-  const previousScrollOffset = useRef(0);
-  const isHeaderVisible = useRef(true);
+  const { headerHeight, onScroll: handleScroll } = useCollapsingHeader(expandedHeaderHeight);
   const postHeight = Math.max(
     0,
     (windowHeight - expandedHeaderHeight - FILTER_BAR_HEIGHT - insets.bottom) * 0.82,
-  );
-
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const currentOffset = Math.max(0, event.nativeEvent.contentOffset.y);
-      const difference = currentOffset - previousScrollOffset.current;
-
-      if (difference > 6 && isHeaderVisible.current) {
-        isHeaderVisible.current = false;
-        Animated.timing(headerHeight, {
-          toValue: 0,
-          duration: 250,
-          useNativeDriver: false,
-        }).start();
-      } else if (difference < -6 && !isHeaderVisible.current) {
-        isHeaderVisible.current = true;
-        Animated.timing(headerHeight, {
-          toValue: expandedHeaderHeight,
-          duration: 250,
-          useNativeDriver: false,
-        }).start();
-      }
-
-      previousScrollOffset.current = currentOffset;
-    },
-    [expandedHeaderHeight, headerHeight],
   );
 
   const renderPost = useCallback(
@@ -92,7 +63,7 @@ export function ForumScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={FORUM_STRINGS.createPost}
-            onPress={showComingSoonNotice}
+            onPress={() => router.push('/posts/new')}
             style={({ pressed }) => [
               styles.headerButton,
               styles.createButton,
@@ -107,7 +78,7 @@ export function ForumScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={FORUM_STRINGS.notifications}
-            onPress={showComingSoonNotice}
+            onPress={() => router.push('/notifications')}
             style={({ pressed }) => [
               styles.headerButton,
               styles.notificationButton,

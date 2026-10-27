@@ -26,6 +26,13 @@ Formato de cada entrada:
 - Cómo se probó: `npm test` (pruebas nuevas del cliente HTTP y del cliente autenticado: token, 401 cierra sesión, otros errores no); las del service de auth pasan por el cliente real con `fetch` simulado. Typecheck y lint sin errores. Se verificó con archivos temporales que cada regla de ESLint salta. No se probó en Expo Go.
 - Queda pendiente: nada nuevo.
 
+## 2026-10-27 · Integración de auth services y Foro
+- Qué se hizo: `AppAuthProvider` ahora compone `createHttpClient(API_URL)` y `createAuthService(client)` y los inyecta al `AuthProvider`, validando `EXPO_PUBLIC_API_URL` al montar. El Foro dejó de leer el token de sesión directamente; su contrato recibe solo el filtro y queda preparado para que el futuro service use `useAuthorizedHttpClient()` (incluye cierre de sesión en 401). Se eliminaron referencias viejas a `httpAuthRepository`/`AuthRepository` del código fuente.
+- Archivos principales: `src/modules/auth/AppAuthProvider.tsx`, `src/modules/auth/application/AuthProvider.tsx`, `src/modules/forum/domain/ForumRepository.ts`, `src/modules/forum/application/useForumFeed.ts` y pruebas del Foro.
+- Decisiones (y por qué): no se conectó un endpoint de publicaciones porque el backend aún no ha compartido su contrato. La URL local de Postman se comprobó sin imprimir su valor. El feed conserva el estado de servicio no configurado y no presenta datos inventados.
+- Cómo se probó: `npx tsc --noEmit`, lint dirigido y pruebas Jest completas (45 tests). Expo Web compiló y se abrió en navegador; la ruta protegida mostró el login. No se usaron credenciales para entrar al Foro.
+- Queda pendiente: conectar el `forumService` autenticado cuando exista el endpoint/DTO del backend; probar Foro en navegador y Expo Go con una sesión de prueba autorizada.
+
 ## 2026-10-26 · T-06 Base visual del Foro
 
 - Qué se hizo: se reemplazó el foro provisional por el header responsive, filtros por tema, feed `FlatList` con ajuste de desplazamiento, tarjetas preparadas para publicaciones de texto/imagen/video y estados de carga, error, vacío y servicio no conectado. El header se oculta al bajar y vuelve al subir.

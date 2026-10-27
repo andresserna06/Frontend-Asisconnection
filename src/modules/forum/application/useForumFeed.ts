@@ -1,7 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { useAuth } from '@/modules/auth';
-import { ForumError } from '@/modules/forum/domain/models/ForumError';
 import type { ForumFilter } from '@/modules/forum/domain/models/ForumCategory';
 import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
 
@@ -15,36 +13,20 @@ export type ForumFeedState =
 
 export function useForumFeed(filter: ForumFilter): ForumFeedState {
   const repository = useForumRepository();
-  const { sessionToken, signOut } = useAuth();
   const query = useQuery({
     queryKey: ['forum', 'feed', filter],
-    enabled: repository !== null && sessionToken !== null,
+    enabled: repository !== null,
     queryFn: async () => {
-      if (repository === null || sessionToken === null) {
-        throw new ForumError('unknown');
+      if (repository === null) {
+        throw new Error('Forum service is not configured.');
       }
 
-      try {
-        return await repository.listPosts({ token: sessionToken, filter });
-      } catch (error) {
-        if (error instanceof ForumError && error.kind === 'sessionExpired') {
-          await signOut();
-        }
-        throw error;
-      }
+      return repository.listPosts({ filter });
     },
   });
 
   if (repository === null) {
     return { status: 'unavailable' };
-  }
-
-  if (sessionToken === null) {
-    return {
-      status: 'error',
-      error: new ForumError('sessionExpired'),
-      retry: () => undefined,
-    };
   }
 
   if (query.isLoading) {

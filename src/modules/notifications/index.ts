@@ -1,2 +1,2 @@
 // Module public API. Other modules import only from here.
-export {};
+export { NotificationsScreen } from './ui/NotificationsScreen';

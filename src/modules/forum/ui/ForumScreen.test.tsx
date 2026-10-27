@@ -2,11 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import {
-  createAuthWrapper,
-  createFakeRepository,
-  createMemoryStorage,
-} from '@/modules/auth/testUtils';
 import { ForumRepositoryProvider } from '@/modules/forum/application/ForumRepositoryProvider';
 
 import { ForumScreen } from './ForumScreen';
@@ -24,7 +19,6 @@ afterEach(() => {
 });
 
 async function renderScreen() {
-  const AuthWrapper = createAuthWrapper(createFakeRepository(), createMemoryStorage());
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
@@ -33,11 +27,9 @@ async function renderScreen() {
   await render(
     <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
       <QueryClientProvider client={queryClient}>
-        <AuthWrapper>
-          <ForumRepositoryProvider repository={null}>
-            <ForumScreen />
-          </ForumRepositoryProvider>
-        </AuthWrapper>
+        <ForumRepositoryProvider repository={null}>
+          <ForumScreen />
+        </ForumRepositoryProvider>
       </QueryClientProvider>
     </SafeAreaProvider>,
   );

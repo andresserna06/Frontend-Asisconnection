@@ -7,14 +7,8 @@ import { AuthProvider } from './application/AuthProvider';
 import { createAuthService } from './services/authService';
 import { createSecureTokenStorage } from './services/secureTokenStorage';
 
-if (API_URL === null) {
-  throw new Error(
-    'EXPO_PUBLIC_API_URL is not set. Copy .env.example to .env and use the backend or Postman mock server URL.',
-  );
-}
-
-// Composition root of the module: the only place that wires data into application.
-const repository = createHttpAuthRepository(API_URL);
+const httpClient = API_URL === null ? null : createHttpClient(API_URL);
+const service = httpClient === null ? null : createAuthService(httpClient);
 const storage = createSecureTokenStorage();
 
 type AppAuthProviderProps = {
@@ -22,7 +16,7 @@ type AppAuthProviderProps = {
 };
 
 export function AppAuthProvider({ children }: AppAuthProviderProps) {
-  if (repository === null) {
+  if (httpClient === null || service === null) {
     throw new Error(
       'EXPO_PUBLIC_API_URL is not set. Copy .env.example to .env and use the backend or Postman mock server URL.',
     );
