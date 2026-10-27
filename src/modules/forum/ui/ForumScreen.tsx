@@ -51,7 +51,7 @@ export function ForumScreen() {
   const renderPost = useCallback(
     ({ item }: { item: ForumPost }) => (
       <View style={[styles.postFrame, { height: postHeight }]}>
-        <ForumPostCard post={item} />
+        <ForumPostCard post={item} onCommentsPress={() => router.push(`/comments/${item.id}`)} />
       </View>
     ),
     [postHeight],

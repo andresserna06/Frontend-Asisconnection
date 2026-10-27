@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
 import {
@@ -7,6 +7,7 @@ import {
   COLORS,
   FONT_FAMILY,
   FONT_SIZE,
+  OPACITY,
   RADIUS,
   SIZE,
   SPACING,
@@ -17,9 +18,10 @@ import { FORUM_STRINGS } from '../strings';
 
 type ForumPostCardProps = {
   post: ForumPost;
+  onCommentsPress: () => void;
 };
 
-export function ForumPostCard({ post }: ForumPostCardProps) {
+export function ForumPostCard({ post, onCommentsPress }: ForumPostCardProps) {
   const palette = CATEGORY_COLORS[post.category];
 
   return (
@@ -92,19 +94,24 @@ export function ForumPostCard({ post }: ForumPostCardProps) {
         </>
       )}
 
-      <View
-        accessible
-        accessibilityLabel={FORUM_STRINGS.interactionSummary(post.likeCount, post.commentCount)}
-        style={styles.actions}
-      >
-        <View style={styles.action}>
+      <View style={styles.actions}>
+        <View
+          accessible
+          accessibilityLabel={FORUM_STRINGS.likeSummary(post.likeCount)}
+          style={styles.action}
+        >
           <Icon name="heart" size={SIZE.iconSmall} color={COLORS.textSecondary} />
           <Text style={styles.count}>{post.likeCount}</Text>
         </View>
-        <View style={styles.action}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={FORUM_STRINGS.openComments(post.commentCount)}
+          onPress={onCommentsPress}
+          style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+        >
           <Icon name="message-circle" size={SIZE.iconSmall} color={COLORS.textSecondary} />
           <Text style={styles.count}>{post.commentCount}</Text>
-        </View>
+        </Pressable>
         <Icon name="bookmark" size={SIZE.iconSmall} color={COLORS.textSecondary} />
       </View>
     </View>
@@ -238,6 +245,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.s6,
+  },
+  pressed: {
+    opacity: OPACITY.pressed,
   },
   count: {
     color: COLORS.textStrong,

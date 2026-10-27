@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider } from '@tanstack/react-query';
 
 import { AppAuthProvider, useAuth } from '@/modules/auth';
+import { AppCommentsProvider } from '@/modules/comments';
 import { AppForumProvider } from '@/modules/forum';
 import { useAppFonts } from '@/shared/hooks/useAppFonts';
 import { useHideSplashScreen } from '@/shared/hooks/useHideSplashScreen';
@@ -16,8 +17,10 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <AppAuthProvider>
         <AppForumProvider>
-          <StatusBar style="dark" />
-          <RootNavigator />
+          <AppCommentsProvider>
+            <StatusBar style="dark" />
+            <RootNavigator />
+          </AppCommentsProvider>
         </AppForumProvider>
       </AppAuthProvider>
     </QueryClientProvider>
@@ -42,6 +45,10 @@ function RootNavigator() {
       <Stack.Protected guard={isSignedIn}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="posts/new" options={{ presentation: 'modal' }} />
+        <Stack.Screen
+          name="comments/[postId]"
+          options={{ presentation: 'transparentModal', animation: 'slide_from_bottom' }}
+        />
       </Stack.Protected>
       <Stack.Protected guard={!isSignedIn}>
         <Stack.Screen name="(auth)" />
