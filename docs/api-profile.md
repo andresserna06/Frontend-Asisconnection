@@ -67,4 +67,4 @@ Estos endpoints devuelven datos **de la propia persona** y solo deben responder 
 
 ## Para probar antes de que exista el backend
 
-Agregar estas tres rutas, con los ejemplos de arriba, al mock server de Postman del equipo. La app no simula datos en el código.
+Ya están en el mock server de Postman del equipo: colección «ASISCONNECTION · Auth», carpeta **Perfil**, cada petición con su ejemplo «200 OK» (datos ficticios del mockup). La app no simula datos en el código.
