@@ -3,6 +3,7 @@
 Lista viva de tareas **abiertas**. Cuando una tarea se termina, se **borra de aquí** y se registra en `BITACORA.md`.
 
 Cómo se usa:
+
 - Una tarea = una pantalla o un componente, revisable en un solo cambio.
 - Estados: `[ ]` pendiente · `[~]` en curso (con nombre de quien la tiene) · `[!]` bloqueada (con la razón).
 - Prioridad por orden: lo de arriba se hace primero.
@@ -13,7 +14,6 @@ Cómo se usa:
 - [ ] **T-03b Probar el login en Expo Go** contra el mock server de Postman y, cuando haya backend, contra el real; si su respuesta difiere de `api-auth.md`, ajustar los tipos de `auth/data/httpAuthRepository.ts`.
 - [ ] **T-04 Estructura de pestañas.** Barra inferior con Foros, Ecosistema, Asistente y Perfil (avatar), pantallas vacías y rutas protegidas.
 - [ ] **T-05 Componentes base** (`shared/ui`): `Button`, `Input`, `Avatar`, `CategoryChip`, `ToggleRow`, `HeaderTeal` (con ocultar al hacer scroll).
-- [ ] **T-06 Foro.** Feed con `snapToInterval`, filtros por tema, tipos imagen, video y texto. Aquí se instala TanStack Query y se monta su proveedor. Reemplaza el `ForumScreen` provisional. Las peticiones autenticadas deben cerrar la sesión ante un 401 (`useAuth().signOut`); exponer el token desde `auth` cuando haga falta.
 - [ ] **T-07 Comentarios** (modal inferior).
 - [ ] **T-08 Nueva publicación.**
 - [ ] **T-09 Notificaciones** agrupadas por fecha.
@@ -26,6 +26,7 @@ Cómo se usa:
 
 ## Bloqueadas o por decidir
 
+- [!] **T-06 Foro — integración de publicaciones.** La vista, el modelo interno y el contrato de repositorio están listos; falta conectar el service cuando backend publique el contrato de publicaciones (endpoints y respuesta). No usar datos de ejemplo en la app.
 - [!] **Registro de cuenta** (el botón «Crear cuenta» ya está en el login, sin función). El backend lo permite (solo ACUDIENTE y DONANTE), pero falta diseñar la pantalla. Campos: `username`, `email`, `clave` de 12+ caracteres, `rol`.
 - [!] **Recuperar contraseña** (enlace visible en el login, sin función). El backend no tiene endpoint.
 - [!] **Ingresar como invitado** (botón visible en el login, sin función). No existe en el backend y hay que decidir qué ve un invitado (Ley 1581).

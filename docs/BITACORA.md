@@ -15,18 +15,29 @@ Formato de cada entrada:
 
 ---
 
+## 2026-10-26 · T-06 Base visual del Foro
+
+- Qué se hizo: se reemplazó el foro provisional por el header responsive, filtros por tema, feed `FlatList` con ajuste de desplazamiento, tarjetas preparadas para publicaciones de texto/imagen/video y estados de carga, error, vacío y servicio no conectado. El header se oculta al bajar y vuelve al subir.
+- Archivos principales: `src/modules/forum/**`, `src/shared/lib/queryClient.ts`, `src/app/_layout.tsx`, `src/modules/auth/application/AuthProvider.tsx`, `src/modules/auth/AppAuthProvider.tsx`, `package.json`.
+- Decisiones (y por qué): no se añadieron datos ficticios ni endpoints supuestos. `ForumRepository` define el contrato de aplicación; `AppForumProvider` es el punto para inyectar el service del backend. TanStack Query se agrega según `STACK.md`; `sessionToken` queda disponible en `useAuth()` y un `ForumError('sessionExpired')` cierra la sesión. Se pospuso la conexión HTTP porque el backend aún no tiene contrato de publicaciones. El proveedor de autenticación valida la URL al montarse, no al importar el módulo, para permitir consumir `useAuth()` desde el API público sin efectos de importación.
+- Cómo se probó: `npm test -- --runInBand forum` (4 pruebas), `npx tsc --noEmit` y ESLint dirigido a los archivos modificados. `npx expo lint` global sigue encontrando errores de fin de línea Prettier en archivos preexistentes; no se reformateó el resto del repo. No se pudo validar en Expo Go.
+- Queda pendiente: conectar el feed y sus acciones cuando exista el service/contrato del backend; implementar la barra inferior de pestañas (T-04) y las pantallas de comentarios, publicación y notificaciones.
+
 ## 2026-10-26 · Repo solo frontend
+
 - Qué se hizo: se retiró del front todo lo que es responsabilidad del backend. Se borraron `auth/data/authMappers.ts` (y su prueba), que adivinaba formas de respuesta, normalizaba roles y traducía nombres de campos, y `isRoleCode` de `Role.ts`. `httpAuthRepository.ts` ahora solo hace la petición, tipa la respuesta según `api-auth.md` (`LoginResponse`, `ProfileResponse`, `ValidationErrorResponse`) y traduce códigos HTTP a `AuthError`. Se borró la carpeta `postman/` del repo.
 - Decisiones (y por qué): pedido del equipo. Este repo es **solo frontend**: las vistas y su lógica de UI. Validar y dar forma a los datos (DTOs) lo hace el backend. Tampoco se simula nada en el código; de momento `EXPO_PUBLIC_API_URL` (en el `.env` de cada quien) apunta al mock server de Postman del equipo. **Cambia AGENTS.md (sección 5)**, `api-auth.md`, `tarea-login.md`, `pantallas.md` y `diseno/README.md`.
 - Cómo se probó: `npm test`, typecheck y lint sin errores.
 
 ## 2026-10-26 · Solo el mock server de Postman
+
 - Qué se hizo: el equipo trabaja de forma momentánea con el mock server de Postman creado desde la colección (URL en el `.env` de cada quien). Se borró el Code Mock local (`postman/mocks/`) y el script `npm run mock`. En el repo solo queda `postman/collections/asisconnection-auth.postman_collection.json`, que es la fuente del mock server. Se limpiaron las menciones en `.env.example`, `env.ts`, `AuthRepository.ts`, `AppAuthProvider.tsx` y AGENTS.md.
 - Decisiones (y por qué): pedido del equipo. Las pruebas de Jest mantienen sus dobles (`testUtils.tsx`, `jest.spyOn(fetch)`): verifican el código, no simulan el backend para la app.
 - Ojo: el mock server responde los ejemplos guardados y **no valida claves** (cualquier clave entra como María, Acudiente).
 - Cómo se probó: `npm test`, typecheck y lint sin errores.
 
 ## 2026-10-26 · Mock de Postman en lugar de mocks en el código
+
 - Qué se hizo: los datos simulados salen del código y pasan a Postman. Se borraron `auth/data/mockAuthRepository.ts` y `auth/data/mocks.ts`; la app siempre usa el repositorio HTTP y exige `EXPO_PUBLIC_API_URL` (si falta, error claro al arrancar).
   - `postman/collections/asisconnection-auth.postman_collection.json`: colección con login de 5 cuentas de prueba (una por rol), perfil, logout, registro y creación de usuarios por admin, con ejemplos y scripts que guardan el token.
   - `postman/mocks/asisconnection-auth/`: **Code Mock** (`postman mock generate` y reescrito a mano) que valida como el backend: credenciales (401), campos faltantes o extra (400), token por usuario en perfil, registro solo ACUDIENTE/DONANTE con clave de 12+ (409 si existe), creación de usuarios solo con token de ADMIN (403). Con CORS para web. Se levanta con `npm run mock` (puerto 4500).
@@ -36,6 +47,7 @@ Formato de cada entrada:
 - Queda pendiente: publicar el Code Mock en Postman cloud (en `PENDIENTES.md`). No ejecutar `postman mock generate --update` sobre el Code Mock: sobrescribe la lógica.
 
 ## 2026-10-26 · T-03 Login
+
 - Qué se hizo: login completo según `tarea-login.md` y el mockup `01-Login`.
   - **domain**: modelos `Session`, `LoginCredentials` y `AuthError` (`invalidCredentials`, `sessionExpired`, `forbidden`, `network`, `validation` con detalle por campo, `unknown`); interfaces `AuthRepository` y `TokenStorage`; `validateLoginForm` (correo válido y contraseña no vacía, sin exigir 12 caracteres).
   - **data**: `createHttpAuthRepository` (`fetch`, timeout de 30 s, `Authorization: Bearer`, manda solo `email` y `clave`); `createMockAuthRepository` con la cuenta ficticia del mockup; mappers defensivos (`authMappers.ts`); `createSecureTokenStorage` con `expo-secure-store`.
@@ -57,6 +69,7 @@ Formato de cada entrada:
 - Queda pendiente: T-03b (probar en Expo Go y confirmar la respuesta real del backend); el 401 en peticiones autenticadas de otros módulos (anotado en T-06); mover «Cerrar sesión» a Ajustes (T-12).
 
 ## 2026-10-26 · Nombres en inglés y modelos de dominio
+
 - Qué se hizo: los módulos pasan a inglés (`forum`, `comments`, `notifications`, `posts`, `profile`, `settings`, `assistant`, `ecosystem`; `auth` se queda). Las claves de categoría también (`announcements`, `questions`, `guides`, `achievements`). Los roles pasan a ser un modelo: `auth/domain/models/Role.ts` (`RoleCode` + `Role` con `code`, `label` y `priority`, y el registro `ROLES`) y se agrega `auth/domain/models/User.ts` (`username`, `email`, `roles`), que pide `tarea-login.md`. Se borró `roles.ts`.
 - Archivos principales: `src/modules/*`, `src/modules/auth/domain/models/{Role,Role.test,User}.ts`, `src/modules/auth/ui/RoleBadge.tsx`, `src/modules/auth/index.ts`, `src/shared/theme/colors.ts`.
 - Decisiones (y por qué): pedido del equipo. Carpetas, archivos, rutas, código y commits van en inglés, y los textos visibles en español. Cada entidad es un modelo en `domain/models/` con todos sus atributos, para cambiar su estructura en un solo lugar. **Cambia AGENTS.md** (secciones 3, 4 y 5), `pantallas.md` (rutas y módulos en inglés: `posts/new`, `comments/[postId]`, `(tabs)/profile`…) y `api-auth.md`. Hay que avisar al equipo.
@@ -64,6 +77,7 @@ Formato de cada entrada:
 - Queda pendiente: nada nuevo.
 
 ## 2026-10-26 · T-02b Roles en la app
+
 - Qué se hizo: tipo `Role`, etiquetas en español y orden de prioridad en `modules/auth/domain/roles.ts` (con `getPrimaryRole`). Átomo genérico `Badge` en `shared/ui/atoms` (píldora con tonos `neutral`, `accent`, `primary` y tamaños `small` 10.5 px para foro y comentarios, `medium` 12 px para perfil). `RoleBadge` en `modules/auth/ui` elige el rol principal y su tono. Todo se exporta por `modules/auth/index.ts`.
 - Archivos principales: `src/modules/auth/domain/roles.ts`, `roles.test.ts`, `src/modules/auth/ui/RoleBadge.tsx`, `src/shared/ui/atoms/Badge.tsx`, `src/modules/auth/index.ts`; tokens nuevos `COLORS.onSurfaceMuted` (`#40514F`), `SPACING.s1` y `SPACING.s11`; `tsconfig.json` con `"types": ["jest"]`.
 - Decisiones (y por qué):
@@ -74,6 +88,7 @@ Formato de cada entrada:
 - Queda pendiente: validar los roles que llegan del backend (mapper en `auth/data`) cuando se haga el login (T-03).
 
 ## 2026-10-26 · T-02 Tema y fuentes
+
 - Qué se hizo: tokens del diseño en `src/shared/theme` (colores, colores por categoría, tamaños de letra, espaciados, radios y medidas fijas) y carga de Nunito y Source Sans 3 con el splash visible hasta que terminan. La pantalla provisional del login ya usa el tema.
 - Archivos principales: `src/shared/theme/{colors,typography,layout,index}.ts`, `src/shared/hooks/useAppFonts.ts`, `src/app/_layout.tsx`, `src/modules/auth/ui/LoginScreen.tsx`.
 - Decisiones (y por qué):
@@ -86,6 +101,7 @@ Formato de cada entrada:
 - Queda pendiente: nada nuevo.
 
 ## 2026-10-26 · T-01 Base del proyecto
+
 - Qué se hizo: se retiró la plantilla de `create-expo-app` (`explore.tsx`, `components/`, `constants/`, `hooks/`, `global.css` e imágenes de ejemplo; se conservan los íconos que usa `app.json`). Se creó la estructura modular de la sección 3 (9 módulos con `ui/application/domain/data` e `index.ts`, y `shared/ui/{atoms,molecules,organisms,templates}`, `theme`, `hooks`, `lib`, `config`). Se configuraron ESLint + Prettier, Jest (`jest-expo`, `@testing-library/react-native`), los scripts `lint`, `typecheck`, `test` y `format`, y `.env.example`. El alias `@/` → `src/` ya venía en `tsconfig.json`.
 - Archivos principales: `src/app/_layout.tsx` (Stack sin header), `src/app/index.tsx` (ruta delgada), `src/modules/auth/ui/LoginScreen.tsx` (provisional hasta T-03), `src/shared/config/strings.ts`, `eslint.config.js`, `.prettierrc`, `.prettierignore`, `.env.example`, `package.json`, `.gitignore` (ahora ignora `.env`).
 - Decisiones (y por qué): código, comentarios y commits en **inglés** (pedido del equipo; los textos visibles siguen en español). Se trabaja con una rama por funcionalidad: T-01 a T-03 van en `feat/auth-login`. Las carpetas vacías llevan `.gitkeep` para que git las conserve. `test` usa `--passWithNoTests` mientras no haya pruebas. `docs/diseno/` queda fuera de Prettier (es copia estática de los mockups). El tema y las fuentes quedan para T-02 y los grupos `(auth)`/`(tabs)` para T-03/T-04.
@@ -93,6 +109,7 @@ Formato de cada entrada:
 - Queda pendiente: abrir la app en Expo Go (`npx expo start`) y correr `npx expo-doctor`. Reemplazar los íconos y el splash de la plantilla en `app.json` por los de ASISCO UP.
 
 ## 2026-10-26 · Arranque del proyecto
+
 - Qué se hizo: se creó el proyecto con `npx create-expo-app@latest proyecto-integrador-mobile` (Expo SDK 57, Expo Router, TypeScript). Se definieron `AGENTS.md`, `STACK.md`, `PENDIENTES.md` y `pantallas.md`.
 - Decisiones: arquitectura modular por capas + Atomic Design en `shared/ui`; stack mínimo (ver `STACK.md`); login con correo y contraseña según el contrato del backend de SAGA UP (`api-auth.md`).
 - Queda pendiente: todo lo de `PENDIENTES.md`, empezando por T-01.

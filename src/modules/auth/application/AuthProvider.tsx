@@ -13,6 +13,7 @@ type AuthState = { status: 'loading' | 'signedOut' } | { status: 'signedIn'; ses
 type AuthContextValue = {
   status: AuthStatus;
   user: User | null;
+  sessionToken: string | null;
   // Rejects with AuthError; the session only changes on success.
   signIn(credentials: LoginCredentials): Promise<void>;
   // Always ends signed out, even if the backend call fails.
@@ -79,6 +80,7 @@ export function AuthProvider({ repository, storage, children }: AuthProviderProp
   const value: AuthContextValue = {
     status: state.status,
     user: state.status === 'signedIn' ? state.session.user : null,
+    sessionToken: state.status === 'signedIn' ? state.session.token : null,
     signIn,
     signOut,
   };

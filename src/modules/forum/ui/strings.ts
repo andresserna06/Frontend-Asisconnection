@@ -1,6 +1,34 @@
-// User-facing texts of the forum module (Spanish).
 export const FORUM_STRINGS = {
-  greeting: (username: string) => `Hola, ${username}`,
-  comingSoon: 'El foro estará aquí muy pronto.',
-  signOut: 'Cerrar sesión',
+  title: 'ASISCONNECTION',
+  createPost: 'Nueva publicación',
+  notifications: 'Notificaciones',
+  filters: {
+    all: 'Todos',
+    announcements: 'Avisos',
+    questions: 'Preguntas',
+    guides: 'Guías',
+    achievements: 'Logros',
+  },
+  categories: {
+    announcements: 'Avisos',
+    questions: 'Preguntas',
+    guides: 'Guías',
+    achievements: 'Logros',
+  },
+  topicsAccessibilityLabel: 'Temas del foro',
+  filterAccessibilityLabel: (label: string) => `Filtrar por ${label}`,
+  photoOf: (name: string) => `Foto de ${name}`,
+  videoDuration: (duration: string) => `Video, duración ${duration}`,
+  interactionSummary: (likes: number, comments: number) =>
+    `${likes} Me gusta, ${comments} comentarios`,
+  unavailableTitle: 'Estamos preparando el foro',
+  unavailableMessage: 'Las publicaciones aparecerán cuando esté conectado el servicio del foro.',
+  loading: 'Cargando publicaciones',
+  emptyTitle: 'Aún no hay publicaciones',
+  emptyMessage: 'Prueba otro tema o vuelve más tarde.',
+  errorTitle: 'No pudimos cargar el foro',
+  sessionExpired: 'Tu sesión terminó. Inicia sesión de nuevo para ver el foro.',
+  forbidden: 'No tienes permiso para ver estas publicaciones.',
+  connectionError: 'Revisa tu conexión e inténtalo de nuevo.',
+  retry: 'Intentar de nuevo',
 } as const;

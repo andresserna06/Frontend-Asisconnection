@@ -1,19 +1,26 @@
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { QueryClientProvider } from '@tanstack/react-query';
 
 import { AppAuthProvider, useAuth } from '@/modules/auth';
+import { AppForumProvider } from '@/modules/forum';
 import { useAppFonts } from '@/shared/hooks/useAppFonts';
 import { useHideSplashScreen } from '@/shared/hooks/useHideSplashScreen';
+import { queryClient } from '@/shared/lib/queryClient';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   return (
-    <AppAuthProvider>
-      <StatusBar style="dark" />
-      <RootNavigator />
-    </AppAuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AppAuthProvider>
+        <AppForumProvider>
+          <StatusBar style="dark" />
+          <RootNavigator />
+        </AppForumProvider>
+      </AppAuthProvider>
+    </QueryClientProvider>
   );
 }
 
