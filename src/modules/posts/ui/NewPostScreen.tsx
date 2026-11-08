@@ -4,6 +4,8 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getPrimaryRole, useAuth } from '@/modules/auth';
+import { useCreatePost } from '@/modules/posts/application/useCreatePost';
+import { usePostsService } from '@/modules/posts/usePostsService';
 import {
   CATEGORY_COLORS,
   COLORS,
@@ -15,7 +17,7 @@ import {
 } from '@/shared/theme';
 import { Icon } from '@/shared/ui/atoms/Icon';
 import type { CategoryKey } from '@/shared/theme';
-import { POST_STRINGS } from './strings';
+import { POST_DRAFT_ISSUE_MESSAGES, POST_ERROR_MESSAGES, POST_STRINGS } from './strings';
 
 const POST_CATEGORIES: { key: Exclude<CategoryKey, 'announcements'>; label: string }[] = [
   { key: 'questions', label: POST_STRINGS.categories.questions },
@@ -26,13 +28,42 @@ const POST_CATEGORIES: { key: Exclude<CategoryKey, 'announcements'>; label: stri
 export function NewPostScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const service = usePostsService();
+  const { submit, clearFeedback, isSubmitting, draftIssue, error } = useCreatePost(service);
   const [content, setContent] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey | null>(null);
   const primaryRole = user === null ? null : getPrimaryRole(user.roles);
   const initials = user?.username.slice(0, 2).toUpperCase() ?? 'AS';
 
-  function handlePublish() {
-    Alert.alert(POST_STRINGS.publishUnavailableTitle, POST_STRINGS.publishUnavailableMessage);
+  const feedbackMessage = draftIssue
+    ? POST_DRAFT_ISSUE_MESSAGES[draftIssue]
+    : error
+      ? POST_ERROR_MESSAGES[error.kind]
+      : null;
+
+  async function handlePublish() {
+    const result = await submit({ category: selectedCategory, content });
+    if (result === null) {
+      return;
+    }
+
+    if (result.status === 'REJECTED') {
+      Alert.alert(POST_STRINGS.rejectedTitle, result.message || POST_STRINGS.rejectedMessage);
+      return;
+    }
+
+    Alert.alert(POST_STRINGS.submittedTitle, result.message || POST_STRINGS.submittedMessage);
+    router.back();
+  }
+
+  function handleContentChange(value: string) {
+    setContent(value);
+    clearFeedback();
+  }
+
+  function handleCategorySelect(category: CategoryKey) {
+    setSelectedCategory(category);
+    clearFeedback();
   }
 
   return (
@@ -52,10 +83,16 @@ export function NewPostScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={POST_STRINGS.publish}
+          disabled={isSubmitting}
           onPress={handlePublish}
-          style={({ pressed }) => [styles.publishButton, pressed && styles.pressed]}
+          style={({ pressed }) => [
+            styles.publishButton,
+            (pressed || isSubmitting) && styles.pressed,
+          ]}
         >
-          <Text style={styles.publishLabel}>{POST_STRINGS.publish}</Text>
+          <Text style={styles.publishLabel}>
+            {isSubmitting ? POST_STRINGS.publishing : POST_STRINGS.publish}
+          </Text>
         </Pressable>
       </View>
 
@@ -81,7 +118,7 @@ export function NewPostScreen() {
           accessibilityLabel={POST_STRINGS.writePost}
           multiline
           value={content}
-          onChangeText={setContent}
+          onChangeText={handleContentChange}
           placeholder={POST_STRINGS.placeholder}
           placeholderTextColor={COLORS.textTertiary}
           style={styles.input}
@@ -100,7 +137,7 @@ export function NewPostScreen() {
                   key={category.key}
                   accessibilityRole="radio"
                   accessibilityState={{ checked: isSelected }}
-                  onPress={() => setSelectedCategory(category.key)}
+                  onPress={() => handleCategorySelect(category.key)}
                   style={({ pressed }) => [
                     styles.categoryChip,
                     {
@@ -123,9 +160,15 @@ export function NewPostScreen() {
             })}
           </View>
         </View>
+
+        {feedbackMessage !== null && (
+          <Text accessibilityRole="alert" style={styles.feedbackError}>
+            {feedbackMessage}
+          </Text>
+        )}
       </ScrollView>
 
-      <View style={[styles.gallery, { paddingBottom: Math.max(insets.bottom, SPACING.s16) }]}>
+      <View style={[styles.gallery, { paddingBottom: insets.bottom + SPACING.s12 }]}>
         <View style={styles.galleryHeader}>
           <Text style={styles.galleryTitle}>{POST_STRINGS.galleryTitle}</Text>
           <Pressable
@@ -165,12 +208,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
   },
   header: {
-    minHeight: SIZE.touchTarget + SPACING.s8,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.s8,
-    paddingHorizontal: SPACING.s12,
-    paddingBottom: SPACING.s8,
+    gap: SPACING.s10,
+    paddingHorizontal: SPACING.s16,
+    paddingVertical: SPACING.s10,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
@@ -180,19 +222,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: RADIUS.headerButton,
-    backgroundColor: COLORS.secondarySoft,
+    backgroundColor: COLORS.surfaceMuted,
   },
   title: {
     flex: 1,
     color: COLORS.primary,
     fontFamily: FONT_FAMILY.heading,
-    fontSize: FONT_SIZE.s18,
-    textAlign: 'center',
+    fontSize: FONT_SIZE.s20,
   },
   publishButton: {
     minHeight: SIZE.touchTarget,
+    alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: SPACING.s14,
+    paddingHorizontal: SPACING.s16,
     borderRadius: RADIUS.headerButton,
     backgroundColor: COLORS.primary,
   },
@@ -282,6 +324,11 @@ const styles = StyleSheet.create({
   categoryLabel: {
     fontFamily: FONT_FAMILY.bodyBold,
     fontSize: FONT_SIZE.s14,
+  },
+  feedbackError: {
+    color: COLORS.danger,
+    fontFamily: FONT_FAMILY.bodySemiBold,
+    fontSize: FONT_SIZE.s13_5,
   },
   gallery: {
     gap: SPACING.s10,

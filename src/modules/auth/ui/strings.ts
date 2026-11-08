@@ -11,6 +11,7 @@ export const LOGIN_STRINGS = {
   showPassword: 'Mostrar contraseña',
   hidePassword: 'Ocultar contraseña',
   forgotPassword: '¿Olvidaste tu contraseña?',
+  consent: 'Acepto el tratamiento de mis datos personales (Ley 1581 de 2012).',
   submit: 'Iniciar sesión',
   slowServer: 'Conectando… la primera vez puede tardar hasta 30 segundos.',
   firstTime: '¿Primera vez aquí?',
@@ -23,6 +24,7 @@ export const FORM_ISSUE_MESSAGES: Record<LoginFormIssue, string> = {
   emailRequired: 'Ingresa tu correo.',
   emailNotEmail: 'Por ahora ingresa con tu correo.',
   passwordRequired: 'Ingresa tu contraseña.',
+  consentRequired: 'Debes aceptar el tratamiento de datos para ingresar.',
 };
 
 export const AUTH_ERROR_MESSAGES: Record<AuthErrorKind, string> = {

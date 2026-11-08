@@ -14,11 +14,17 @@ export type Role = {
 // Single source of truth for every role attribute: change roles only here.
 export const ROLES: Record<RoleCode, Role> = {
   ADMIN: { code: 'ADMIN', label: 'Administrador', priority: 1 },
-  TALLERISTA: { code: 'TALLERISTA', label: 'Tallerista', priority: 2 },
-  ESTUDIANTE: { code: 'ESTUDIANTE', label: 'Estudiante', priority: 3 },
+  MODERATOR: { code: 'MODERATOR', label: 'Moderador', priority: 2 },
+  VOLUNTARIO: { code: 'VOLUNTARIO', label: 'Voluntario', priority: 3 },
   ACUDIENTE: { code: 'ACUDIENTE', label: 'Acudiente', priority: 4 },
-  DONANTE: { code: 'DONANTE', label: 'Donante', priority: 5 },
+  BENEFICIARIO: { code: 'BENEFICIARIO', label: 'Beneficiario', priority: 5 },
+  INVERSOR: { code: 'INVERSOR', label: 'Inversor', priority: 6 },
 };
+
+// Narrows a role string sent by the backend to a known code.
+export function isRoleCode(value: string): value is RoleCode {
+  return Object.prototype.hasOwnProperty.call(ROLES, value);
+}
 
 // Role shown next to a user's name.
 export function getPrimaryRole(codes: readonly RoleCode[]): Role | null {

@@ -1,17 +1,17 @@
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
+
+import { useAuthorizedHttpClient } from '@/modules/auth';
 
 import { ForumRepositoryProvider } from './application/ForumRepositoryProvider';
-import type { ForumRepository } from './domain/ForumRepository';
-import { createDemoForumRepository } from './services/demoForumRepository';
-
-// Punto único para inyectar el servicio cuando el backend esté disponible. Mientras
-// tanto, en desarrollo se muestran publicaciones de prueba.
-const repository: ForumRepository | null = __DEV__ ? createDemoForumRepository() : null;
+import { createForumService } from './services/forumService';
 
 type AppForumProviderProps = {
   children: ReactNode;
 };
 
 export function AppForumProvider({ children }: AppForumProviderProps) {
+  const client = useAuthorizedHttpClient();
+  const repository = useMemo(() => createForumService(client), [client]);
+
   return <ForumRepositoryProvider repository={repository}>{children}</ForumRepositoryProvider>;
 }

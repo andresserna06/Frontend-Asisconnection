@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthError } from '@/modules/auth/domain/models/AuthError';
+import type { Session } from '@/modules/auth/domain/models/Session';
 import {
   createAuthWrapper,
   createFakeAuthService,
@@ -28,9 +29,16 @@ async function renderScreen(service = createFakeAuthService()) {
   return service;
 }
 
-async function fillAndSubmit(email: string, password: string) {
+async function fillAndSubmit(email: string, password: string, checkConsent = true) {
   await fireEvent.changeText(screen.getByLabelText('Correo o documento'), email);
   await fireEvent.changeText(screen.getByLabelText('Contraseña'), password);
+  if (checkConsent) {
+    await fireEvent.press(
+      screen.getByRole('checkbox', {
+        name: 'Acepto el tratamiento de mis datos personales (Ley 1581 de 2012).',
+      }),
+    );
+  }
   await fireEvent.press(screen.getByRole('button', { name: 'Iniciar sesión' }));
 }
 
@@ -46,16 +54,19 @@ describe('LoginScreen', () => {
 
   it('shows field messages and does not submit an invalid form', async () => {
     const service = await renderScreen();
-    await fillAndSubmit('1053123456', '');
+    await fillAndSubmit('1053123456', '', false);
 
     expect(screen.getByText('Por ahora ingresa con tu correo.')).toBeOnTheScreen();
     expect(screen.getByText('Ingresa tu contraseña.')).toBeOnTheScreen();
+    expect(
+      screen.getByText('Debes aceptar el tratamiento de datos para ingresar.'),
+    ).toBeOnTheScreen();
     expect(service.login).not.toHaveBeenCalled();
   });
 
   it('disables the button while signing in', async () => {
     await renderScreen(
-      createFakeAuthService({ login: jest.fn(() => new Promise<string>(() => {})) }),
+      createFakeAuthService({ login: jest.fn(() => new Promise<Session>(() => {})) }),
     );
     await fillAndSubmit('maria@prueba.com', 'secreta');
 

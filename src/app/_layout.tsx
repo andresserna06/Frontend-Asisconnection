@@ -49,6 +49,7 @@ function RootNavigator() {
           name="comments/[postId]"
           options={{ presentation: 'transparentModal', animation: 'slide_from_bottom' }}
         />
+        <Stack.Screen name="profile/settings" />
       </Stack.Protected>
       <Stack.Protected guard={!isSignedIn}>
         <Stack.Screen name="(auth)" />

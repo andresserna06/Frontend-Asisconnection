@@ -40,7 +40,7 @@ export const TEST_SAVED_POST: Post = {
   createdAt: '2026-10-26T09:00:00Z',
   likeCount: 74,
   commentCount: 12,
-  author: { id: 'user-2', fullName: 'Otra Persona', roles: ['TALLERISTA'], photoUrl: null },
+  author: { id: 'user-2', fullName: 'Otra Persona', roles: ['VOLUNTARIO'], photoUrl: null },
 };
 
 export function createFakeProfileService(overrides: Partial<ProfileService> = {}) {

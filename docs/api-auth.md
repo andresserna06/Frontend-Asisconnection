@@ -1,69 +1,116 @@
-# Contrato de autenticación (backend SAGA UP)
+# Contrato de autenticación y sesiones (`AsisConexión Backend`)
 
-Fuente: correo de la profesora. El backend lo desarrolla otro equipo y se despliega en Render; **la URL aún no se ha compartido**. Hasta entonces, se trabaja con un repositorio simulado (ver `tarea-login.md`). No se edita el contrato desde este repo; si algo falla o falta, se anota en `PENDIENTES.md` y se reporta a la profesora.
+Fuente de verdad: `specs/001-asisconexion-mvp/contracts/openapi.yaml` del repositorio `Asisconnection` desplegado en Render (`https://asisconection.onrender.com/v1`).
 
-Base: `EXPO_PUBLIC_API_URL` (sin barra final).
+Base configurada en `.env`:
+```env
+EXPO_PUBLIC_API_URL=https://asisconection.onrender.com/v1
+```
 
-## Roles
+## 1. Roles del Ecosistema
 
-`ADMIN`, `ESTUDIANTE`, `ACUDIENTE`, `DONANTE`, `TALLERISTA`. Un usuario puede tener varios. Son los mismos roles para todos los proyectos del curso: la app los usa tal cual, sin inventar otros.
+Los códigos de rol se comparten en `src/shared/domain/models/RoleCode.ts` y sus etiquetas/prioridades viven en `src/modules/auth/domain/models/Role.ts`:
 
-Cómo se muestran en la app (etiqueta del rol junto al nombre, antes «Familia» o «Profesional» en los mockups):
+| Rol del backend (`RoleCode`) | Etiqueta en pantalla | Prioridad | Tono (`RoleBadge`) |
+|---|---|---:|---|
+| `ADMIN` | Administrador | 1 | `primary` |
+| `MODERATOR` | Moderador | 2 | `primary` |
+| `VOLUNTARIO` | Voluntario | 3 | `accent` |
+| `INVERSOR` | Inversor | 4 | `neutral` |
+| `ACUDIENTE` | Acudiente | 5 | `neutral` |
+| `BENEFICIARIO` | Beneficiario | 6 | `neutral` |
 
-| Rol del backend | Etiqueta en pantalla |
-|---|---|
-| `ACUDIENTE` | Acudiente |
-| `DONANTE` | Donante |
-| `TALLERISTA` | Tallerista |
-| `ESTUDIANTE` | Estudiante |
-| `ADMIN` | Administrador |
+Cuando un usuario posee múltiples roles (`local_role`, `rol`, `external_roles`), `getPrimaryRole` selecciona el de mayor prioridad (menor número).
 
-Si una persona tiene varios roles, la etiqueta muestra el primero según este orden: ADMIN, TALLERISTA, ESTUDIANTE, ACUDIENTE, DONANTE. Las etiquetas y el orden viven en un solo lugar (el modelo `modules/auth/domain/models/Role.ts`), no repartidas por la UI. Propuesta inicial: el equipo puede cambiarla.
+## 2. Endpoints consumidos por `src/modules/auth/services/authService.ts`
 
-## Endpoints
-
-| Método y ruta | Auth | Para qué |
+| Método y ruta | Auth | Uso en la app |
 |---|---|---|
-| `POST /auth/registro` | No | Registro público. **Solo `ACUDIENTE` y `DONANTE`**. |
-| `POST /auth/login` | No | Inicio de sesión. Devuelve `token` y los roles. |
-| `GET /auth/perfil` | Bearer | Datos y roles del usuario de la sesión. |
-| `POST /auth/logout` | Bearer | Cierra la sesión. |
-| `POST /auth/usuarios` | Bearer de `ADMIN` | Crea usuarios `ESTUDIANTE`, `TALLERISTA` o `ADMIN`. No se usa desde la app de la comunidad. |
+| `POST /auth/login` | No | Autentica contra el servicio central de identidad, sincroniza `UserAccount` + `Actor` en `ASISCONEXION_DB` y devuelve `device_token` + `user`. |
+| `POST /auth/registro` | No | Registra cuenta nueva, sincroniza `UserAccount` + `Actor` y devuelve `device_token` + `user`. |
+| `POST /sessions/anonymous` | No | Crea sesión rápida por dispositivo (`device_token` + `session_id`) con aceptación de consentimiento Ley 1581. |
+| `GET /actors/me` | `Bearer <device_token>` | Valida la sesión guardada en `expo-secure-store` al abrir la app y restaura `username` y `primary_role`. |
 
-El token va en todas las rutas protegidas: `Authorization: Bearer <token>`.
+> **Cierre de sesión (`signOut`)**: el `device_token` es un JWT local de sesión de dispositivo; cerrar sesión limpia el token en `expo-secure-store` sin requerir petición HTTP adicional.
 
-## Cuerpos
+## 3. Payloads de entrada y salida
 
-Registro (un solo rol, campo `rol`):
+### `POST /auth/login`
+**Envía (`SyncSessionDto`)**:
 ```json
-{ "username": "maria.acudiente", "email": "maria@prueba.com", "clave": "ClaveAcudiente2026", "rol": "ACUDIENTE" }
+{
+  "email": "maria@prueba.com",
+  "clave": "ClaveAcudiente2026",
+  "accept_consent": true
+}
+```
+> **Ley 1581 de 2012 y Ley 1098 de 2006**: `accept_consent` debe ser estrictamente el booleano `true`. El formulario de login incluye `ConsentCheckbox` obligatorio antes de enviar.
+
+**Recibe (`200 OK` — `AuthSessionResponseDto`)**:
+```json
+{
+  "user": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "maria.acudiente",
+    "email": "maria@prueba.com",
+    "rol": "ACUDIENTE",
+    "external_roles": ["ACUDIENTE"],
+    "local_role": null
+  },
+  "device_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "synced_with_global_db": true
+}
 ```
 
-Login:
+### `POST /auth/registro`
+**Envía (`RegisterUserDto`)**:
 ```json
-{ "email": "maria@prueba.com", "clave": "ClaveAcudiente2026" }
+{
+  "username": "carlos.voluntario",
+  "email": "carlos@prueba.com",
+  "clave": "ClaveSegura123",
+  "rol": "VOLUNTARIO",
+  "accept_consent": true
+}
 ```
 
-Crear usuario (admin; varios roles, campo `roles` como arreglo):
+### `POST /sessions/anonymous`
+**Envía (`InitAnonymousSessionDto`)**:
 ```json
-{ "username": "ana.tallerista", "email": "ana@prueba.com", "clave": "ClaveTallerista2026", "roles": ["TALLERISTA"] }
+{
+  "accept_consent": true,
+  "nickname": "InvitadoFamiliar",
+  "role_tag": "ACUDIENTE"
+}
 ```
 
-## Reglas
+**Recibe (`201 Created` — `AnonymousSessionResponseDto`)**:
+```json
+{
+  "device_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "session_id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
 
-- La clave debe tener **al menos 12 caracteres** (al registrar; en el login no se valida longitud en el cliente).
-- El cuerpo solo admite los campos indicados: **cualquier campo extra se rechaza**. No mandes campos de más.
-- La forma exacta de la respuesta del login (nombres de campos del token y de los roles) **no está documentada**: se sabe que incluye `token` y los roles. La app asume `{ "token": "..." }` para el login, `{ "username", "email", "roles" }` para el perfil y `{ "errores": { "email", "clave" } }` para un 400 (`auth/services/authService.ts`); dar forma a la respuesta es trabajo del backend. Si el backend responde distinto, se ajustan esos tipos.
+## 4. Manejo de errores homologado (RFC 7807 `ProblemDetails`)
 
-## Respuestas
+El backend responde todos los errores en formato estándar RFC 7807:
+```json
+{
+  "type": "https://asisconexion.org/errors/bad-request",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "Error de validación en los datos enviados.",
+  "errors": [
+    { "field": "email", "message": "email must be an email" },
+    { "field": "accept_consent", "message": "Debe aceptar expresamente el tratamiento de datos personales." }
+  ]
+}
+```
 
-| Código | Significado | Qué hace la app |
+| Código HTTP | Traducción a `AuthError.kind` | Comportamiento en la UI |
 |---|---|---|
-| 201 | Creado | Registro correcto. |
-| 200 | OK (login, perfil, logout) | Seguir el flujo. |
-| 400 | Datos inválidos, con detalle por campo | Mostrar el error junto a cada campo. |
-| 401 | Sin token, token inválido o sesión expirada | Borrar la sesión local y volver al login. |
-| 403 | Sin permisos | Mostrar mensaje de «no tienes permiso». |
-| 409 | Usuario o correo ya registrado | Mensaje junto al campo de correo o usuario. |
-
-Los usuarios de los ejemplos son solo de prueba. **No uses datos reales de la Fundación.**
+| `400` | `validation` (`fieldErrors`) | Muestra el mensaje de error debajo del campo (`email`, `password`, `acceptConsent`). |
+| `401` | `invalidCredentials` (en login) / `sessionExpired` (en `/actors/me`) | En login muestra credenciales inválidas; en rutas protegidas limpia `expo-secure-store` y redirige a `(auth)/login`. |
+| `403` | `forbidden` | Muestra aviso de cuenta sin permisos o inactiva. |
+| `502` o sin red | `network` | Muestra aviso de problema de conexión (incluye caída o rate-limit del servicio central de identidad). |

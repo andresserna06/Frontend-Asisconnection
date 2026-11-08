@@ -46,12 +46,23 @@ export function useAddComment(postId: string) {
       }
       return repository.addComment({ ...comment, postId });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['comments', postId] }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['comments', postId] });
+      await queryClient.invalidateQueries({ queryKey: ['forum', 'feed'] });
+    },
   });
 
   return {
     canComment: repository !== null,
     addComment: mutation.mutateAsync,
     isSending: mutation.isPending,
+  };
+}
+
+export function useToggleCommentLike() {
+  const repository = useCommentsRepository();
+
+  return (commentId: string) => {
+    void repository?.toggleLike?.(commentId).catch(() => undefined);
   };
 }

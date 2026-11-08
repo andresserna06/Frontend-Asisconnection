@@ -52,3 +52,11 @@ export function useForumFeed(filter: ForumFilter): ForumFeedState {
     isRefreshing: query.isFetching,
   };
 }
+
+export function useTogglePostLike() {
+  const repository = useForumRepository();
+
+  return (postId: string) => {
+    void repository?.toggleLike?.(postId).catch(() => undefined);
+  };
+}

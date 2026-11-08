@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import { AuthProvider } from '@/modules/auth/application/AuthProvider';
 import type { AuthService, TokenStorage } from '@/modules/auth/domain/AuthService';
+import type { Session } from '@/modules/auth/domain/models/Session';
 import type { User } from '@/modules/auth/domain/models/User';
 import { createHttpClient, type HttpClient } from '@/shared/lib/http';
 
@@ -9,7 +10,6 @@ import { createHttpClient, type HttpClient } from '@/shared/lib/http';
 
 export const TEST_USER: User = {
   username: 'test.user',
-  email: 'test@prueba.com',
   roles: ['ACUDIENTE'],
 };
 
@@ -17,8 +17,10 @@ export const TEST_TOKEN = 'test-token';
 
 export function createFakeAuthService(overrides: Partial<AuthService> = {}) {
   return {
-    login: jest.fn<Promise<string>, Parameters<AuthService['login']>>(async () => TEST_TOKEN),
-    logout: jest.fn<Promise<void>, [string]>(async () => undefined),
+    login: jest.fn<Promise<Session>, Parameters<AuthService['login']>>(async () => ({
+      token: TEST_TOKEN,
+      user: TEST_USER,
+    })),
     getProfile: jest.fn<Promise<User>, [string]>(async () => TEST_USER),
     ...overrides,
   };

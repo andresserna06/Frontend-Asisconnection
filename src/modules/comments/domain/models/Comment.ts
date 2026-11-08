@@ -22,3 +22,11 @@ export type NewComment = {
   // Id of the top-level comment being answered, or null for a new comment.
   parentId: string | null;
 };
+
+export type CommentSubmissionStatus = 'PENDING' | 'REJECTED';
+
+export type CommentSubmissionResult = {
+  id: string;
+  status: CommentSubmissionStatus;
+  message: string;
+};

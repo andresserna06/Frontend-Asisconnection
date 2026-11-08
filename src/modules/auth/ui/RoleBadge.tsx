@@ -4,10 +4,11 @@ import { Badge, type BadgeSize, type BadgeTone } from '@/shared/ui/atoms/Badge';
 // Mockup styles: "Familia" -> neutral, "Profesional" -> accent, foundation -> primary.
 const ROLE_TONES: Record<RoleCode, BadgeTone> = {
   ADMIN: 'primary',
-  TALLERISTA: 'accent',
-  ESTUDIANTE: 'accent',
+  MODERATOR: 'primary',
+  VOLUNTARIO: 'accent',
   ACUDIENTE: 'neutral',
-  DONANTE: 'neutral',
+  BENEFICIARIO: 'neutral',
+  INVERSOR: 'neutral',
 };
 
 type RoleBadgeProps = {

@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useLogin } from '@/modules/auth/application/useLogin';
+import { ConsentCheckbox } from '@/modules/auth/ui/components/ConsentCheckbox';
 import { PasswordField } from '@/modules/auth/ui/components/PasswordField';
 import { AUTH_ERROR_MESSAGES, FORM_ISSUE_MESSAGES, LOGIN_STRINGS } from '@/modules/auth/ui/strings';
 import { STRINGS } from '@/shared/config/strings';
@@ -45,14 +46,23 @@ export function LoginScreen() {
   const { submit, clearFeedback, isSubmitting, formIssues, error } = useLogin();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [acceptConsent, setAcceptConsent] = useState(false);
   const passwordRef = useRef<TextInput>(null);
 
   const emailIssue = formIssues.email ? FORM_ISSUE_MESSAGES[formIssues.email] : null;
   const passwordIssue = formIssues.password ? FORM_ISSUE_MESSAGES[formIssues.password] : null;
+  const consentIssue = formIssues.acceptConsent
+    ? FORM_ISSUE_MESSAGES[formIssues.acceptConsent]
+    : null;
   const formError = error ? AUTH_ERROR_MESSAGES[error.kind] : null;
 
   function handleSubmit() {
-    submit({ email, password });
+    submit({ email, password, acceptConsent });
+  }
+
+  function handleConsentToggle() {
+    setAcceptConsent((current) => !current);
+    clearFeedback('acceptConsent');
   }
 
   function handleEmailChange(value: string) {
@@ -134,6 +144,13 @@ export function LoginScreen() {
               size="small"
               onPress={showComingSoonNotice}
               style={styles.forgotPassword}
+            />
+
+            <ConsentCheckbox
+              label={LOGIN_STRINGS.consent}
+              isChecked={acceptConsent}
+              onToggle={handleConsentToggle}
+              error={consentIssue ?? error?.fieldErrors.acceptConsent}
             />
 
             {formError && (

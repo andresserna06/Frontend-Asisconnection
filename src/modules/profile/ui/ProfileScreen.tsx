@@ -1,5 +1,6 @@
 import { FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 import { useMyProfile } from '@/modules/profile/application/useMyProfile';
 import { toProfileError } from '@/modules/profile/domain/models/ProfileError';
@@ -53,7 +54,11 @@ export function ProfileScreen() {
         followerCount={me.followerCount}
         followingCount={me.followingCount}
       />
-      <InfoCard profile={me} onEdit={showComingSoonNotice} onOpenSettings={showComingSoonNotice} />
+      <InfoCard
+        profile={me}
+        onEdit={showComingSoonNotice}
+        onOpenSettings={() => router.push('/profile/settings')}
+      />
       <ProfileTabs
         activeTab={activeTab}
         postCount={me.postCount}

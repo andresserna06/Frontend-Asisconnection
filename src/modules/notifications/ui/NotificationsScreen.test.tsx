@@ -1,7 +1,13 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { createFakeNotificationsService } from '../testUtils';
+import { useNotificationsService } from '../useNotificationsService';
 import { NotificationsScreen } from './NotificationsScreen';
+
+jest.mock('../useNotificationsService', () => ({
+  useNotificationsService: jest.fn(),
+}));
 
 const SAFE_AREA_METRICS = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -9,6 +15,10 @@ const SAFE_AREA_METRICS = {
 };
 
 describe('NotificationsScreen', () => {
+  beforeEach(() => {
+    jest.mocked(useNotificationsService).mockReturnValue(createFakeNotificationsService());
+  });
+
   it('shows the date groups without invented notifications', async () => {
     await render(
       <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
@@ -24,14 +34,33 @@ describe('NotificationsScreen', () => {
     expect(screen.getAllByText('No hay notificaciones en este periodo.')).toHaveLength(4);
   });
 
-  it('keeps the mark-read control available for the future service integration', async () => {
+  it('marks notifications as read when pressing the mark-read button', async () => {
+    const markAllRead = jest.fn().mockResolvedValue(undefined);
+    const service = createFakeNotificationsService({ markAllRead }, [
+      {
+        id: 'notif-1',
+        type: 'COMMENT_ON_POST',
+        title: 'Nuevo comentario en tu publicación',
+        body: 'Carlos Voluntario comentó en tu publicación.',
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+    jest.mocked(useNotificationsService).mockReturnValue(service);
+
     await render(
       <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
         <NotificationsScreen />
       </SafeAreaProvider>,
     );
 
-    expect(screen.getByRole('button', { name: 'Marcar todo como leído' })).toBeOnTheScreen();
-    expect(screen.getByText('Marcar leídas')).toBeOnTheScreen();
+    expect(await screen.findByText('Nuevo comentario en tu publicación')).toBeOnTheScreen();
+    const button = screen.getByRole('button', { name: 'Marcar todo como leído' });
+    await fireEvent.press(button);
+
+    await waitFor(() => {
+      expect(markAllRead).toHaveBeenCalledTimes(1);
+    });
+    expect(await screen.findByText('Leídas')).toBeOnTheScreen();
   });
 });

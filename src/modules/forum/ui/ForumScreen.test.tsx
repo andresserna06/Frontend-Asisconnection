@@ -43,16 +43,16 @@ describe('ForumScreen', () => {
     expect(screen.getByRole('button', { name: 'Nueva publicación' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Notificaciones' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Filtrar por Todos' })).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: 'Filtrar por Preguntas' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Filtrar por Salud' })).toBeOnTheScreen();
     expect(screen.getByText('Estamos preparando el foro')).toBeOnTheScreen();
   });
 
   it('updates the selected topic accessibly', async () => {
     await renderScreen();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Filtrar por Avisos' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Filtrar por Noticias' }));
 
-    expect(screen.getByRole('button', { name: 'Filtrar por Avisos' })).toHaveProp(
+    expect(screen.getByRole('button', { name: 'Filtrar por Noticias' })).toHaveProp(
       'accessibilityState',
       { selected: true },
     );

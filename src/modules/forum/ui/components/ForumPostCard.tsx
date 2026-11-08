@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
@@ -19,10 +20,18 @@ import { FORUM_STRINGS } from '../strings';
 type ForumPostCardProps = {
   post: ForumPost;
   onCommentsPress: () => void;
+  onLikePress?: () => void;
 };
 
-export function ForumPostCard({ post, onCommentsPress }: ForumPostCardProps) {
+export function ForumPostCard({ post, onCommentsPress, onLikePress }: ForumPostCardProps) {
   const palette = CATEGORY_COLORS[post.category];
+  const [isLiked, setIsLiked] = useState(false);
+  const likeCount = post.likeCount + (isLiked ? 1 : 0);
+
+  function handleLikePress() {
+    setIsLiked((current) => !current);
+    onLikePress?.();
+  }
 
   return (
     <View style={[styles.card, { borderTopColor: palette.main }]}>
@@ -95,14 +104,20 @@ export function ForumPostCard({ post, onCommentsPress }: ForumPostCardProps) {
       )}
 
       <View style={styles.actions}>
-        <View
-          accessible
-          accessibilityLabel={FORUM_STRINGS.likeSummary(post.likeCount)}
-          style={styles.action}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={FORUM_STRINGS.likeSummary(likeCount)}
+          accessibilityState={{ selected: isLiked }}
+          onPress={handleLikePress}
+          style={({ pressed }) => [styles.action, pressed && styles.pressed]}
         >
-          <Icon name="heart" size={SIZE.iconSmall} color={COLORS.textSecondary} />
-          <Text style={styles.count}>{post.likeCount}</Text>
-        </View>
+          <Icon
+            name="heart"
+            size={SIZE.iconSmall}
+            color={isLiked ? COLORS.alert : COLORS.textSecondary}
+          />
+          <Text style={styles.count}>{likeCount}</Text>
+        </Pressable>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={FORUM_STRINGS.openComments(post.commentCount)}

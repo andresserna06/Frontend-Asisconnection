@@ -1,10 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
   BORDER_WIDTH,
   COLORS,
   FONT_FAMILY,
   FONT_SIZE,
+  OPACITY,
   RADIUS,
   SIZE,
   SPACING,
@@ -20,6 +21,7 @@ type EcosystemItem = {
 
 type EcosystemCardProps = {
   item: EcosystemItem;
+  onPress?: () => void;
 };
 
 const TONES = {
@@ -28,11 +30,11 @@ const TONES = {
   neutral: { background: COLORS.surfaceMuted, foreground: COLORS.onSurfaceMuted },
 } as const;
 
-export function EcosystemCard({ item }: EcosystemCardProps) {
+export function EcosystemCard({ item, onPress }: EcosystemCardProps) {
   const tone = TONES[item.tone];
 
-  return (
-    <View style={styles.card}>
+  const content = (
+    <>
       <View style={[styles.iconBox, { backgroundColor: tone.background }]}>
         <Icon name={item.icon} size={SIZE.ecosystemIcon / 2} color={tone.foreground} />
       </View>
@@ -43,8 +45,23 @@ export function EcosystemCard({ item }: EcosystemCardProps) {
       <View style={styles.externalIcon}>
         <Icon name="external-link" size={SIZE.iconSmall} color={COLORS.textStrong} />
       </View>
-    </View>
+    </>
   );
+
+  if (onPress !== undefined) {
+    return (
+      <Pressable
+        accessibilityRole="link"
+        accessibilityLabel={`${item.title}. ${item.description}`}
+        onPress={onPress}
+        style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+
+  return <View style={styles.card}>{content}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -60,6 +77,9 @@ const styles = StyleSheet.create({
     borderWidth: BORDER_WIDTH.hairline,
     borderColor: COLORS.border,
     borderRadius: RADIUS.ecosystemCard,
+  },
+  pressed: {
+    opacity: OPACITY.pressed,
   },
   iconBox: {
     width: SIZE.ecosystemIcon,

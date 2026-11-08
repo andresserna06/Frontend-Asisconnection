@@ -77,19 +77,16 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
   }, [service, storage]);
 
   async function signIn(credentials: LoginCredentials) {
-    const newToken = await service.login(credentials);
-    const user = await service.getProfile(newToken);
-    await storage.saveToken(newToken);
-    setState({ status: 'signedIn', session: { token: newToken, user } });
+    const session = await service.login(credentials);
+    await storage.saveToken(session.token);
+    setState({ status: 'signedIn', session });
   }
 
+  // The device token is local (no logout endpoint): signing out only forgets it.
   const signOut = useCallback(async () => {
-    if (token !== null) {
-      await service.logout(token).catch(() => undefined);
-    }
     await storage.clearToken().catch(() => undefined);
     setState({ status: 'signedOut' });
-  }, [service, storage, token]);
+  }, [storage]);
 
   // Stable while the session does not change, so services built on it can be memoized.
   const authorizedClient = useMemo<HttpClient>(

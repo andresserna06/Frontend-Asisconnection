@@ -2,12 +2,12 @@ import { getPrimaryRole, ROLES, type RoleCode } from './Role';
 
 describe('getPrimaryRole', () => {
   it('returns the only role a user has', () => {
-    expect(getPrimaryRole(['DONANTE'])).toBe(ROLES.DONANTE);
+    expect(getPrimaryRole(['INVERSOR'])).toBe(ROLES.INVERSOR);
   });
 
   it('picks the highest-priority role regardless of input order', () => {
-    expect(getPrimaryRole(['ACUDIENTE', 'TALLERISTA'])).toBe(ROLES.TALLERISTA);
-    expect(getPrimaryRole(['DONANTE', 'ESTUDIANTE', 'ADMIN'])).toBe(ROLES.ADMIN);
+    expect(getPrimaryRole(['ACUDIENTE', 'VOLUNTARIO'])).toBe(ROLES.VOLUNTARIO);
+    expect(getPrimaryRole(['INVERSOR', 'MODERATOR', 'ADMIN'])).toBe(ROLES.ADMIN);
   });
 
   it('returns null when there are no roles', () => {

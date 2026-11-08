@@ -1,6 +1,6 @@
 import type { CategoryCode } from '@/shared/domain/models/CategoryCode';
 
-// Forum topics. Keys match CategoryKey in shared/theme (colors) and the backend codes.
+// Forum topics. Keys match CategoryKey in shared/theme (colors) and map to backend categories.
 export type { CategoryCode } from '@/shared/domain/models/CategoryCode';
 
 export type Category = {
@@ -11,8 +11,8 @@ export type Category = {
 
 // Single source of truth for category attributes: change them only here.
 export const CATEGORIES: Record<CategoryCode, Category> = {
-  announcements: { code: 'announcements', label: 'Avisos' },
-  questions: { code: 'questions', label: 'Preguntas' },
-  guides: { code: 'guides', label: 'Guías' },
-  achievements: { code: 'achievements', label: 'Logros' },
+  announcements: { code: 'announcements', label: 'Noticias' },
+  questions: { code: 'questions', label: 'Salud' },
+  guides: { code: 'guides', label: 'Apoyo Pedagógico' },
+  achievements: { code: 'achievements', label: 'Voluntariado' },
 };

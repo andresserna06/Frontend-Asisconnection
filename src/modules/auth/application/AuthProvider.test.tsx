@@ -64,7 +64,9 @@ describe('session restore', () => {
 describe('signIn', () => {
   it('saves the token and exposes the user', async () => {
     const { result, storage } = await renderAuth();
-    await act(() => result.current.signIn({ email: 'test@prueba.com', password: 'x' }));
+    await act(() =>
+      result.current.signIn({ email: 'test@prueba.com', password: 'x', acceptConsent: true }),
+    );
     expect(result.current.status).toBe('signedIn');
     expect(result.current.user).toEqual(TEST_USER);
     expect(storage.peek()).toBe(TEST_TOKEN);
@@ -78,7 +80,9 @@ describe('signIn', () => {
     });
     const { result, storage } = await renderAuth(service);
     await act(() =>
-      expect(result.current.signIn({ email: 'a@b.co', password: 'x' })).rejects.toMatchObject({
+      expect(
+        result.current.signIn({ email: 'a@b.co', password: 'x', acceptConsent: true }),
+      ).rejects.toMatchObject({
         kind: 'invalidCredentials',
       }),
     );
@@ -88,17 +92,14 @@ describe('signIn', () => {
 });
 
 describe('signOut', () => {
-  it('clears the session even if the backend call fails', async () => {
-    const service = createFakeAuthService({
-      logout: jest.fn(async () => {
-        throw new AuthError('network');
-      }),
-    });
-    const { result, storage } = await renderAuth(service, createMemoryStorage(TEST_TOKEN));
+  it('clears the saved token and signs out', async () => {
+    const { result, storage } = await renderAuth(
+      createFakeAuthService(),
+      createMemoryStorage(TEST_TOKEN),
+    );
     expect(result.current.status).toBe('signedIn');
 
     await act(() => result.current.signOut());
-    expect(service.logout).toHaveBeenCalledWith(TEST_TOKEN);
     expect(result.current.status).toBe('signedOut');
     expect(storage.peek()).toBeNull();
   });

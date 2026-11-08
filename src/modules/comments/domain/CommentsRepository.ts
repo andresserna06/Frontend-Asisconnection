@@ -1,9 +1,9 @@
-import type { Comment, NewComment } from './models/Comment';
+import type { Comment, CommentSubmissionResult, NewComment } from './models/Comment';
 
-// The service implements this contract when the backend publishes its endpoints.
 export type CommentsRepository = {
   listComments(postId: string): Promise<Comment[]>;
-  addComment(comment: NewComment): Promise<Comment>;
+  addComment(comment: NewComment): Promise<CommentSubmissionResult>;
+  toggleLike?(commentId: string): Promise<boolean>;
 };
 
 // Total shown in the sheet: top-level comments plus their replies.

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -18,6 +19,7 @@ import { useAuth } from '@/modules/auth';
 import {
   useAddComment,
   useComments,
+  useToggleCommentLike,
   type CommentsState,
 } from '@/modules/comments/application/useComments';
 import type { Comment } from '@/modules/comments/domain/models/Comment';
@@ -51,6 +53,7 @@ export function CommentsScreen({ postId }: CommentsScreenProps) {
   const { user } = useAuth();
   const state = useComments(postId);
   const { canComment, addComment, isSending } = useAddComment(postId);
+  const toggleCommentLike = useToggleCommentLike();
   const [draft, setDraft] = useState('');
   const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null);
   const initials = user?.username.slice(0, 2).toUpperCase() ?? '';
@@ -72,9 +75,27 @@ export function CommentsScreen({ postId }: CommentsScreenProps) {
     if (!canPublish) {
       return;
     }
-    await addComment({ content: draft.trim(), parentId: replyTarget?.threadId ?? null });
-    setDraft('');
-    setReplyTarget(null);
+    try {
+      const result = await addComment({
+        content: draft.trim(),
+        parentId: replyTarget?.threadId ?? null,
+      });
+      setDraft('');
+      setReplyTarget(null);
+      if (result.status === 'REJECTED') {
+        Alert.alert(
+          COMMENTS_STRINGS.rejectedTitle,
+          result.message || COMMENTS_STRINGS.rejectedMessage,
+        );
+      } else {
+        Alert.alert(
+          COMMENTS_STRINGS.submittedTitle,
+          result.message || COMMENTS_STRINGS.submittedMessage,
+        );
+      }
+    } catch {
+      Alert.alert(COMMENTS_STRINGS.sendErrorTitle, COMMENTS_STRINGS.sendErrorMessage);
+    }
   }
 
   return (
@@ -110,7 +131,7 @@ export function CommentsScreen({ postId }: CommentsScreenProps) {
           data={state.status === 'success' ? state.comments : []}
           keyExtractor={(comment) => comment.id}
           renderItem={({ item }: { item: Comment }) => (
-            <CommentItem comment={item} onReply={handleReply} />
+            <CommentItem comment={item} onReply={handleReply} onToggleLike={toggleCommentLike} />
           )}
           ListHeaderComponent={
             state.status === 'success' && state.total > 0 ? (

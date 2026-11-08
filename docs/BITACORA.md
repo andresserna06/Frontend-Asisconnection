@@ -15,6 +15,52 @@ Formato de cada entrada:
 
 ---
 
+## 2026-11-08 · T-09, T-10b, T-12, T-13, T-14 Integración de Asistente, Ecosistema, Perfil, Ajustes y Notificaciones (Fase 4 — Bloques A, B y C)
+- Qué se hizo:
+  - **Bloque A (Asistente y Ecosistema)**:
+    - `assistantService` conectado a `GET /assistant/faqs` y `POST /assistant/escalate`, con hook `useAssistant` (selección de categoría, respuesta de regla + `disclaimer` legal y derivación a WhatsApp vía `Linking.openURL`) e integración en `AssistantScreen`.
+    - `ecosystemService` conectado a `GET /directory/links`, con hook `useEcosystemLinks` (combina con las 5 tarjetas oficiales de la fundación y abre `url` externa cuando el backend la entrega) e integración en `EcosystemScreen` y `EcosystemCard`.
+  - **Bloque B (Perfil, Ajustes y Auth Invitado/Registro)**:
+    - Backend (`Asisconnection`): se enriqueció `GET /v1/actors/me` con `email` (solo para el propio titular conforme a Ley 1581), `posts_count`, `followers_count` y `following_count`, y se añadió `GET /v1/actors/me/posts`.
+    - Frontend (`profileService`): adaptado a `GET /actors/me`, `PATCH /actors/me` (`updateMyProfile`) y `GET /actors/me/posts`.
+    - Módulo `settings`: se implementaron `PrivacySettings` (todos los interruptores en `false` por defecto conforme a Ley 1581), `usePrivacySettings` y `SettingsScreen` con vista previa en vivo y botón «Cerrar sesión» conectado a `useAuth().signOut()`.
+    - Módulo `auth`: se añadieron `register` (`POST /auth/registro`) y `loginAnonymous` (`POST /sessions/anonymous`) en `AuthService` y `authService.ts`.
+  - **Bloque C (Notificaciones)**:
+    - Backend (`Asisconnection`): se agregaron `GET /v1/notifications` (actividad reciente en publicaciones propias dentro de los últimos 30 días) y `PATCH /v1/notifications/read-all`.
+    - Frontend (`notifications`): se implementaron `NotificationItem`, `groupNotificationsByPeriod` (`Hoy`, `Ayer`, `Últimos 7 días`, `Últimos 30 días`, descartando mayores a 30 días), `notificationsService`, `useNotifications` y `NotificationsScreen`.
+- Archivos principales: `src/modules/assistant/**`, `src/modules/ecosystem/**`, `src/modules/profile/services/profileService.ts`, `src/modules/settings/**`, `src/modules/notifications/**`, `src/modules/auth/{domain/AuthService,services/authService}.ts`.
+- Decisiones (y por qué): cada pantalla recibe su service mediante un hook de composición en la raíz del módulo (`useXService.ts`) que envuelve `useAuthorizedHttpClient()`, respetando las reglas de capas de ESLint (`ui → application → domain`, `ui` nunca importa `services/` directamente).
+- Cómo se probó:
+  - Frontend: `tsc --noEmit` (0 errores), `eslint src --max-warnings=0` (0 errores/warnings) y `jest` (27 suites pasadas, 109/109 tests en verde).
+  - Backend: `npm run lint` (0 errores/warnings) y `npm test` (6/6 tests unitarios en verde).
+- Queda pendiente: hacer `git push` del backend para que Render redespliegue los nuevos endpoints y probar en Expo Go (T-03b).
+
+## 2026-11-07 · T-07 Comentarios y Reacciones del Foro (Fase 3b)
+- Qué se hizo:
+  - Backend (`Asisconnection`): se agregó `GET /v1/posts/:postId/comments` paginado (solo comentarios `APPROVED` con `likes_count`) y se enriqueció `AuthorBadgeDto` con `actor_id` y `avatar_url` desde la tabla `actors`.
+  - Frontend (`Frontend-Asisconnection`): se creó `commentsService` (`GET /posts/:postId/comments` con fallback a `recent_comments`, `POST /posts/:postId/comments` omitiendo `parent_id` cuando es raíz, y `POST /comments/:id/reactions`), se conectó en `AppCommentsProvider`, se retiró `demoCommentsRepository` y se conectaron las reacciones (`POST /posts/:postId/reactions`) en `ForumPostCard` y `ForumScreen`.
+- Archivos principales: `src/modules/comments/services/commentsService.ts`, `src/modules/comments/AppCommentsProvider.tsx`, `src/modules/comments/application/useComments.ts`, `src/modules/comments/ui/{CommentsScreen,components/CommentItem}.tsx`, `src/modules/forum/services/forumService.ts`, `src/modules/forum/ui/{ForumScreen,components/ForumPostCard}.tsx`.
+- Decisiones (y por qué): `commentsService.listComments` hace fallback automático a `recent_comments` de `/posts` si `/posts/:postId/comments` responde 404 mientras se redespliega Render.
+- Cómo se probó: `tsc --noEmit` (0 errores), `eslint` (0 errores) y `jest` en frontend (23 suites, 99/99 tests) y backend (5/5 tests unitarios).
+- Queda pendiente: redesplegar backend en Render y continuar con Fase 4 (Perfil, Asistente y Ecosistema).
+
+## 2026-11-07 · T-06 y T-08 Conexión del Foro y Creación de Publicaciones (Fases 2 y 3a)
+- Qué se hizo:
+  - Se creó `forumService` (`GET /categories` y `GET /posts` con filtro `categoryId`), se conectó en `AppForumProvider` usando `useAuthorizedHttpClient()` y se eliminó `demoForumRepository`.
+  - Se creó `postsService` (`POST /posts` resolviendo el `category_id` desde `GET /categories`), `usePostsService`, `useCreatePost` y se conectó `NewPostScreen` mostrando el aviso de moderación (`PENDING` o `REJECTED`) e invalidando el feed del foro.
+  - Se alinearon los nombres de las categorías en el frontend con las 4 categorías del backend (`Noticias`, `Salud`, `Apoyo Pedagógico`, `Voluntariado`) y se creó `toCategoryCode` en `shared/domain/models/CategoryCode.ts`.
+- Archivos principales: `src/shared/domain/models/CategoryCode.ts`, `src/modules/forum/services/forumService.ts`, `src/modules/forum/AppForumProvider.tsx`, `src/modules/forum/ui/strings.ts`, `src/modules/posts/domain/PostsService.ts`, `src/modules/posts/domain/models/{Category,PostSubmission}.ts`, `src/modules/posts/services/postsService.ts`, `src/modules/posts/application/useCreatePost.ts`, `src/modules/posts/usePostsService.ts`, `src/modules/posts/ui/{NewPostScreen,strings}.ts`.
+- Decisiones (y por qué): se reutiliza la caché en memoria de `GET /categories` dentro de cada service para traducir entre `CategoryCode` del frontend y el UUID `category_id` del backend sin repetir peticiones en cada cambio de filtro.
+- Cómo se probó: `tsc --noEmit` (0 errores), `eslint src` (0 errores) y `jest` (22 suites pasadas, 95/95 tests en verde).
+- Queda pendiente: probar flujo completo en Expo Go contra `https://asisconection.onrender.com/v1` y conectar reacciones/comentarios.
+
+## 2026-11-07 · T-03c Login contra el backend AsisConexión (Fase 1)
+- Qué se hizo: `authService` usa el contrato de AsisConexión (`POST /auth/login` con `accept_consent`, respuesta `device_token` + `user`; perfil desde `GET /actors/me`; errores RFC 7807). Se quitó `logout` HTTP (el token es local). Casilla obligatoria de consentimiento (Ley 1581) en el login. Roles alineados al backend (ADMIN, MODERATOR, ACUDIENTE, VOLUNTARIO, INVERSOR, BENEFICIARIO). `User` ya no tiene `email` (no viene en `/actors/me`).
+- Archivos principales: `modules/auth/services/authService.ts`, `domain/AuthService.ts`, `domain/models/{User,LoginCredentials,Role}.ts`, `domain/validateLoginForm.ts`, `application/AuthProvider.tsx`, `ui/LoginScreen.tsx`, `ui/components/ConsentCheckbox.tsx`, `shared/domain/models/RoleCode.ts`.
+- Decisiones: `EXPO_PUBLIC_API_URL` debe incluir `/v1`. Un 502 (servicio de identidad caído) se muestra como error de red.
+- Cómo se probó: `tsc --noEmit` (0 errores), `eslint` (0 errores) y `jest` en `auth` y `profile` (49/49 tests en verde). Falta probar en Expo Go.
+- Pendientes: validar diseño de la casilla de consentimiento.
+
 ## 2026-10-27 · T-10b y T-14 Integración del Perfil y Ecosistema
 - Qué se hizo:
   - Se resolvieron los conflictos del merge preservando la pantalla completa de Perfil integrada desde `main`; `(tabs)/profile` y la pestaña del footer llegan a `ProfileScreen` a través del `index.ts` público del módulo.

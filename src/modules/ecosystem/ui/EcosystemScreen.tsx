@@ -1,6 +1,8 @@
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Linking, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useEcosystemLinks } from '@/modules/ecosystem/application/useEcosystemLinks';
+import { useEcosystemService } from '@/modules/ecosystem/useEcosystemService';
 import { COLORS, FONT_FAMILY, FONT_SIZE, SPACING } from '@/shared/theme';
 
 import { EcosystemCard } from './components/EcosystemCard';
@@ -8,6 +10,8 @@ import { ECOSYSTEM_STRINGS } from './strings';
 
 export function EcosystemScreen() {
   const insets = useSafeAreaInsets();
+  const service = useEcosystemService();
+  const { findLinkForTitle } = useEcosystemLinks(service);
 
   return (
     <View style={styles.screen}>
@@ -22,7 +26,15 @@ export function EcosystemScreen() {
         contentContainerStyle={styles.list}
         data={ECOSYSTEM_STRINGS.items}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <EcosystemCard item={item} />}
+        renderItem={({ item }) => {
+          const link = findLinkForTitle(item.title);
+          return (
+            <EcosystemCard
+              item={item}
+              onPress={link !== null ? () => void Linking.openURL(link.url) : undefined}
+            />
+          );
+        }}
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={Separator}
       />

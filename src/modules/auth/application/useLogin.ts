@@ -28,7 +28,7 @@ export function useLogin() {
     isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
-      await signIn({ email: credentials.email.trim(), password: credentials.password });
+      await signIn({ ...credentials, email: credentials.email.trim() });
     } catch (caught) {
       setError(toAuthError(caught));
     } finally {

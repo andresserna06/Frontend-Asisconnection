@@ -1,0 +1,15 @@
+export const SETTINGS_STRINGS = {
+  header: 'Ajustes de privacidad',
+  back: 'Volver al perfil',
+  previewTitle: 'Así te ven los demás',
+  previewEmpty: 'Solo se muestra tu nombre, rol y publicaciones aprobadas.',
+  visibilityTitle: 'Información que muestras',
+  emailLabel: 'Correo electrónico',
+  birthDateLabel: 'Fecha de nacimiento',
+  cityLabel: 'Ciudad',
+  onlyMe: 'Solo yo',
+  visibleToCommunity: 'Visible en la comunidad',
+  followTitle: 'Quién puede seguirte',
+  requireApprovalLabel: 'Requerir aprobación para seguirme',
+  signOut: 'Cerrar sesión',
+} as const;

@@ -22,4 +22,11 @@ export const COMMENTS_STRINGS = {
   unavailableTitle: 'Estamos preparando los comentarios',
   unavailableMessage: 'Aparecerán cuando esté conectado el servicio.',
   retry: 'Intentar de nuevo',
+  submittedTitle: 'Comentario enviado',
+  submittedMessage: 'Tu comentario fue recibido y se mostrará cuando sea aprobado por moderación.',
+  rejectedTitle: 'Comentario no permitido',
+  rejectedMessage:
+    'Tu comentario fue rechazado automáticamente por las reglas de protección comunitaria.',
+  sendErrorTitle: 'No pudimos enviar tu comentario',
+  sendErrorMessage: 'Revisa tu conexión e inténtalo de nuevo.',
 } as const;

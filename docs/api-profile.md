@@ -1,70 +1,59 @@
-# Contrato esperado del Perfil (propuesta del frontend)
+# Contrato del Perfil y Ajustes (`AsisConexión Backend`)
 
-**Estos endpoints todavía no existen en el backend.** Es lo que la app espera para la pantalla «Mi perfil» (`05-Perfil`, `05c-Perfil-guardados`). No es el contrato oficial: cuando SAGA UP publique los endpoints reales, se ajustan **solo** las rutas (`PATHS`) y los tipos de respuesta de `src/modules/profile/services/profileService.ts`, y los modelos si cambian los campos. La pantalla no se toca.
+Documenta la integración real de `src/modules/profile/services/profileService.ts` y `src/modules/settings` con el backend `AsisConexión` (`https://asisconection.onrender.com/v1`).
 
-Base: `EXPO_PUBLIC_API_URL`. Todas las rutas requieren `Authorization: Bearer <token>` (lo pone `useAuthorizedHttpClient()`; un 401 cierra la sesión).
+Todas las rutas requieren `Authorization: Bearer <device_token>` inyectado automáticamente por `useAuthorizedHttpClient()`.
 
-## Endpoints
+## 1. Endpoints consumidos
 
-| Método y ruta | Para qué | Respuesta (200) | Modelo en la app |
+| Método y ruta | Uso en la app | Respuesta (`200 OK`) | Modelo en el Frontend |
 |---|---|---|---|
-| `GET /usuarios/me` | Perfil propio: datos, cifras y datos personales | objeto `MyProfile` | `profile/domain/models/MyProfile.ts` |
-| `GET /usuarios/me/publicaciones` | Publicaciones propias, de la más nueva a la más vieja | arreglo de `Post` | `posts/domain/models/Post.ts` |
-| `GET /usuarios/me/guardados` | Publicaciones guardadas (privadas, nunca se muestran a otros) | arreglo de `Post` | `posts/domain/models/Post.ts` |
+| `GET /actors/me` | Carga el perfil propio (nombre, rol, avatar, correo del titular y contadores de actividad). | `ActorProfileResponseDto` | `MyProfile` (`profile/domain/models/MyProfile.ts`) |
+| `PATCH /actors/me` | Actualiza nombres, apellidos, avatar o biografía corta del actor autenticado. | `ActorProfileResponseDto` | `MyProfile` |
+| `GET /actors/me/posts?page=1&limit=20` | Lista las publicaciones propias con `status = APPROVED` ordenadas de la más reciente a la más antigua. | `PostsPageDto` (`{ data, meta }`) | `Post[]` (`shared/domain/models/Post.ts`) |
+| `GET /categories?page=1&limit=50` | Traduce el `category_id` (UUID) de cada publicación propia a `CategoryCode` (`announcements`, `questions`, `guides`, `achievements`). | `CategoriesPageDto` (`{ data, meta }`) | `Record<string, CategoryCode>` |
 
-## Cuerpos de respuesta
+## 2. Cuerpo de respuesta de `GET /actors/me`
 
-`GET /usuarios/me`:
 ```json
 {
-  "id": "u-123",
-  "fullName": "Nombre Apellido",
-  "roles": ["ACUDIENTE"],
-  "photoUrl": null,
-  "email": "persona@ejemplo.com",
-  "birthDate": "1988-05-14",
-  "city": "Manizales",
-  "memberSince": "2026-03-01",
-  "postCount": 4,
-  "followerCount": 38,
-  "followingCount": 21,
-  "savedCount": 2
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "user_account_id": "u1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "username": "persona.prueba",
+  "email": "persona@prueba.com",
+  "primary_role": "ACUDIENTE",
+  "first_names": "Persona",
+  "last_names": "Prueba",
+  "avatar_url": "https://cdn.asisco.org/avatar.jpg",
+  "short_bio": "Acudiente de la fundación",
+  "posts_count": 2,
+  "followers_count": 5,
+  "following_count": 3,
+  "created_at": "2026-03-01T00:00:00.000Z",
+  "updated_at": "2026-03-01T00:00:00.000Z"
 }
 ```
-- `birthDate` y `city` pueden ser `null` si la persona no los agregó (la app muestra «Sin agregar»).
-- Fechas: `birthDate` y `memberSince` como `YYYY-MM-DD`.
-- `roles`: los mismos códigos de `api-auth.md`.
 
-Cada elemento de `/publicaciones` y `/guardados`:
+### Trazabilidad hacia `MyProfile`:
+- `fullName`: concatena `first_names` y `last_names`; si ambos son `null`, usa `username`.
+- `roles`: `[primary_role]` validado contra `ROLES`.
+- `email`: sólo el endpoint `/actors/me` devuelve `email` (para que el titular lo vea en su propio perfil). El endpoint público `/actors/:id` **jamás** incluye `email` por cumplimiento de la Ley 1581 de 2012.
+- `postCount`, `followerCount`, `followingCount`: mapeados desde `posts_count`, `followers_count` y `following_count`.
+
+## 3. Cuerpo de petición de `PATCH /actors/me`
+
 ```json
 {
-  "id": "p-1",
-  "category": "achievements",
-  "text": "Texto de la publicación",
-  "imageUrl": "https://…/foto.jpg",
-  "imageDescription": "Descripción de la foto para lectores de pantalla",
-  "createdAt": "2026-10-24T12:00:00Z",
-  "likeCount": 61,
-  "commentCount": 23,
-  "author": { "id": "u-123", "fullName": "Nombre Apellido", "roles": ["ACUDIENTE"], "photoUrl": null }
+  "first_names": "Lucía",
+  "last_names": "Gómez",
+  "short_bio": "Mamá cuidadora"
 }
 ```
-- `category`: `announcements` (Avisos), `questions` (Preguntas), `guides` (Guías) o `achievements` (Logros).
-- `imageUrl` e `imageDescription` en `null` si la publicación no tiene foto.
-- `createdAt` en ISO 8601 (la app muestra «hace 2 días»).
 
-## Errores
+## 4. Privacidad por defecto en Ajustes (`src/modules/settings`)
 
-| Caso | Qué hace la app |
-|---|---|
-| Sin conexión o tiempo agotado | «No hay conexión…» con botón Reintentar |
-| `401` | Cierra la sesión y vuelve al login (lo hace `auth`) |
-| Cualquier otro código | «No pudimos cargar tu perfil…» con Reintentar |
-
-## Privacidad (Ley 1581)
-
-Estos endpoints devuelven datos **de la propia persona** y solo deben responder a su token. Lo que ven los demás (perfil de otra persona, `5b`) depende de los interruptores de Ajustes y es otro endpoint.
-
-## Para probar antes de que exista el backend
-
-Ya están en el mock server de Postman del equipo: colección «ASISCONNECTION · Auth», carpeta **Perfil**, cada petición con su ejemplo «200 OK» (datos ficticios del mockup). La app no simula datos en el código.
+Conforme a la **Ley 1581 de 2012**, en `src/modules/settings/domain/models/PrivacySettings.ts` todos los interruptores de visibilidad de datos personales inician apagados (`false` = *«Solo yo»*):
+- `showEmail: false`
+- `showBirthDate: false`
+- `showCity: false`
+- `requireFollowApproval: false`

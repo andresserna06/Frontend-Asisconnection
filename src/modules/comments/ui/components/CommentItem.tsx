@@ -22,15 +22,20 @@ type CommentItemProps = {
   // Set for replies: they are indented and answering one stays in the same thread.
   threadId?: string;
   onReply: (threadId: string, authorName: string) => void;
+  onToggleLike?: (commentId: string) => void;
 };
 
-export function CommentItem({ comment, threadId, onReply }: CommentItemProps) {
+export function CommentItem({ comment, threadId, onReply, onToggleLike }: CommentItemProps) {
   const isReply = threadId !== undefined;
   const [isExpanded, setIsExpanded] = useState(false);
-  // Local only until the backend exposes likes for comments.
   const [isLiked, setIsLiked] = useState(false);
   const likeCount = comment.likeCount + (isLiked ? 1 : 0);
   const hasReplies = comment.replies.length > 0;
+
+  function handleLikePress() {
+    setIsLiked((value) => !value);
+    onToggleLike?.(comment.id);
+  }
 
   return (
     <View>
@@ -99,7 +104,7 @@ export function CommentItem({ comment, threadId, onReply }: CommentItemProps) {
           accessibilityLabel={COMMENTS_STRINGS.like}
           accessibilityHint={COMMENTS_STRINGS.likeSummary(likeCount)}
           accessibilityState={{ selected: isLiked }}
-          onPress={() => setIsLiked((value) => !value)}
+          onPress={handleLikePress}
           style={({ pressed }) => [styles.like, pressed && styles.pressed]}
         >
           <Icon
@@ -113,7 +118,13 @@ export function CommentItem({ comment, threadId, onReply }: CommentItemProps) {
 
       {isExpanded &&
         comment.replies.map((reply) => (
-          <CommentItem key={reply.id} comment={reply} threadId={comment.id} onReply={onReply} />
+          <CommentItem
+            key={reply.id}
+            comment={reply}
+            threadId={comment.id}
+            onReply={onReply}
+            onToggleLike={onToggleLike}
+          />
         ))}
     </View>
   );

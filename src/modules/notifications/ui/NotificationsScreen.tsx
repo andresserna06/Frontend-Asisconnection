@@ -1,18 +1,29 @@
-import { Alert, Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SIZE, SPACING } from '@/shared/theme';
 import { Icon } from '@/shared/ui/atoms/Icon';
 import { useCollapsingHeader } from '@/shared/hooks/useCollapsingHeader';
+import type { NotificationsService } from '../domain/NotificationsService';
+import { NOTIFICATION_PERIODS } from '../domain/models/NotificationItem';
+import { useNotifications } from '../application/useNotifications';
+import { useNotificationsService } from '../useNotificationsService';
 import { NOTIFICATION_STRINGS } from './strings';
 
 const HEADER_ROW_HEIGHT = 66;
 
-export function NotificationsScreen() {
+type NotificationsScreenProps = {
+  service?: NotificationsService;
+};
+
+export function NotificationsScreen({ service: serviceOverride }: NotificationsScreenProps = {}) {
   const insets = useSafeAreaInsets();
   const expandedHeaderHeight = insets.top + HEADER_ROW_HEIGHT;
   const { headerHeight, onScroll } = useCollapsingHeader(expandedHeaderHeight);
+  const defaultService = useNotificationsService();
+  const service = serviceOverride ?? defaultService;
+  const { grouped, hasMarkedAllRead, markAllRead } = useNotifications(service);
 
   return (
     <View style={styles.container}>
@@ -32,16 +43,17 @@ export function NotificationsScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={NOTIFICATION_STRINGS.markRead}
-            onPress={() =>
-              Alert.alert(
-                NOTIFICATION_STRINGS.markUnavailableTitle,
-                NOTIFICATION_STRINGS.markUnavailableMessage,
-              )
-            }
+            onPress={() => {
+              void markAllRead();
+            }}
             style={({ pressed }) => [styles.readButton, pressed && styles.pressed]}
           >
             <Icon name="check" size={SIZE.iconSmall} color={COLORS.onPrimary} />
-            <Text style={styles.readLabel}>{NOTIFICATION_STRINGS.markReadShort}</Text>
+            <Text style={styles.readLabel}>
+              {hasMarkedAllRead
+                ? NOTIFICATION_STRINGS.markedRead
+                : NOTIFICATION_STRINGS.markReadShort}
+            </Text>
           </Pressable>
         </View>
       </Animated.View>
@@ -52,16 +64,31 @@ export function NotificationsScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {NOTIFICATION_STRINGS.periods.map((period) => (
-          <View key={period} style={styles.period}>
-            <Text accessibilityRole="header" style={styles.periodTitle}>
-              {period}
-            </Text>
-            <View style={styles.emptyPeriod}>
-              <Text style={styles.emptyText}> {NOTIFICATION_STRINGS.empty}</Text>
+        {NOTIFICATION_PERIODS.map((period) => {
+          const periodItems = grouped[period];
+          return (
+            <View key={period} style={styles.period}>
+              <Text accessibilityRole="header" style={styles.periodTitle}>
+                {period}
+              </Text>
+              {periodItems.length === 0 ? (
+                <View style={styles.emptyPeriod}>
+                  <Text style={styles.emptyText}>{NOTIFICATION_STRINGS.empty}</Text>
+                </View>
+              ) : (
+                periodItems.map((item) => (
+                  <View
+                    key={item.id}
+                    style={[styles.notificationRow, !item.isRead && styles.unreadRow]}
+                  >
+                    <Text style={styles.notificationTitle}>{item.title}</Text>
+                    <Text style={styles.notificationBody}>{item.body}</Text>
+                  </View>
+                ))
+              )}
             </View>
-          </View>
-        ))}
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -146,5 +173,27 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontFamily: FONT_FAMILY.body,
     fontSize: FONT_SIZE.s14,
+  },
+  notificationRow: {
+    paddingHorizontal: SPACING.s20,
+    paddingVertical: SPACING.s12,
+    backgroundColor: COLORS.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    gap: SPACING.s4,
+  },
+  unreadRow: {
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.primary,
+  },
+  notificationTitle: {
+    color: COLORS.textTitle,
+    fontFamily: FONT_FAMILY.bodyBold,
+    fontSize: FONT_SIZE.s14,
+  },
+  notificationBody: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT_FAMILY.body,
+    fontSize: FONT_SIZE.s13,
   },
 });

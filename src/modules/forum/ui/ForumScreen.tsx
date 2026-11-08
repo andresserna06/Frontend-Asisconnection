@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
-import { useForumFeed } from '@/modules/forum/application/useForumFeed';
+import { useForumFeed, useTogglePostLike } from '@/modules/forum/application/useForumFeed';
 import type { ForumFilter } from '@/modules/forum/domain/models/ForumCategory';
 import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
 import { useCollapsingHeader } from '@/shared/hooks/useCollapsingHeader';
@@ -41,6 +41,7 @@ export function ForumScreen() {
   const { height: windowHeight } = useWindowDimensions();
   const [selectedFilter, setSelectedFilter] = useState<ForumFilter>('all');
   const feed = useForumFeed(selectedFilter);
+  const togglePostLike = useTogglePostLike();
   const expandedHeaderHeight = insets.top + HEADER_ROW_HEIGHT;
   const { headerHeight, onScroll: handleScroll } = useCollapsingHeader(expandedHeaderHeight);
   const postHeight = Math.max(
@@ -51,10 +52,14 @@ export function ForumScreen() {
   const renderPost = useCallback(
     ({ item }: { item: ForumPost }) => (
       <View style={[styles.postFrame, { height: postHeight }]}>
-        <ForumPostCard post={item} onCommentsPress={() => router.push(`/comments/${item.id}`)} />
+        <ForumPostCard
+          post={item}
+          onCommentsPress={() => router.push(`/comments/${item.id}`)}
+          onLikePress={() => togglePostLike(item.id)}
+        />
       </View>
     ),
-    [postHeight],
+    [postHeight, togglePostLike],
   );
 
   return (
