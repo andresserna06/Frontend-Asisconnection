@@ -3,24 +3,24 @@ import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { RoleBadge } from '@/modules/auth';
-import type { Post } from '@/shared/domain/models/Post';
+import { CATEGORIES } from '@/modules/posts';
 import { PROFILE_STRINGS } from '@/modules/profile/ui/strings';
+import type { Post } from '@/shared/domain/models/Post';
 import { formatRelativeTime } from '@/shared/lib/formatRelativeTime';
 import {
-  BORDER_WIDTH,
-  CATEGORY_COLORS,
-  COLORS,
-  FONT_FAMILY,
-  FONT_SIZE,
-  LINE_HEIGHT,
-  RADIUS,
-  SIZE,
-  SPACING,
+    BORDER_WIDTH,
+    CATEGORY_COLORS,
+    COLORS,
+    FONT_FAMILY,
+    FONT_SIZE,
+    LINE_HEIGHT,
+    RADIUS,
+    SIZE,
+    SPACING,
 } from '@/shared/theme';
+import { Avatar, getAvatarTone } from '@/shared/ui/atoms/Avatar';
+import { CategoryChip } from '@/shared/ui/atoms/CategoryChip';
 import { Icon } from '@/shared/ui/atoms/Icon';
-
-import { Avatar, getAvatarTone } from './Avatar';
-import { CategoryLabel } from './CategoryLabel';
 
 // The text is cut after three lines, as in the mockup.
 const MAX_TEXT_LINES = 3;
@@ -39,7 +39,11 @@ export const ProfilePostCard = memo(function ProfilePostCard({
   return (
     <View style={[styles.card, { borderLeftColor: CATEGORY_COLORS[post.category].main }]}>
       <View style={styles.row}>
-        <CategoryLabel category={post.category} />
+        <CategoryChip
+          label={CATEGORIES[post.category].label}
+          category={post.category}
+          variant="label"
+        />
         <Text style={styles.time}>{formatRelativeTime(post.createdAt)}</Text>
       </View>
 

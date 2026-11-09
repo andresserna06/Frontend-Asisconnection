@@ -23,14 +23,12 @@ const TONES: Record<AvatarTone, { background: string; text: string }> = {
 
 const AUTHOR_TONES: AvatarTone[] = ['achievement', 'secondary', 'info'];
 
-// Stable tone per person, so the same author always has the same color.
 export function getAvatarTone(id: string): AvatarTone {
   const sum = [...id].reduce((total, char) => total + char.charCodeAt(0), 0);
   return AUTHOR_TONES[sum % AUTHOR_TONES.length];
 }
 
-// Photo or initials. Decorative: the name next to it is what screen readers read.
-// Moves to shared/ui when a second module needs it (T-05).
+// Decorative: the adjacent name is what screen readers read.
 export function Avatar({ name, photoUrl, size, tone = 'accent' }: AvatarProps) {
   const sizeStyle = size === 'large' ? styles.large : styles.small;
   if (photoUrl !== null) {

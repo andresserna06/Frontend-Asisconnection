@@ -11,13 +11,10 @@ Cómo se usa:
 
 ## En orden de trabajo
 
-- [ ] **T-03b Probar el login y los módulos en Expo Go** contra el backend real en Render (`https://asisconection.onrender.com/v1`) tras redesplegar los nuevos endpoints del backend.
-- [ ] **T-05 Componentes base** (`shared/ui`): `Button`, `Input`, `Avatar`, `CategoryChip`, `ToggleRow`, `HeaderTeal` (con ocultar al hacer scroll).
-- [ ] **T-11 Perfil de otra persona** (seguir / siguiendo con `/actors/:actorId/connections`).
-- [ ] **T-15 Ícono y splash de la app.** Reemplazar los de la plantilla en `app.json` (`icon`, `adaptiveIcon`, `splash`) por los de ASISCO UP.
-
 ## Bloqueadas o por decidir
 
+- [!] **T-03b Probar el login y los módulos en Expo Go**. Render responde en categorías, foro, FAQ y directorio; falta probar el flujo autenticado desde Expo Go con una cuenta de prueba válida.
+- [!] **T-11 Perfil de otra persona**. Swagger solo expone `GET /actors/{id}`, `GET /connections` y `POST /connections`; no hay listado público de publicaciones por actor ni endpoint para dejar de seguir. La ruta del pendiente (`/actors/:actorId/connections`) no existe en el contrato desplegado.
 - [!] **Recuperar contraseña** (enlace visible en el login, sin función). El backend no tiene endpoint.
 - [!] **Qué roles entran a la app móvil.** Los roles están alineados con el backend (`ADMIN`, `MODERATOR`, `ACUDIENTE`, `VOLUNTARIO`, `INVERSOR`, `BENEFICIARIO`). Falta confirmar si `ADMIN` usa la app o solo el backend, y qué ve cada rol en el Foro.
 - [!] **Respuestas del Asistente.** Algunas respuestas de política son provisionales; confirmar con la fundación.
@@ -27,4 +24,5 @@ Cómo se usa:
 Lo que la app necesita y todavía no existe. Nadie edita el contrato del backend desde este repo.
 
 - [ ] Redesplegar en Render los cambios del backend (`GET /posts/:postId/comments`, `GET /actors/me/posts`, `GET /notifications`, `PATCH /notifications/read-all`, y campos enriquecidos en `AuthorBadgeDto` y `ActorProfileResponseDto`).
+- [ ] Añadir endpoint paginado de publicaciones aprobadas por actor público y definir operación para cancelar una conexión; requeridos para completar T-11 sin descargar y filtrar todo el feed.
 - [ ] Persistencia en servidor de publicaciones guardadas (`/actors/me/saved`) y preferencias de privacidad (Ajustes).

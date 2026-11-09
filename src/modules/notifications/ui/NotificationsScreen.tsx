@@ -1,13 +1,14 @@
-import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useCollapsingHeader } from '@/shared/hooks/useCollapsingHeader';
 import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SIZE, SPACING } from '@/shared/theme';
 import { Icon } from '@/shared/ui/atoms/Icon';
-import { useCollapsingHeader } from '@/shared/hooks/useCollapsingHeader';
+import { HeaderTeal } from '@/shared/ui/organisms/HeaderTeal';
+import { useNotifications } from '../application/useNotifications';
 import type { NotificationsService } from '../domain/NotificationsService';
 import { NOTIFICATION_PERIODS } from '../domain/models/NotificationItem';
-import { useNotifications } from '../application/useNotifications';
 import { useNotificationsService } from '../useNotificationsService';
 import { NOTIFICATION_STRINGS } from './strings';
 
@@ -27,8 +28,11 @@ export function NotificationsScreen({ service: serviceOverride }: NotificationsS
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.headerClip, { height: headerHeight }]}>
-        <View style={[styles.header, { paddingTop: insets.top + SPACING.s8 }]}>
+      <HeaderTeal
+        title={NOTIFICATION_STRINGS.header}
+        headerHeight={headerHeight}
+        paddingTop={insets.top + SPACING.s8}
+        leftAccessory={
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={NOTIFICATION_STRINGS.back}
@@ -37,9 +41,8 @@ export function NotificationsScreen({ service: serviceOverride }: NotificationsS
           >
             <Icon name="chevron-left" size={SIZE.icon} color={COLORS.onPrimary} />
           </Pressable>
-          <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
-            {NOTIFICATION_STRINGS.header}
-          </Text>
+        }
+        rightAccessory={
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={NOTIFICATION_STRINGS.markRead}
@@ -55,8 +58,8 @@ export function NotificationsScreen({ service: serviceOverride }: NotificationsS
                 : NOTIFICATION_STRINGS.markReadShort}
             </Text>
           </Pressable>
-        </View>
-      </Animated.View>
+        }
+      />
 
       <ScrollView
         onScroll={onScroll}
@@ -99,20 +102,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  headerClip: {
-    overflow: 'hidden',
-    backgroundColor: COLORS.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.s10,
-    paddingHorizontal: SPACING.s16,
-    paddingBottom: SPACING.s14,
-    backgroundColor: COLORS.primary,
-    borderBottomLeftRadius: RADIUS.cardLarge,
-    borderBottomRightRadius: RADIUS.cardLarge,
-  },
   backButton: {
     width: SIZE.touchTarget,
     height: SIZE.touchTarget,
@@ -120,12 +109,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: RADIUS.headerButton,
     backgroundColor: COLORS.headerButton,
-  },
-  title: {
-    flex: 1,
-    color: COLORS.onPrimary,
-    fontFamily: FONT_FAMILY.heading,
-    fontSize: FONT_SIZE.s21,
   },
   readButton: {
     minHeight: SIZE.touchTarget,

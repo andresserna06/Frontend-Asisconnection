@@ -15,7 +15,24 @@ Formato de cada entrada:
 
 ---
 
+## 2026-11-09 · T-15 Ícono y splash de ASISCO UP
+
+- Qué se hizo: se generaron recursos de marca en PNG: icono cuadrado, foreground/monocromo adaptive para Android y wordmark de splash. Se actualizaron `icon`, `ios.icon`, `android.adaptiveIcon`, `web.favicon` y el plugin `expo-splash-screen`.
+- Archivos principales: `app.json`, `assets/images/asisco-icon.png`, `assets/images/android-icon-foreground.png`, `assets/images/android-icon-monochrome.png`, `assets/images/asisco-splash.png`.
+- Decisiones: se usa fondo verde ASISCO (`#1F6B65`); se quitó el `backgroundImage` azul de plantilla para que Android use `backgroundColor`. El icono iOS ahora apunta al PNG cuadrado porque el directorio `.icon` anterior prevalecía sobre el icono raíz.
+- Cómo se probó: `expo config --type public` terminó sin errores; se parseó `app.json` y se verificó que las seis rutas configuradas existan. No se generó build nativo; Expo Go no representa el splash nativo.
+- Queda pendiente: T-03b (login en Expo Go con cuenta válida) y T-11 (endpoints públicos faltantes de conexiones/perfil).
+
+## 2026-11-09 · T-05 Componentes base compartidos
+
+- Qué se hizo: se reutilizaron los átomos `Button` e `Input` ya existentes y se incorporaron `Avatar`, `CategoryChip`, `ToggleRow` y `HeaderTeal` en `shared/ui`. Foro y Perfil ahora comparten Avatar/CategoryChip; Ajustes usa ToggleRow; Foro y Notificaciones usan HeaderTeal con el hook compartido de ocultamiento al desplazar.
+- Archivos principales: `src/shared/ui/atoms/{Avatar,CategoryChip}.tsx`, `src/shared/ui/molecules/ToggleRow.tsx`, `src/shared/ui/organisms/HeaderTeal.tsx`, pantallas de Foro, Perfil, Ajustes y Notificaciones.
+- Decisiones: CategoryChip expone variantes de filtro y etiqueta; la variante de filtro recibe la etiqueta accesible del consumidor para conservar «Filtrar por…». HeaderTeal recibe sus accesorios y la altura animada, dejando las acciones en cada pantalla.
+- Cómo se probó: `tsc --noEmit` sin errores, ESLint focalizado sin hallazgos, Jest de Ajustes (2/2) y Foro (2/2) pasaron. La suite de Notificaciones se inició, pero el terminal no devolvió un resultado final.
+- Queda pendiente: T-03b, probar login y módulos en Expo Go con una cuenta válida del equipo.
+
 ## 2026-11-08 · T-09, T-10b, T-12, T-13, T-14 Integración de Asistente, Ecosistema, Perfil, Ajustes y Notificaciones (Fase 4 — Bloques A, B y C)
+
 - Qué se hizo:
   - **Bloque A (Asistente y Ecosistema)**:
     - `assistantService` conectado a `GET /assistant/faqs` y `POST /assistant/escalate`, con hook `useAssistant` (selección de categoría, respuesta de regla + `disclaimer` legal y derivación a WhatsApp vía `Linking.openURL`) e integración en `AssistantScreen`.
@@ -36,6 +53,7 @@ Formato de cada entrada:
 - Queda pendiente: hacer `git push` del backend para que Render redespliegue los nuevos endpoints y probar en Expo Go (T-03b).
 
 ## 2026-11-07 · T-07 Comentarios y Reacciones del Foro (Fase 3b)
+
 - Qué se hizo:
   - Backend (`Asisconnection`): se agregó `GET /v1/posts/:postId/comments` paginado (solo comentarios `APPROVED` con `likes_count`) y se enriqueció `AuthorBadgeDto` con `actor_id` y `avatar_url` desde la tabla `actors`.
   - Frontend (`Frontend-Asisconnection`): se creó `commentsService` (`GET /posts/:postId/comments` con fallback a `recent_comments`, `POST /posts/:postId/comments` omitiendo `parent_id` cuando es raíz, y `POST /comments/:id/reactions`), se conectó en `AppCommentsProvider`, se retiró `demoCommentsRepository` y se conectaron las reacciones (`POST /posts/:postId/reactions`) en `ForumPostCard` y `ForumScreen`.
@@ -45,6 +63,7 @@ Formato de cada entrada:
 - Queda pendiente: redesplegar backend en Render y continuar con Fase 4 (Perfil, Asistente y Ecosistema).
 
 ## 2026-11-07 · T-06 y T-08 Conexión del Foro y Creación de Publicaciones (Fases 2 y 3a)
+
 - Qué se hizo:
   - Se creó `forumService` (`GET /categories` y `GET /posts` con filtro `categoryId`), se conectó en `AppForumProvider` usando `useAuthorizedHttpClient()` y se eliminó `demoForumRepository`.
   - Se creó `postsService` (`POST /posts` resolviendo el `category_id` desde `GET /categories`), `usePostsService`, `useCreatePost` y se conectó `NewPostScreen` mostrando el aviso de moderación (`PENDING` o `REJECTED`) e invalidando el feed del foro.
@@ -55,6 +74,7 @@ Formato de cada entrada:
 - Queda pendiente: probar flujo completo en Expo Go contra `https://asisconection.onrender.com/v1` y conectar reacciones/comentarios.
 
 ## 2026-11-07 · T-03c Login contra el backend AsisConexión (Fase 1)
+
 - Qué se hizo: `authService` usa el contrato de AsisConexión (`POST /auth/login` con `accept_consent`, respuesta `device_token` + `user`; perfil desde `GET /actors/me`; errores RFC 7807). Se quitó `logout` HTTP (el token es local). Casilla obligatoria de consentimiento (Ley 1581) en el login. Roles alineados al backend (ADMIN, MODERATOR, ACUDIENTE, VOLUNTARIO, INVERSOR, BENEFICIARIO). `User` ya no tiene `email` (no viene en `/actors/me`).
 - Archivos principales: `modules/auth/services/authService.ts`, `domain/AuthService.ts`, `domain/models/{User,LoginCredentials,Role}.ts`, `domain/validateLoginForm.ts`, `application/AuthProvider.tsx`, `ui/LoginScreen.tsx`, `ui/components/ConsentCheckbox.tsx`, `shared/domain/models/RoleCode.ts`.
 - Decisiones: `EXPO_PUBLIC_API_URL` debe incluir `/v1`. Un 502 (servicio de identidad caído) se muestra como error de red.
@@ -62,6 +82,7 @@ Formato de cada entrada:
 - Pendientes: validar diseño de la casilla de consentimiento.
 
 ## 2026-10-27 · T-10b y T-14 Integración del Perfil y Ecosistema
+
 - Qué se hizo:
   - Se resolvieron los conflictos del merge preservando la pantalla completa de Perfil integrada desde `main`; `(tabs)/profile` y la pestaña del footer llegan a `ProfileScreen` a través del `index.ts` público del módulo.
   - Se implementó Ecosistema según `03-Ecosistema`: cinco tarjetas con íconos, descripciones, tokens del tema y layout adaptable. El indicador de enlace es visual; no hay destinos inventados ni navegación externa.
@@ -75,6 +96,7 @@ Formato de cada entrada:
 - Queda pendiente: header verde y Ajustes para Perfil (T-10b/T-12); la integración de endpoints de Perfil y publicaciones cuando backend los publique; configurar destinos externos si el equipo define sus URL.
 
 ## 2026-10-26 · T-10 Perfil propio (contenido y conexión)
+
 - Qué se hizo: pantalla «Mi perfil» según `05-Perfil` y `05c-Perfil-guardados`, sin el header verde ni la barra inferior (los hace otro compañero en T-04/T-05; queda T-10b).
   - **posts/domain**: modelos `Post` (con `PostAuthor`) y `Category` (`CATEGORIES` con sus etiquetas), exportados por `@/modules/posts` para que el Foro los reutilice.
   - **profile/domain**: `MyProfile`, `ProfileError` (`network`, `unknown`) y la interfaz `ProfileService`.
@@ -96,6 +118,7 @@ Formato de cada entrada:
 - Queda pendiente: T-10b (header, barra inferior y backend) y los endpoints en «Pendiente del backend».
 
 ## 2026-10-26 · Capa services y cliente HTTP compartido
+
 - Qué se hizo:
   - La capa `data/` de cada módulo pasa a llamarse **`services/`** (pedido del equipo: nombre más familiar). En auth: `httpAuthRepository` → `services/authService.ts` (`createAuthService`) y la interfaz `AuthRepository` → `domain/AuthService.ts` (`AuthService`); `secureTokenStorage` se mueve a `services/`.
   - **`shared/lib/http`**: `createHttpClient(baseUrl)` y `HttpError` (`status` null si no hubo respuesta, más el cuerpo del error). Es el único lugar que llama a `fetch` y maneja URL base, timeout de 30 s, JSON y `Authorization: Bearer`. Los services lo reciben y solo conocen sus endpoints y sus errores de dominio.
@@ -107,6 +130,7 @@ Formato de cada entrada:
 - Queda pendiente: nada nuevo.
 
 ## 2026-10-27 · Integración de auth services y Foro
+
 - Qué se hizo: `AppAuthProvider` ahora compone `createHttpClient(API_URL)` y `createAuthService(client)` y los inyecta al `AuthProvider`, validando `EXPO_PUBLIC_API_URL` al montar. El Foro dejó de leer el token de sesión directamente; su contrato recibe solo el filtro y queda preparado para que el futuro service use `useAuthorizedHttpClient()` (incluye cierre de sesión en 401). Se eliminaron referencias viejas a `httpAuthRepository`/`AuthRepository` del código fuente.
 - Archivos principales: `src/modules/auth/AppAuthProvider.tsx`, `src/modules/auth/application/AuthProvider.tsx`, `src/modules/forum/domain/ForumRepository.ts`, `src/modules/forum/application/useForumFeed.ts` y pruebas del Foro.
 - Decisiones (y por qué): no se conectó un endpoint de publicaciones porque el backend aún no ha compartido su contrato. La URL local de Postman se comprobó sin imprimir su valor. El feed conserva el estado de servicio no configurado y no presenta datos inventados.

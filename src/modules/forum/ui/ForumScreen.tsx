@@ -1,31 +1,31 @@
+import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
-  Animated,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
+    ActivityIndicator,
+    FlatList,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
+    useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 
 import { useForumFeed, useTogglePostLike } from '@/modules/forum/application/useForumFeed';
 import type { ForumFilter } from '@/modules/forum/domain/models/ForumCategory';
 import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
 import { useCollapsingHeader } from '@/shared/hooks/useCollapsingHeader';
 import {
-  COLORS,
-  FONT_FAMILY,
-  FONT_SIZE,
-  LETTER_SPACING,
-  RADIUS,
-  SIZE,
-  SPACING,
+    COLORS,
+    FONT_FAMILY,
+    FONT_SIZE,
+    LETTER_SPACING,
+    RADIUS,
+    SIZE,
+    SPACING,
 } from '@/shared/theme';
 import { Icon } from '@/shared/ui/atoms/Icon';
+import { HeaderTeal } from '@/shared/ui/organisms/HeaderTeal';
 
 import { ForumPostCard } from './components/ForumPostCard';
 import { TopicFilters } from './components/TopicFilters';
@@ -64,8 +64,12 @@ export function ForumScreen() {
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.headerClip, { height: headerHeight }]}>
-        <View style={[styles.header, { paddingTop: insets.top }]}>
+      <HeaderTeal
+        title={FORUM_STRINGS.title}
+        headerHeight={headerHeight}
+        paddingTop={insets.top}
+        titleStyle={{ fontSize: FONT_SIZE.s20, letterSpacing: LETTER_SPACING.wide / 4 }}
+        leftAccessory={
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={FORUM_STRINGS.createPost}
@@ -78,9 +82,8 @@ export function ForumScreen() {
           >
             <Icon name="plus" size={SIZE.icon} color={COLORS.text} />
           </Pressable>
-          <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
-            {FORUM_STRINGS.title}
-          </Text>
+        }
+        rightAccessory={
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={FORUM_STRINGS.notifications}
@@ -93,8 +96,8 @@ export function ForumScreen() {
           >
             <Icon name="bell" size={SIZE.icon} color={COLORS.onPrimary} />
           </Pressable>
-        </View>
-      </Animated.View>
+        }
+      />
 
       <TopicFilters selected={selectedFilter} onSelect={setSelectedFilter} />
 
@@ -193,19 +196,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  headerClip: {
-    overflow: 'hidden',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.s10,
-    paddingHorizontal: SPACING.s16,
-    paddingBottom: SPACING.s14,
-    backgroundColor: COLORS.primary,
-    borderBottomLeftRadius: RADIUS.cardLarge,
-    borderBottomRightRadius: RADIUS.cardLarge,
-  },
   headerButton: {
     width: SIZE.touchTarget,
     height: SIZE.touchTarget,
@@ -222,14 +212,6 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.75,
-  },
-  title: {
-    flex: 1,
-    textAlign: 'center',
-    fontFamily: FONT_FAMILY.heading,
-    fontSize: FONT_SIZE.s20,
-    letterSpacing: LETTER_SPACING.wide / 4,
-    color: COLORS.onPrimary,
   },
   feedContent: {
     flexGrow: 1,

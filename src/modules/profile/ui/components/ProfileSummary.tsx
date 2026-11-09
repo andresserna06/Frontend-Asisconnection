@@ -2,20 +2,19 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { RoleBadge, type RoleCode } from '@/modules/auth';
 import { PROFILE_STRINGS } from '@/modules/profile/ui/strings';
-import { Icon } from '@/shared/ui/atoms/Icon';
 import {
-  BORDER_WIDTH,
-  COLORS,
-  FONT_FAMILY,
-  FONT_SIZE,
-  LINE_HEIGHT,
-  OPACITY,
-  RADIUS,
-  SIZE,
-  SPACING,
+    BORDER_WIDTH,
+    COLORS,
+    FONT_FAMILY,
+    FONT_SIZE,
+    LINE_HEIGHT,
+    OPACITY,
+    RADIUS,
+    SIZE,
+    SPACING,
 } from '@/shared/theme';
-
-import { Avatar } from './Avatar';
+import { Avatar } from '@/shared/ui/atoms/Avatar';
+import { Icon } from '@/shared/ui/atoms/Icon';
 
 // Extra touch area so the 32 px camera button reaches 44 px.
 const CAMERA_HIT_SLOP = (SIZE.touchTarget - SIZE.avatarAction) / 2;

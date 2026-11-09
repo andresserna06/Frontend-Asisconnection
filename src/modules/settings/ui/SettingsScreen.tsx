@@ -1,43 +1,14 @@
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/modules/auth';
 import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SIZE, SPACING } from '@/shared/theme';
 import { Icon } from '@/shared/ui/atoms/Icon';
+import { ToggleRow } from '@/shared/ui/molecules/ToggleRow';
 import { usePrivacySettings } from '../application/usePrivacySettings';
 import type { PrivacySettings } from '../domain/models/PrivacySettings';
 import { SETTINGS_STRINGS } from './strings';
-
-type ToggleRowProps = {
-  label: string;
-  isEnabled: boolean;
-  onToggle: () => void;
-};
-
-function ToggleRow({ label, isEnabled, onToggle }: ToggleRowProps) {
-  return (
-    <Pressable
-      accessibilityRole="switch"
-      accessibilityLabel={label}
-      accessibilityState={{ checked: isEnabled }}
-      onPress={onToggle}
-      style={styles.toggleRow}
-    >
-      <View style={styles.toggleTextColumn}>
-        <Text style={styles.toggleLabel}>{label}</Text>
-        <Text style={styles.toggleState}>
-          {isEnabled ? SETTINGS_STRINGS.visibleToCommunity : SETTINGS_STRINGS.onlyMe}
-        </Text>
-      </View>
-      <Switch
-        value={isEnabled}
-        onValueChange={onToggle}
-        trackColor={{ false: COLORS.border, true: COLORS.primary }}
-      />
-    </Pressable>
-  );
-}
 
 type SettingsScreenProps = {
   initialSettings?: PrivacySettings;
@@ -88,16 +59,25 @@ export function SettingsScreen({ initialSettings }: SettingsScreenProps = {}) {
           <ToggleRow
             label={SETTINGS_STRINGS.emailLabel}
             isEnabled={settings.showEmail}
+            valueLabel={
+              settings.showEmail ? SETTINGS_STRINGS.visibleToCommunity : SETTINGS_STRINGS.onlyMe
+            }
             onToggle={() => toggleSetting('showEmail')}
           />
           <ToggleRow
             label={SETTINGS_STRINGS.birthDateLabel}
             isEnabled={settings.showBirthDate}
+            valueLabel={
+              settings.showBirthDate ? SETTINGS_STRINGS.visibleToCommunity : SETTINGS_STRINGS.onlyMe
+            }
             onToggle={() => toggleSetting('showBirthDate')}
           />
           <ToggleRow
             label={SETTINGS_STRINGS.cityLabel}
             isEnabled={settings.showCity}
+            valueLabel={
+              settings.showCity ? SETTINGS_STRINGS.visibleToCommunity : SETTINGS_STRINGS.onlyMe
+            }
             onToggle={() => toggleSetting('showCity')}
           />
         </View>
@@ -109,6 +89,11 @@ export function SettingsScreen({ initialSettings }: SettingsScreenProps = {}) {
           <ToggleRow
             label={SETTINGS_STRINGS.requireApprovalLabel}
             isEnabled={settings.requireFollowApproval}
+            valueLabel={
+              settings.requireFollowApproval
+                ? SETTINGS_STRINGS.visibleToCommunity
+                : SETTINGS_STRINGS.onlyMe
+            }
             onToggle={() => toggleSetting('requireFollowApproval')}
           />
         </View>
@@ -178,27 +163,6 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontFamily: FONT_FAMILY.body,
     fontSize: FONT_SIZE.s14,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: SIZE.touchTarget,
-    gap: SPACING.s12,
-  },
-  toggleTextColumn: {
-    flex: 1,
-    gap: SPACING.s2,
-  },
-  toggleLabel: {
-    color: COLORS.text,
-    fontFamily: FONT_FAMILY.bodyBold,
-    fontSize: FONT_SIZE.s14,
-  },
-  toggleState: {
-    color: COLORS.textSecondary,
-    fontFamily: FONT_FAMILY.body,
-    fontSize: FONT_SIZE.s12,
   },
   signOutButton: {
     minHeight: SIZE.touchTarget,
