@@ -1,4 +1,7 @@
-import type { ForumRepository } from '@/modules/forum/domain/ForumRepository';
+import type {
+  ForumRepository,
+  ModerationPendingItem,
+} from '@/modules/forum/domain/ForumRepository';
 import type { ForumCategory } from '@/modules/forum/domain/models/ForumCategory';
 import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
 import { toCategoryCode } from '@/shared/domain/models/CategoryCode';
@@ -47,6 +50,18 @@ type ToggleReactionResponse = {
   post_id: string;
   type: string;
   active: boolean;
+};
+
+type ModerationPendingItemResponse = {
+  id: string;
+  item_type: 'POST' | 'COMMENT';
+  content: string;
+  author: AuthorBadgeResponse;
+  created_at: string;
+};
+
+type ModerationPendingPageResponse = {
+  data: ModerationPendingItemResponse[];
 };
 
 const ROLE_LABELS: Record<string, string> = {
@@ -190,6 +205,35 @@ export function createForumService(client: HttpClient): ForumRepository {
           body: { type: 'LIKE' },
         });
         return result.active;
+      } catch (error) {
+        throw toForumError(error);
+      }
+    },
+
+    async listPendingModeration(): Promise<ModerationPendingItem[]> {
+      try {
+        const page = await client.request<ModerationPendingPageResponse>(
+          '/admin/moderation/pending?page=1&limit=50',
+        );
+        return page.data.map((item) => ({
+          id: item.id,
+          itemType: item.item_type,
+          content: item.content,
+          authorDisplayName: item.author.display_name,
+          createdAt: item.created_at,
+        }));
+      } catch (error) {
+        throw toForumError(error);
+      }
+    },
+
+    async moderateItem(id, itemType, status) {
+      try {
+        const resource = itemType === 'POST' ? 'posts' : 'comments';
+        await client.request(`/admin/moderation/${resource}/${id}/status`, {
+          method: 'PATCH',
+          body: { status },
+        });
       } catch (error) {
         throw toForumError(error);
       }

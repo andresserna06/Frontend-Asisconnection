@@ -8,8 +8,13 @@ import {
   type ReactNode,
 } from 'react';
 
-import type { AuthService, TokenStorage } from '@/modules/auth/domain/AuthService';
-import { toAuthError } from '@/modules/auth/domain/models/AuthError';
+import type {
+  AnonymousCredentials,
+  AuthService,
+  RegisterCredentials,
+  TokenStorage,
+} from '@/modules/auth/domain/AuthService';
+import { AuthError, toAuthError } from '@/modules/auth/domain/models/AuthError';
 import type { LoginCredentials } from '@/modules/auth/domain/models/LoginCredentials';
 import type { Session } from '@/modules/auth/domain/models/Session';
 import type { User } from '@/modules/auth/domain/models/User';
@@ -24,6 +29,8 @@ type AuthContextValue = {
   user: User | null;
   // Rejects with AuthError; the session only changes on success.
   signIn(credentials: LoginCredentials): Promise<void>;
+  signInAnonymous?(credentials: AnonymousCredentials): Promise<void>;
+  register?(credentials: RegisterCredentials): Promise<void>;
   // Always ends signed out, even if the backend call fails.
   signOut(): Promise<void>;
   // HTTP client for the other modules' services: sends the session token and signs out
@@ -76,11 +83,38 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
     };
   }, [service, storage]);
 
-  async function signIn(credentials: LoginCredentials) {
-    const session = await service.login(credentials);
-    await storage.saveToken(session.token);
-    setState({ status: 'signedIn', session });
-  }
+  const signIn = useCallback(
+    async (credentials: LoginCredentials) => {
+      const session = await service.login(credentials);
+      await storage.saveToken(session.token);
+      setState({ status: 'signedIn', session });
+    },
+    [service, storage],
+  );
+
+  const signInAnonymous = useCallback(
+    async (credentials: AnonymousCredentials) => {
+      if (!service.loginAnonymous) {
+        throw new AuthError('unknown');
+      }
+      const session = await service.loginAnonymous(credentials);
+      await storage.saveToken(session.token);
+      setState({ status: 'signedIn', session });
+    },
+    [service, storage],
+  );
+
+  const register = useCallback(
+    async (credentials: RegisterCredentials) => {
+      if (!service.register) {
+        throw new AuthError('unknown');
+      }
+      const session = await service.register(credentials);
+      await storage.saveToken(session.token);
+      setState({ status: 'signedIn', session });
+    },
+    [service, storage],
+  );
 
   // The device token is local (no logout endpoint): signing out only forgets it.
   const signOut = useCallback(async () => {
@@ -109,6 +143,8 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
     status: state.status,
     user: state.status === 'signedIn' ? state.session.user : null,
     signIn,
+    signInAnonymous,
+    register,
     signOut,
     authorizedClient,
   };

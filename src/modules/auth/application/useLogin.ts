@@ -7,7 +7,7 @@ import { type LoginFormIssues, validateLoginForm } from '@/modules/auth/domain/v
 import { useAuth } from './AuthProvider';
 
 export function useLogin() {
-  const { signIn } = useAuth();
+  const { signIn, signInAnonymous } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formIssues, setFormIssues] = useState<LoginFormIssues>({});
   const [error, setError] = useState<AuthError | null>(null);
@@ -37,11 +37,35 @@ export function useLogin() {
     }
   }
 
+  async function submitAnonymous(acceptConsent: boolean, nickname?: string) {
+    if (isSubmittingRef.current || !signInAnonymous) {
+      return;
+    }
+    if (!acceptConsent) {
+      setFormIssues({ acceptConsent: 'consentRequired' });
+      setError(null);
+      return;
+    }
+
+    setFormIssues({});
+    setError(null);
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+    try {
+      await signInAnonymous({ acceptConsent, nickname });
+    } catch (caught) {
+      setError(toAuthError(caught));
+    } finally {
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
+    }
+  }
+
   // Called when the user edits a field: hide the feedback that no longer applies.
   function clearFeedback(field: LoginField) {
     setFormIssues((current) => ({ ...current, [field]: undefined }));
     setError(null);
   }
 
-  return { submit, clearFeedback, isSubmitting, formIssues, error };
+  return { submit, submitAnonymous, clearFeedback, isSubmitting, formIssues, error };
 }

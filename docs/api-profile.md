@@ -8,8 +8,10 @@ Todas las rutas requieren `Authorization: Bearer <device_token>` inyectado autom
 
 | Método y ruta | Uso en la app | Respuesta (`200 OK`) | Modelo en el Frontend |
 |---|---|---|---|
-| `GET /actors/me` | Carga el perfil propio (nombre, rol, avatar, correo del titular y contadores de actividad). | `ActorProfileResponseDto` | `MyProfile` (`profile/domain/models/MyProfile.ts`) |
-| `PATCH /actors/me` | Actualiza nombres, apellidos, avatar o biografía corta del actor autenticado. | `ActorProfileResponseDto` | `MyProfile` |
+| `GET /actors/me` | Carga el perfil propio (nombre, rol, avatar, correo, fecha de nacimiento, ciudad, switches de privacidad y contadores de actividad). | `ActorProfileResponseDto` | `MyProfile` (`profile/domain/models/MyProfile.ts`) |
+| `PATCH /actors/me` | Actualiza nombres, apellidos, avatar, biografía corta, fecha de nacimiento, ciudad o switches de privacidad Ley 1581 del actor autenticado. | `ActorProfileResponseDto` | `MyProfile` / `PrivacySettings` |
+| `GET /actors/:id` | Carga el perfil público de otro miembro de la comunidad (filtrando `email`, `birth_date` y `city` según los switches de privacidad del titular). | `ActorProfileResponseDto` | `MyProfile` (`usePublicProfile`) |
+| `POST /connections` | Solicita o establece conexión (`{ receiver_actor_id }`) con otro miembro. | `ActorConnectionResponseDto` | `ActorConnectionSummary` (`usePublicProfile.follow`) |
 | `GET /actors/me/posts?page=1&limit=20` | Lista las publicaciones propias con `status = APPROVED` ordenadas de la más reciente a la más antigua. | `PostsPageDto` (`{ data, meta }`) | `Post[]` (`shared/domain/models/Post.ts`) |
 | `GET /categories?page=1&limit=50` | Traduce el `category_id` (UUID) de cada publicación propia a `CategoryCode` (`announcements`, `questions`, `guides`, `achievements`). | `CategoriesPageDto` (`{ data, meta }`) | `Record<string, CategoryCode>` |
 
@@ -26,6 +28,12 @@ Todas las rutas requieren `Authorization: Bearer <device_token>` inyectado autom
   "last_names": "Prueba",
   "avatar_url": "https://cdn.asisco.org/avatar.jpg",
   "short_bio": "Acudiente de la fundación",
+  "birth_date": "1990-05-14",
+  "city": "Manizales",
+  "show_email": false,
+  "show_birth_date": false,
+  "show_city": false,
+  "require_follow_approval": false,
   "posts_count": 2,
   "followers_count": 5,
   "following_count": 3,
@@ -37,7 +45,7 @@ Todas las rutas requieren `Authorization: Bearer <device_token>` inyectado autom
 ### Trazabilidad hacia `MyProfile`:
 - `fullName`: concatena `first_names` y `last_names`; si ambos son `null`, usa `username`.
 - `roles`: `[primary_role]` validado contra `ROLES`.
-- `email`: sólo el endpoint `/actors/me` devuelve `email` (para que el titular lo vea en su propio perfil). El endpoint público `/actors/:id` **jamás** incluye `email` por cumplimiento de la Ley 1581 de 2012.
+- `email`, `birthDate`, `city`: `/actors/me` siempre los devuelve al titular junto con sus banderas `show_email`, `show_birth_date` y `show_city`. En cambio, `/actors/:id` **oculta (`null`)** cada campo cuyo switch de privacidad esté en `false` (cumplimiento Ley 1581 de 2012).
 - `postCount`, `followerCount`, `followingCount`: mapeados desde `posts_count`, `followers_count` y `following_count`.
 
 ## 3. Cuerpo de petición de `PATCH /actors/me`
@@ -46,14 +54,20 @@ Todas las rutas requieren `Authorization: Bearer <device_token>` inyectado autom
 {
   "first_names": "Lucía",
   "last_names": "Gómez",
-  "short_bio": "Mamá cuidadora"
+  "short_bio": "Mamá cuidadora",
+  "birth_date": "1990-05-14",
+  "city": "Manizales",
+  "show_email": false,
+  "show_birth_date": false,
+  "show_city": true,
+  "require_follow_approval": false
 }
 ```
 
-## 4. Privacidad por defecto en Ajustes (`src/modules/settings`)
+## 4. Privacidad en Ajustes (`src/modules/settings`)
 
-Conforme a la **Ley 1581 de 2012**, en `src/modules/settings/domain/models/PrivacySettings.ts` todos los interruptores de visibilidad de datos personales inician apagados (`false` = *«Solo yo»*):
-- `showEmail: false`
-- `showBirthDate: false`
-- `showCity: false`
-- `requireFollowApproval: false`
+Conforme a la **Ley 1581 de 2012**, todos los interruptores de visibilidad de datos personales inician apagados (`false` = *«Solo yo»*) y se sincronizan con el backend mediante `settingsService` (`GET /actors/me` y `PATCH /actors/me`):
+- `showEmail: false` (`show_email`)
+- `showBirthDate: false` (`show_birth_date`)
+- `showCity: false` (`show_city`)
+- `requireFollowApproval: false` (`require_follow_approval`)

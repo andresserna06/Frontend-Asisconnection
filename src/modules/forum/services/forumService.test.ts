@@ -141,4 +141,38 @@ describe('createForumService', () => {
     expect(init?.method).toBe('POST');
     expect(JSON.parse(String(init?.body))).toEqual({ type: 'LIKE' });
   });
+
+  it('lists pending moderation items and approves or rejects them via /admin/moderation', async () => {
+    const service = createForumService(createHttpClient(BASE_URL));
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse(200, {
+          data: [
+            {
+              id: 'pending-1',
+              item_type: 'POST',
+              content: 'Publicación en cola',
+              author: { display_name: 'Lucía', role_label: 'ACUDIENTE', is_registered: true },
+              created_at: '2026-11-08T12:00:00.000Z',
+            },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse(200, { id: 'pending-1', status: 'APPROVED' }));
+
+    const pending = await service.listPendingModeration?.();
+    expect(pending).toEqual([
+      {
+        id: 'pending-1',
+        itemType: 'POST',
+        content: 'Publicación en cola',
+        authorDisplayName: 'Lucía',
+        createdAt: '2026-11-08T12:00:00.000Z',
+      },
+    ]);
+
+    await service.moderateItem?.('pending-1', 'POST', 'APPROVED');
+    expect(fetchMock.mock.calls[1][0]).toBe(`${BASE_URL}/admin/moderation/posts/pending-1/status`);
+    expect(fetchMock.mock.calls[1][1]?.method).toBe('PATCH');
+  });
 });

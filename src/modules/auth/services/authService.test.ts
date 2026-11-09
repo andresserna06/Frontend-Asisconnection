@@ -114,6 +114,35 @@ describe('createAuthService', () => {
     await expectAuthError(service.getProfile('tok'), 'forbidden');
   });
 
+  it('restores local_role MODERATOR from /actors/me and anonymous sessions from /sessions/me', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(200, {
+        id: 'a1',
+        username: 'maria',
+        primary_role: 'VOLUNTARIO',
+        local_role: 'MODERATOR',
+      }),
+    );
+    await expect(service.getProfile('tok')).resolves.toEqual({
+      username: 'maria',
+      roles: ['MODERATOR', 'VOLUNTARIO'],
+    });
+
+    fetchMock.mockResolvedValueOnce(jsonResponse(403, {})).mockResolvedValueOnce(
+      jsonResponse(200, {
+        is_anonymous: true,
+        display_name: 'Invitado Feliz',
+        rol: 'BENEFICIARIO',
+        external_roles: [],
+        local_role: null,
+      }),
+    );
+    await expect(service.getProfile('anon-tok')).resolves.toEqual({
+      username: 'Invitado Feliz',
+      roles: ['BENEFICIARIO'],
+    });
+  });
+
   it('registers a user via POST /auth/registro and returns the device session', async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse(201, {

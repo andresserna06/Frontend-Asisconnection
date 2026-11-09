@@ -15,6 +15,20 @@ Formato de cada entrada:
 
 ---
 
+## 2026-11-08 · Alineación Total de Modelo de Privacidad, Moderación, Perfil Público y Ecosistema (Backend + Frontend)
+- Qué se hizo:
+  - **Backend (`Asisconnection`)**:
+    - Se completó el seed `redirection-links.seed.ts` y `RedirectionLinkRepository.onModuleInit` con los 5 proyectos oficiales del ecosistema (`SUMA 21`, `AULA UP`, `SAGA-UP`, `SON UP`, `LUPE`).
+    - Se amplió la entidad `Actor`, `ActorProfileResponseDto`, `UpdateActorProfileDto`, `ActorsService` y `ActorRepository` (con migración `1761510000000-AddActorPrivacyAndProfileFields.ts` y `ALTER TABLE IF NOT EXISTS` automático al iniciar) con `birth_date`, `city`, `show_email`, `show_birth_date`, `show_city` y `require_follow_approval`.
+    - `GET /v1/actors/:id` respeta ahora la configuración Ley 1581 de cada usuario: solo expone `email`, `birth_date` o `city` a terceros si el titular activó el interruptor correspondiente.
+  - **Frontend (`Frontend-Asisconnection`)**:
+    - `AuthProvider` y `useLogin` exponen `signInAnonymous`, `register` y `submitAnonymous`.
+    - `ProfileService` y `profileService.ts` conectan `birthDate`, `city`, `getPublicProfile` (`GET /actors/:id`) y `followActor` (`POST /connections`), además del nuevo hook `usePublicProfile`.
+    - `SettingsScreen` y `usePrivacySettings` persisten los interruptores de privacidad en el servidor mediante `settingsService` (`GET /actors/me` y `PATCH /actors/me`).
+    - `ForumRepository`, `forumService.ts` y el nuevo hook `useModerationQueue` implementan el listado y aprobación/rechazo de la cola de moderación (`GET /admin/moderation/pending`, `PATCH /admin/moderation/posts|comments/:id/status`).
+    - Se estructuró en `docs/PENDIENTES.md` la hoja de ruta detallada de tareas de UI/Interfaz (`UI-01` a `UI-09`) para el equipo de diseño/frontend.
+- Cómo se probó: `tsc --noEmit` (0 errores), `eslint src --max-warnings=0` (0 errores) y `jest` en frontend (27 suites, 110/110 tests) y backend (`npm run build`, `npm run lint`, `npm test` y `npm run test:e2e`).
+
 ## 2026-11-08 · T-09, T-10b, T-12, T-13, T-14 Integración de Asistente, Ecosistema, Perfil, Ajustes y Notificaciones (Fase 4 — Bloques A, B y C)
 - Qué se hizo:
   - **Bloque A (Asistente y Ecosistema)**:

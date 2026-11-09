@@ -6,12 +6,25 @@ export type UpdateProfileInput = {
   lastNames?: string;
   avatarUrl?: string | null;
   shortBio?: string | null;
+  birthDate?: string;
+  city?: string;
+  showEmail?: boolean;
+  showBirthDate?: boolean;
+  showCity?: boolean;
+  requireFollowApproval?: boolean;
+};
+
+export type ActorConnectionResult = {
+  id: string;
+  status: 'PENDING' | 'ACCEPTED' | 'BLOCKED';
 };
 
 // Contract implemented by the services layer (HTTP). Methods reject with ProfileError.
 export type ProfileService = {
   getMyProfile(): Promise<MyProfile>;
   updateMyProfile?(input: UpdateProfileInput): Promise<MyProfile>;
+  getPublicProfile?(actorId: string): Promise<MyProfile>;
+  followActor?(actorId: string): Promise<ActorConnectionResult>;
   // Newest first.
   getMyPosts(): Promise<Post[]>;
   // Private: never shown to anyone else.
