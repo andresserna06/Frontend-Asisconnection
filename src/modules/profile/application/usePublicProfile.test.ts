@@ -35,7 +35,6 @@ const SAMPLE_PUBLIC_PROFILE = {
   postCount: 4,
   followerCount: 10,
   followingCount: 6,
-  savedCount: 0,
 };
 
 describe('usePublicProfile', () => {
@@ -43,7 +42,6 @@ describe('usePublicProfile', () => {
     const service: ProfileService = {
       getMyProfile: jest.fn(),
       getMyPosts: jest.fn(),
-      getMySavedPosts: jest.fn(),
       getPublicProfile: jest.fn().mockResolvedValue(SAMPLE_PUBLIC_PROFILE),
       getActorPosts: jest.fn().mockResolvedValue([SAMPLE_POST]),
       followActor: jest.fn().mockResolvedValue({ id: 'conn-1', status: 'ACCEPTED' }),
@@ -76,7 +74,6 @@ describe('usePublicProfile', () => {
     const service: ProfileService = {
       getMyProfile: jest.fn(),
       getMyPosts: jest.fn(),
-      getMySavedPosts: jest.fn(),
       getPublicProfile: jest.fn().mockResolvedValue(SAMPLE_PUBLIC_PROFILE),
       followActor: jest.fn().mockRejectedValue(new ProfileError('network')),
     };

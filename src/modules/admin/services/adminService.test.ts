@@ -29,6 +29,26 @@ const pendingPage = {
 };
 
 describe('adminService', () => {
+  it('recognizes the author of a request when the queue omits the actor id', async () => {
+    const request = jest.fn(async () => ({
+      data: [{ id: 'post-1', content: 'Mía', author: { display_name: 'maria', actor_id: 'a-1' } }],
+    }));
+    const service = createAdminService({ request } as unknown as HttpClient);
+
+    await expect(
+      service.getRemovalTarget?.({
+        id: 'req-1',
+        itemType: 'COMMENT',
+        content: '#SOLICITUD-ELIMINAR publicacion',
+        imageUrl: null,
+        postId: 'post-1',
+        removalRequest: { kind: 'post' },
+        author: { actorId: null, displayName: 'maria', roleLabel: 'ACUDIENTE', isRegistered: true },
+        createdAt: '2026-11-09T12:00:00.000Z',
+      }),
+    ).resolves.toEqual({ content: 'Mía', isRequestedByAuthor: true });
+  });
+
   it('loads and maps a filtered pending moderation page', async () => {
     const client: HttpClient = {
       request: jest.fn().mockResolvedValue(pendingPage),
@@ -42,7 +62,10 @@ describe('adminService', () => {
           itemType: 'POST',
           content: 'Contenido para revisar',
           imageUrl: null,
+          postId: null,
+          removalRequest: null,
           author: {
+            actorId: null,
             displayName: 'Persona de prueba',
             roleLabel: 'ACUDIENTE',
             isRegistered: true,

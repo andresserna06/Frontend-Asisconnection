@@ -20,7 +20,6 @@ export const TEST_PROFILE: MyProfile = {
   postCount: 1,
   followerCount: 38,
   followingCount: 21,
-  savedCount: 1,
 };
 
 export const TEST_POST: Post = {
@@ -35,25 +34,12 @@ export const TEST_POST: Post = {
   author: { id: 'user-1', fullName: 'Persona Prueba', roles: ['ACUDIENTE'], photoUrl: null },
 };
 
-export const TEST_SAVED_POST: Post = {
-  id: 'post-2',
-  category: 'guides',
-  text: 'Texto de una publicación guardada.',
-  imageUrl: 'https://example.test/foto.jpg',
-  imageDescription: 'Foto de ejemplo',
-  createdAt: '2026-10-26T09:00:00Z',
-  likeCount: 74,
-  commentCount: 12,
-  author: { id: 'user-2', fullName: 'Otra Persona', roles: ['VOLUNTARIO'], photoUrl: null },
-};
-
 export function createFakeProfileService(overrides: Partial<ProfileService> = {}) {
   return {
     getMyProfile: jest.fn<Promise<MyProfile>, []>(async () => TEST_PROFILE),
     getPublicProfile: jest.fn<Promise<MyProfile>, [string]>(async () => TEST_PROFILE),
     getMyPosts: jest.fn<Promise<Post[]>, []>(async () => [TEST_POST]),
     getActorPosts: jest.fn<Promise<Post[]>, [string]>(async () => [TEST_POST]),
-    getMySavedPosts: jest.fn<Promise<Post[]>, []>(async () => [TEST_SAVED_POST]),
     followActor: jest.fn<Promise<ActorConnectionResult>, [string]>(async () => ({
       id: 'conn-1',
       status: 'ACCEPTED',

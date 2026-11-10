@@ -1,6 +1,7 @@
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { AdminResource } from '@/modules/admin/application/useAdminDashboard';
+import type { RemovalTargetPreview } from '@/modules/admin/domain/AdminService';
 import type { AdminErrorKind } from '@/modules/admin/domain/models/AdminError';
 import type {
   ModerationFilter,
@@ -21,11 +22,11 @@ import { TextButton } from '@/shared/ui/atoms/TextButton';
 
 import { ADMIN_STRINGS } from '../strings';
 import { ModerationCard } from './ModerationCard';
+import { RemovalRequestCard } from './RemovalRequestCard';
 
 type ModerationSectionProps = {
   queue: AdminResource<ModerationQueuePage>;
   filter: ModerationFilter;
-  busyItemId: string | null;
   isLoadingMore: boolean;
   loadMoreError: { kind: AdminErrorKind } | null;
   operationError: { kind: AdminErrorKind } | null;
@@ -33,6 +34,8 @@ type ModerationSectionProps = {
   onRetry: () => void;
   onLoadMore: () => void;
   onDecide: (item: ModerationItem, decision: 'APPROVED' | 'REJECTED') => void;
+  onLoadRemovalTarget?: (item: ModerationItem) => Promise<RemovalTargetPreview>;
+  onResolveRemoval: (item: ModerationItem, shouldHide: boolean) => void;
 };
 
 const FILTERS: { value: ModerationFilter; label: string }[] = [
@@ -44,7 +47,6 @@ const FILTERS: { value: ModerationFilter; label: string }[] = [
 export function ModerationSection({
   queue,
   filter,
-  busyItemId,
   isLoadingMore,
   loadMoreError,
   operationError,
@@ -52,6 +54,8 @@ export function ModerationSection({
   onRetry,
   onLoadMore,
   onDecide,
+  onLoadRemovalTarget,
+  onResolveRemoval,
 }: ModerationSectionProps) {
   return (
     <View style={styles.container}>
@@ -110,14 +114,22 @@ export function ModerationSection({
             </View>
           ) : (
             <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-              {queue.data.items.map((item) => (
-                <ModerationCard
-                  key={`${item.itemType}-${item.id}`}
-                  item={item}
-                  isBusy={busyItemId === item.id}
-                  onDecide={onDecide}
-                />
-              ))}
+              {queue.data.items.map((item) =>
+                item.removalRequest && onLoadRemovalTarget ? (
+                  <RemovalRequestCard
+                    key={`${item.itemType}-${item.id}`}
+                    item={item}
+                    onLoadTarget={onLoadRemovalTarget}
+                    onResolve={onResolveRemoval}
+                  />
+                ) : (
+                  <ModerationCard
+                    key={`${item.itemType}-${item.id}`}
+                    item={item}
+                    onDecide={onDecide}
+                  />
+                ),
+              )}
               {loadMoreError !== null ? (
                 <Text accessibilityRole="alert" style={styles.message}>
                   {ADMIN_STRINGS.errors[loadMoreError.kind] ?? ADMIN_STRINGS.genericError}

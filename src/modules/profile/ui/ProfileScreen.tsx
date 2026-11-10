@@ -11,6 +11,7 @@ import type { UpdateProfileInput } from '@/modules/profile/domain/ProfileService
 import type { Post } from '@/shared/domain/models/Post';
 import { PROFILE_ERROR_MESSAGES, PROFILE_STRINGS } from '@/modules/profile/ui/strings';
 import { useProfileService } from '@/modules/profile/useProfileService';
+import { useContentRemoval } from '@/modules/removal';
 import { useCollapsingHeader } from '@/shared/hooks/useCollapsingHeader';
 import { pickImageFromLibrary } from '@/shared/lib/imagePicker';
 import {
@@ -31,7 +32,6 @@ import { EditProfileModal } from './components/EditProfileModal';
 import { InfoCard } from './components/InfoCard';
 import { ProfilePostCard } from './components/ProfilePostCard';
 import { ProfileSummary } from './components/ProfileSummary';
-import { ProfileTabs } from './components/ProfileTabs';
 import { StatsCard } from './components/StatsCard';
 import { StatusMessage } from './components/StatusMessage';
 
@@ -42,7 +42,8 @@ export function ProfileScreen() {
   const { isAnonymous, signOut } = useAuth();
   const service = useProfileService();
   const refreshMyPhotoUrl = useRefreshMyPhotoUrl();
-  const { profile, posts, activeTab, selectTab } = useMyProfile(service);
+  const { profile, posts } = useMyProfile(service);
+  const { isHidden } = useContentRemoval();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -149,8 +150,12 @@ export function ProfileScreen() {
   }
 
   const me = profile.data;
-  const isSavedTab = activeTab === 'saved';
   const canOpenModerationPanel = me.roles.includes('ADMIN') || me.roles.includes('MODERATOR');
+  const myVisiblePosts =
+    posts.status === 'success' ? posts.data.filter((post) => !isHidden(post.id)) : [];
+  const hiddenPostCount =
+    posts.status === 'success' ? posts.data.length - myVisiblePosts.length : 0;
+  const visiblePostCount = Math.max(0, me.postCount - hiddenPostCount);
 
   async function handleSaveProfile(input: UpdateProfileInput) {
     if (service.updateMyProfile) {
@@ -174,7 +179,7 @@ export function ProfileScreen() {
         </Text>
       ) : null}
       <StatsCard
-        postCount={me.postCount}
+        postCount={visiblePostCount}
         followerCount={me.followerCount}
         followingCount={me.followingCount}
         onFollowersPress={() => router.push('/profile/followers')}
@@ -190,12 +195,9 @@ export function ProfileScreen() {
         </Pressable>
       ) : null}
       <InfoCard profile={me} onEdit={() => setIsEditOpen(true)} />
-      <ProfileTabs
-        activeTab={activeTab}
-        postCount={me.postCount}
-        savedCount={me.savedCount}
-        onSelect={selectTab}
-      />
+      <Text accessibilityRole="header" style={styles.postsTitle}>
+        {PROFILE_STRINGS.publicProfile.posts(visiblePostCount)}
+      </Text>
     </View>
   );
 
@@ -207,12 +209,7 @@ export function ProfileScreen() {
       <StatusMessage kind="error" message={PROFILE_STRINGS.listError} onRetry={posts.reload} />
     );
   } else {
-    listStatus = (
-      <StatusMessage
-        kind="message"
-        message={isSavedTab ? PROFILE_STRINGS.empty.saved : PROFILE_STRINGS.empty.posts}
-      />
-    );
+    listStatus = <StatusMessage kind="message" message={PROFILE_STRINGS.empty.posts} />;
   }
 
   return (
@@ -240,20 +237,16 @@ export function ProfileScreen() {
             onScroll={onScroll}
             scrollEventThrottle={16}
             contentContainerStyle={[styles.content, { paddingTop: SPACING.s18 }]}
-            data={posts.status === 'success' ? posts.data : []}
+            data={myVisiblePosts}
             keyExtractor={(post) => post.id}
             renderItem={({ item }) => (
               <ProfilePostCard
                 post={item}
-                isAuthorShown={isSavedTab}
-                onPress={
-                  isSavedTab
-                    ? undefined
-                    : () =>
-                        router.push({
-                          pathname: '/users/[userId]/posts/[postId]',
-                          params: { userId: me.id, postId: item.id },
-                        })
+                onPress={() =>
+                  router.push({
+                    pathname: '/users/[userId]/posts/[postId]',
+                    params: { userId: me.id, postId: item.id },
+                  })
                 }
               />
             )}
@@ -345,6 +338,11 @@ const styles = StyleSheet.create({
     color: COLORS.danger,
     fontFamily: FONT_FAMILY.body,
     fontSize: FONT_SIZE.s14,
+  },
+  postsTitle: {
+    color: COLORS.textTitle,
+    fontFamily: FONT_FAMILY.heading,
+    fontSize: FONT_SIZE.s16,
   },
   separator: {
     height: SPACING.s14,

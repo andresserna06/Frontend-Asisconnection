@@ -4,7 +4,13 @@ import type { Comment } from './models/Comment';
 function comment(id: string, replies: Comment[] = []): Comment {
   return {
     id,
-    author: { id: 'a', name: 'Persona de prueba', initials: 'PP', isFoundation: false },
+    author: {
+      id: 'a',
+      profileId: 'a',
+      name: 'Persona de prueba',
+      initials: 'PP',
+      isFoundation: false,
+    },
     publishedAtLabel: 'ahora',
     content: 'Texto',
     likeCount: 0,

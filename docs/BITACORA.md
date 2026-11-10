@@ -15,6 +15,22 @@ Formato de cada entrada:
 
 ---
 
+## 2026-11-10 · T-39 Enlaces del Ecosistema
+
+- Qué se hizo: SUMA 21, AULA UP y SAGA-UP abren su sitio publicado.
+- Archivos principales: `src/modules/ecosystem/domain/models/EcosystemLink.ts`, `src/modules/ecosystem/application/useEcosystemLinks.ts`.
+- Decisiones: las tres direcciones tienen prioridad sobre `GET /directory/links` y funcionan aunque ese servicio falle. SON UP y LUPE siguen usando el directorio.
+- Cómo se probó: `npx tsc --noEmit`, `npx expo lint`, `npm test`, `npx expo export` para web y Android, respuesta 200 de las tres direcciones y apertura con Edge sin interfaz. No se probó en Expo Go o en un dispositivo.
+- Queda pendiente: T-03b.
+
+## 2026-11-10 · T-38 Eliminar contenido y cola de moderación
+
+- Qué se hizo: admins y moderadores eliminan cualquier publicación o comentario; una cuenta registrada elimina los suyos para todos al instante; los invitados envían una solicitud que un moderador confirma. La cola de moderación retira cada decisión de inmediato, no repite ni trae de vuelta elementos, y el Foro se actualiza al decidir. «Rechazar» y «Revocar» funcionan en web. Se retiró por completo la función de guardados.
+- Archivos principales: `src/modules/removal/**`, `src/shared/lib/{authorRemovalMarks,deviceStorage}.ts`, `src/shared/ui/organisms/ConfirmDialog.tsx`, `src/modules/admin/application/useAdminDashboard.ts`, `src/modules/admin/ui/components/RemovalRequestCard.tsx`.
+- Decisiones: el backend responde 403 a quien no modera y no tiene ruta para borrar. Solo el dueño puede editar su perfil, así que sus eliminaciones viajan en el fragmento de su `avatar_url`, que acompaña a cada publicación y comentario; no se puede falsificar para otra persona y las imágenes lo ignoran. Cabe un máximo aproximado de 40 eliminaciones por cuenta. El contenido sigue en la base de datos. Dependencia nueva aprobada: `@react-native-async-storage/async-storage`, solo para datos no sensibles.
+- Cómo se probó: `npx tsc --noEmit`, `npx expo lint`, `npm test`, `npx expo export` para web y Android, y recorrido con Edge sin interfaz con la API simulada. No se probó contra el backend real ni en Expo Go o en un dispositivo.
+- Queda pendiente: confirmar que el backend acepta la URL con fragmento, y que permite rechazar contenido ya aprobado.
+
 ## 2026-11-10 · T-37 Interruptores de Ajustes
 
 - Qué se hizo: un clic sobre el interruptor cambia el ajuste una sola vez; antes reaccionaban la fila y el interruptor, y el cambio se anulaba enviando dos peticiones.

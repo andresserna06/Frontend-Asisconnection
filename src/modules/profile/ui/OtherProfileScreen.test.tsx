@@ -9,6 +9,10 @@ import type { PublicProfile } from '@/modules/profile/domain/models/PublicProfil
 
 import { OtherProfileScreen } from './OtherProfileScreen';
 
+jest.mock('@/modules/removal', () => ({
+  RemoveContentButton: () => null,
+  useContentRemoval: () => ({ isHidden: () => false }),
+}));
 jest.mock('@/modules/profile/usePublicProfileService', () => ({
   usePublicProfileService: jest.fn(),
 }));

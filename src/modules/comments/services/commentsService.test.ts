@@ -68,6 +68,7 @@ describe('createCommentsService', () => {
         id: 'c-1',
         author: {
           id: 'actor-1',
+          profileId: 'actor-1',
           name: 'Marcela Ramírez',
           initials: 'MR',
           isFoundation: false,
@@ -80,6 +81,7 @@ describe('createCommentsService', () => {
             id: 'c-2',
             author: {
               id: 'actor-admin',
+              profileId: 'actor-admin',
               name: 'ASISCO UP',
               initials: 'AU',
               isFoundation: true,

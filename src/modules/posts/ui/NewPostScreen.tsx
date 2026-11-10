@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -8,6 +8,7 @@ import { getPrimaryRole, useAuth } from '@/modules/auth';
 import { useCreatePost } from '@/modules/posts/application/useCreatePost';
 import { PostsError } from '@/modules/posts/domain/models/PostSubmission';
 import { usePostsService } from '@/modules/posts/usePostsService';
+import { rememberGuestContent } from '@/modules/removal';
 import type { LocalMediaFile } from '@/shared/domain/models/LocalMediaFile';
 import {
   IS_CAMERA_AVAILABLE,
@@ -45,7 +46,7 @@ const ANNOUNCEMENT_CATEGORY: { key: CategoryKey; label: string } = {
 export function NewPostScreen() {
   const insets = useSafeAreaInsets();
   const { isDesktop } = useResponsiveLayout();
-  const { user } = useAuth();
+  const { user, isAnonymous } = useAuth();
   const service = usePostsService();
   const { submit, clearFeedback, isSubmitting, draftIssue, error } = useCreatePost(service);
   const [content, setContent] = useState('');
@@ -53,6 +54,7 @@ export function NewPostScreen() {
   const [selectedPhoto, setSelectedPhoto] = useState<LocalMediaFile | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const isPublishingRef = useRef(false);
   const primaryRole = user === null ? null : getPrimaryRole(user.roles);
   const initials = user?.username.slice(0, 2).toUpperCase() ?? 'AS';
   const canPublishAnnouncements =
@@ -84,7 +86,7 @@ export function NewPostScreen() {
     handlePickResult(await takePhoto(), POST_STRINGS.cameraPermission);
   }
 
-  async function handlePublish() {
+  async function publish() {
     let mediaUrls: string[] | undefined;
     if (selectedPhoto !== null && service.uploadMedia) {
       setPhotoError(null);
@@ -111,8 +113,24 @@ export function NewPostScreen() {
       return;
     }
 
+    if (isAnonymous) {
+      void rememberGuestContent(result.id);
+    }
     Alert.alert(POST_STRINGS.submittedTitle, result.message || POST_STRINGS.submittedMessage);
     router.back();
+  }
+
+  // A double click during the photo upload must not create the post twice.
+  async function handlePublish() {
+    if (isPublishingRef.current) {
+      return;
+    }
+    isPublishingRef.current = true;
+    try {
+      await publish();
+    } finally {
+      isPublishingRef.current = false;
+    }
   }
 
   function handleContentChange(value: string) {

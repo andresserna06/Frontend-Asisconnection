@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForumFeed, useTogglePostLike } from '@/modules/forum/application/useForumFeed';
 import type { ForumFilter } from '@/modules/forum/domain/models/ForumCategory';
 import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
+import { useContentRemoval } from '@/modules/removal';
 import { STRINGS } from '@/shared/config/strings';
 import { useCollapsingHeader } from '@/shared/hooks/useCollapsingHeader';
 import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
@@ -52,6 +53,9 @@ export function ForumScreen({ aside }: ForumScreenProps) {
   const [selectedFilter, setSelectedFilter] = useState<ForumFilter>('all');
   const feed = useForumFeed(selectedFilter);
   const togglePostLike = useTogglePostLike();
+  const { isHidden } = useContentRemoval();
+  const visiblePosts =
+    feed.status === 'success' ? feed.posts.filter((post) => !isHidden(post.id)) : [];
   const expandedHeaderHeight = insets.top + HEADER_ROW_HEIGHT;
   const { headerHeight, onScroll: handleScroll } = useCollapsingHeader(expandedHeaderHeight);
   const availablePostHeight =
@@ -128,7 +132,7 @@ export function ForumScreen({ aside }: ForumScreenProps) {
       <TopicFilters selected={selectedFilter} onSelect={setSelectedFilter} />
 
       <FlatList
-        data={feed.status === 'success' ? feed.posts : []}
+        data={visiblePosts}
         keyExtractor={(post) => post.id}
         renderItem={renderPost}
         onScroll={handleScroll}

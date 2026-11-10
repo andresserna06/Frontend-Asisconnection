@@ -1,5 +1,7 @@
 import type { CommentsRepository } from '@/modules/comments/domain/CommentsRepository';
 import type { Comment, CommentSubmissionStatus } from '@/modules/comments/domain/models/Comment';
+import { parseRemovalRequest } from '@/modules/removal';
+import { isRemovedByAuthor } from '@/shared/lib/authorRemovalMarks';
 import { type HttpClient, HttpError } from '@/shared/lib/http';
 
 type AuthorBadgeResponse = {
@@ -83,6 +85,7 @@ function toCommentNode(item: ApprovedCommentItemResponse): Comment {
     id: item.id,
     author: {
       id: item.author.actor_id ?? item.author.display_name,
+      profileId: item.author.actor_id ?? null,
       name: item.author.display_name,
       initials: toInitials(item.author.display_name),
       isFoundation,
@@ -94,7 +97,13 @@ function toCommentNode(item: ApprovedCommentItemResponse): Comment {
   };
 }
 
-export function buildCommentThreads(items: ApprovedCommentItemResponse[]): Comment[] {
+export function buildCommentThreads(allItems: ApprovedCommentItemResponse[]): Comment[] {
+  // Neither a removal request approved by mistake nor what its author removed is shown.
+  const items = allItems.filter(
+    (item) =>
+      parseRemovalRequest(item.content) === null &&
+      !isRemovedByAuthor(item.author.avatar_url, 'comment', item.id),
+  );
   const rootMap = new Map<string, Comment>();
   const roots: Comment[] = [];
 

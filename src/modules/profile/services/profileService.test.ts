@@ -55,7 +55,6 @@ describe('createProfileService', () => {
       postCount: 2,
       followerCount: 5,
       followingCount: 3,
-      savedCount: 0,
       shortBio: 'Acudiente',
       showEmail: false,
       showBirthDate: false,

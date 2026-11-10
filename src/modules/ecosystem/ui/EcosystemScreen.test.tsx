@@ -41,7 +41,47 @@ describe('EcosystemScreen', () => {
     const sumaLink = await screen.findByRole('link', { name: /SUMA 21/ });
     await fireEvent.press(sumaLink);
 
-    expect(openUrlSpy).toHaveBeenCalledWith('https://suma21.fundacionasisco.org');
+    expect(openUrlSpy).toHaveBeenCalledWith('https://suma21-frontend.onrender.com');
+    openUrlSpy.mockRestore();
+  });
+
+  it('opens the published systems even when the backend directory is unavailable', async () => {
+    const openUrlSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    await renderScreen(
+      createFakeEcosystemService({
+        listLinks: jest.fn(async () => {
+          throw new Error('offline');
+        }),
+      }),
+    );
+
+    await fireEvent.press(await screen.findByRole('link', { name: /AULA UP/ }));
+    await fireEvent.press(screen.getByRole('link', { name: /SAGA-UP/ }));
+
+    expect(openUrlSpy).toHaveBeenCalledWith('https://aulaup-bxss.onrender.com/');
+    expect(openUrlSpy).toHaveBeenCalledWith('https://saga-up-frontend.onrender.com/login');
+    expect(screen.queryByRole('link', { name: /LUPE/ })).toBeNull();
+    openUrlSpy.mockRestore();
+  });
+
+  it('keeps using the backend directory for the other systems', async () => {
+    const openUrlSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    await renderScreen(
+      createFakeEcosystemService({
+        listLinks: jest.fn(async () => [
+          {
+            id: 'link-2',
+            projectName: 'LUPE',
+            url: 'https://lupe.example.test',
+            description: 'Proyectos',
+          },
+        ]),
+      }),
+    );
+
+    await fireEvent.press(await screen.findByRole('link', { name: /LUPE/ }));
+
+    expect(openUrlSpy).toHaveBeenCalledWith('https://lupe.example.test');
     openUrlSpy.mockRestore();
   });
 });

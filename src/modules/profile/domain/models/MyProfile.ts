@@ -16,7 +16,6 @@ export type MyProfile = {
   postCount: number;
   followerCount: number;
   followingCount: number;
-  savedCount: number;
   shortBio?: string | null;
   showEmail?: boolean;
   showBirthDate?: boolean;

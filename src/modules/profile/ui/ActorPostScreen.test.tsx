@@ -9,6 +9,10 @@ import { usePublicProfileService } from '@/modules/profile/usePublicProfileServi
 
 import { ActorPostScreen } from './ActorPostScreen';
 
+jest.mock('@/modules/removal', () => ({
+  RemoveContentButton: () => null,
+  useContentRemoval: () => ({ isHidden: () => false }),
+}));
 jest.mock('@/modules/forum', () => ({ useTogglePostLike: jest.fn() }));
 jest.mock('@/modules/profile/usePublicProfileService', () => ({
   usePublicProfileService: jest.fn(),

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Comment } from '@/modules/comments/domain/models/Comment';
+import { RemoveContentButton } from '@/modules/removal';
 import {
   BORDER_WIDTH,
   COLORS,
@@ -20,6 +21,7 @@ import { COMMENTS_STRINGS } from '../strings';
 
 type CommentItemProps = {
   comment: Comment;
+  postId: string;
   // Set for replies: they are indented and answering one stays in the same thread.
   threadId?: string;
   onReply: (threadId: string, authorName: string) => void;
@@ -27,7 +29,13 @@ type CommentItemProps = {
   onToggleLike?: (commentId: string) => Promise<boolean>;
 };
 
-export function CommentItem({ comment, threadId, onReply, onToggleLike }: CommentItemProps) {
+export function CommentItem({
+  comment,
+  postId,
+  threadId,
+  onReply,
+  onToggleLike,
+}: CommentItemProps) {
   const isReply = threadId !== undefined;
   const [isExpanded, setIsExpanded] = useState(false);
   const like = useReactionToggle(
@@ -107,6 +115,15 @@ export function CommentItem({ comment, threadId, onReply, onToggleLike }: Commen
                 </Text>
               </Pressable>
             )}
+            <RemoveContentButton
+              target={{
+                kind: 'comment',
+                id: comment.id,
+                postId,
+                authorName: comment.author.name,
+                authorProfileId: comment.author.profileId,
+              }}
+            />
           </View>
         </View>
 
@@ -132,6 +149,7 @@ export function CommentItem({ comment, threadId, onReply, onToggleLike }: Commen
           <CommentItem
             key={reply.id}
             comment={reply}
+            postId={postId}
             threadId={comment.id}
             onReply={onReply}
             onToggleLike={onToggleLike}

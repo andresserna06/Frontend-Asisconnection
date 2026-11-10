@@ -22,7 +22,9 @@ import {
   useToggleCommentLike,
   type CommentsState,
 } from '@/modules/comments/application/useComments';
+import { countComments } from '@/modules/comments/domain/CommentsRepository';
 import type { Comment } from '@/modules/comments/domain/models/Comment';
+import { rememberGuestContent, useContentRemoval } from '@/modules/removal';
 import {
   BORDER_WIDTH,
   COLORS,
@@ -54,8 +56,19 @@ export function CommentsScreen({ postId }: CommentsScreenProps) {
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const { isDesktop } = useResponsiveLayout();
-  const { user } = useAuth();
+  const { user, isAnonymous } = useAuth();
+  const { isHidden } = useContentRemoval();
   const state = useComments(postId);
+  const visibleComments =
+    state.status === 'success'
+      ? state.comments
+          .filter((comment) => !isHidden(comment.id))
+          .map((comment) => ({
+            ...comment,
+            replies: comment.replies.filter((reply) => !isHidden(reply.id)),
+          }))
+      : [];
+  const visibleTotal = countComments(visibleComments);
   const { canComment, addComment, isSending } = useAddComment(postId);
   const toggleCommentLike = useToggleCommentLike();
   const [draft, setDraft] = useState('');
@@ -86,6 +99,9 @@ export function CommentsScreen({ postId }: CommentsScreenProps) {
       });
       setDraft('');
       setReplyTarget(null);
+      if (isAnonymous && result.status !== 'REJECTED') {
+        void rememberGuestContent(result.id);
+      }
       if (result.status === 'REJECTED') {
         Alert.alert(
           COMMENTS_STRINGS.rejectedTitle,
@@ -139,14 +155,19 @@ export function CommentsScreen({ postId }: CommentsScreenProps) {
         </View>
 
         <FlatList
-          data={state.status === 'success' ? state.comments : []}
+          data={visibleComments}
           keyExtractor={(comment) => comment.id}
           renderItem={({ item }: { item: Comment }) => (
-            <CommentItem comment={item} onReply={handleReply} onToggleLike={toggleCommentLike} />
+            <CommentItem
+              comment={item}
+              postId={postId}
+              onReply={handleReply}
+              onToggleLike={toggleCommentLike}
+            />
           )}
           ListHeaderComponent={
-            state.status === 'success' && state.total > 0 ? (
-              <Text style={styles.count}>{COMMENTS_STRINGS.count(state.total)}</Text>
+            visibleTotal > 0 ? (
+              <Text style={styles.count}>{COMMENTS_STRINGS.count(visibleTotal)}</Text>
             ) : null
           }
           ListEmptyComponent={<CommentsStateView state={state} />}

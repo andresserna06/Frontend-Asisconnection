@@ -6,6 +6,12 @@ import type { LocalMediaFile } from '@/shared/domain/models/LocalMediaFile';
 import { type CategoryCode, toCategoryCode } from '@/shared/domain/models/CategoryCode';
 import type { Post } from '@/shared/domain/models/Post';
 import type { RoleCode } from '@/shared/domain/models/RoleCode';
+import {
+  countPostsRemovedByAuthor,
+  getAvatarPhotoUrl,
+  isRemovedByAuthor,
+  replaceAvatarPhoto,
+} from '@/shared/lib/authorRemovalMarks';
 import { type HttpClient, HttpError } from '@/shared/lib/http';
 import { uploadMedia } from '@/shared/lib/uploadMedia';
 
@@ -89,7 +95,8 @@ function toProfileError(error: unknown): ProfileError {
   );
 }
 
-function normalizeAvatarUrl(url: string | null | undefined): string | null {
+function normalizeAvatarUrl(rawAvatar: string | null | undefined): string | null {
+  const url = getAvatarPhotoUrl(rawAvatar);
   if (!url) {
     return null;
   }
@@ -181,10 +188,12 @@ export function createProfileService(client: HttpClient): ProfileService {
       birthDate: actor.birth_date ?? null,
       city: actor.city ?? null,
       memberSince: actor.created_at,
-      postCount: actor.posts_count ?? 0,
+      postCount: Math.max(
+        0,
+        (actor.posts_count ?? 0) - countPostsRemovedByAuthor(actor.avatar_url),
+      ),
       followerCount: actor.followers_count ?? 0,
       followingCount: Math.max(0, (actor.following_count ?? 0) - countUnfollowedActors()),
-      savedCount: 0,
       shortBio: actor.short_bio ?? null,
       showEmail: actor.show_email ?? false,
       showBirthDate: actor.show_birth_date ?? false,
@@ -205,12 +214,20 @@ export function createProfileService(client: HttpClient): ProfileService {
 
     async updateMyProfile(input: UpdateProfileInput) {
       try {
+        // A new photo must not bring back the content its owner removed.
+        const avatarUrl =
+          input.avatarUrl !== undefined
+            ? replaceAvatarPhoto(
+                (await client.request<ActorProfileResponse>('/actors/me')).avatar_url,
+                input.avatarUrl,
+              )
+            : undefined;
         const actor = await client.request<ActorProfileResponse>('/actors/me', {
           method: 'PATCH',
           body: {
             ...(input.firstNames !== undefined ? { first_names: input.firstNames } : {}),
             ...(input.lastNames !== undefined ? { last_names: input.lastNames } : {}),
-            ...(input.avatarUrl !== undefined ? { avatar_url: input.avatarUrl } : {}),
+            ...(input.avatarUrl !== undefined ? { avatar_url: avatarUrl } : {}),
             ...(input.shortBio !== undefined ? { short_bio: input.shortBio } : {}),
             ...(input.birthDate !== undefined ? { birth_date: input.birthDate } : {}),
             ...(input.city !== undefined ? { city: input.city } : {}),
@@ -254,7 +271,9 @@ export function createProfileService(client: HttpClient): ProfileService {
           loadCategoriesById(),
           client.request<PostsPageResponse>('/actors/me/posts?page=1&limit=20'),
         ]);
-        return page.data.map((item) => toPost(item, categoriesById));
+        return page.data
+          .filter((item) => !isRemovedByAuthor(item.author.avatar_url, 'post', item.id))
+          .map((item) => toPost(item, categoriesById));
       } catch (error) {
         if (error instanceof HttpError && error.status === 404) {
           return [];
@@ -269,17 +288,15 @@ export function createProfileService(client: HttpClient): ProfileService {
           loadCategoriesById(),
           client.request<PostsPageResponse>(`/actors/${actorId}/posts?page=1&limit=20`),
         ]);
-        return page.data.map((item) => toPost(item, categoriesById));
+        return page.data
+          .filter((item) => !isRemovedByAuthor(item.author.avatar_url, 'post', item.id))
+          .map((item) => toPost(item, categoriesById));
       } catch (error) {
         if (error instanceof HttpError && error.status === 404) {
           return [];
         }
         throw toProfileError(error);
       }
-    },
-
-    async getMySavedPosts() {
-      return [];
     },
 
     async uploadAvatar(media: LocalMediaFile) {

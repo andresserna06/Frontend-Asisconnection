@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
 import type {
   ModerationDecision,
@@ -7,12 +8,12 @@ import type {
 } from '@/modules/admin/domain/models/ModerationItem';
 import { BORDER_WIDTH, COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SPACING } from '@/shared/theme';
 import { Button } from '@/shared/ui/atoms/Button';
+import { ConfirmDialog } from '@/shared/ui/organisms/ConfirmDialog';
 
 import { ADMIN_STRINGS } from '../strings';
 
 type ModerationCardProps = {
   item: ModerationItem;
-  isBusy: boolean;
   onDecide: (item: ModerationItem, decision: ModerationDecision) => void;
 };
 
@@ -24,19 +25,10 @@ function formatCreatedAt(value: string): string {
   return date.toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-export function ModerationCard({ item, isBusy, onDecide }: ModerationCardProps) {
+export function ModerationCard({ item, onDecide }: ModerationCardProps) {
   const contentType = item.itemType === 'POST' ? ADMIN_STRINGS.post : ADMIN_STRINGS.comment;
 
-  function confirmRejection() {
-    Alert.alert(ADMIN_STRINGS.rejectTitle, ADMIN_STRINGS.rejectMessage, [
-      { text: ADMIN_STRINGS.cancel, style: 'cancel' },
-      {
-        text: ADMIN_STRINGS.rejected,
-        style: 'destructive',
-        onPress: () => onDecide(item, 'REJECTED'),
-      },
-    ]);
-  }
+  const [isConfirmingRejection, setIsConfirmingRejection] = useState(false);
 
   return (
     <View style={styles.card}>
@@ -59,22 +51,28 @@ export function ModerationCard({ item, isBusy, onDecide }: ModerationCardProps) 
       ) : null}
       <View style={styles.actions}>
         <View style={styles.action}>
-          <Button
-            label={ADMIN_STRINGS.approve}
-            onPress={() => onDecide(item, 'APPROVED')}
-            isLoading={isBusy}
-            isDisabled={isBusy}
-          />
+          <Button label={ADMIN_STRINGS.approve} onPress={() => onDecide(item, 'APPROVED')} />
         </View>
         <View style={styles.action}>
           <Button
             label={ADMIN_STRINGS.reject}
             variant="outline"
-            onPress={confirmRejection}
-            isDisabled={isBusy}
+            onPress={() => setIsConfirmingRejection(true)}
           />
         </View>
       </View>
+      <ConfirmDialog
+        visible={isConfirmingRejection}
+        title={ADMIN_STRINGS.rejectTitle}
+        message={ADMIN_STRINGS.rejectMessage}
+        confirmLabel={ADMIN_STRINGS.rejected}
+        cancelLabel={ADMIN_STRINGS.cancel}
+        onConfirm={() => {
+          setIsConfirmingRejection(false);
+          onDecide(item, 'REJECTED');
+        }}
+        onCancel={() => setIsConfirmingRejection(false)}
+      />
     </View>
   );
 }

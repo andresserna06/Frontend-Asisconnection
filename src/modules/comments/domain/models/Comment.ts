@@ -1,5 +1,6 @@
 export type CommentAuthor = {
   id: string;
+  profileId: string | null;
   name: string;
   initials: string;
   // Comments from the foundation carry the «Fundación» badge.

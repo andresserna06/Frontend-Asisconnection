@@ -1,5 +1,6 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -30,7 +31,13 @@ export function AdminScreen({ service: serviceOverride }: AdminScreenProps = {})
   const isAdmin = user?.roles.includes('ADMIN') ?? false;
   const isModerator = user?.roles.includes('MODERATOR') ?? false;
   const canAccessModeration = isAdmin || isModerator;
-  const dashboard = useAdminDashboard(service, canAccessModeration, isAdmin);
+  const queryClient = useQueryClient();
+  // Without this the forum keeps showing its cached list after a decision.
+  const handleContentChanged = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ['forum', 'feed'] });
+    void queryClient.invalidateQueries({ queryKey: ['comments'] });
+  }, [queryClient]);
+  const dashboard = useAdminDashboard(service, canAccessModeration, isAdmin, handleContentChanged);
   const [headerHeight] = useState(() => new Animated.Value(insets.top + HEADER_ROW_HEIGHT));
 
   useEffect(() => {
@@ -108,7 +115,6 @@ export function AdminScreen({ service: serviceOverride }: AdminScreenProps = {})
           <ModerationSection
             queue={dashboard.queue}
             filter={dashboard.filter}
-            busyItemId={dashboard.busyItemId}
             isLoadingMore={dashboard.isLoadingMore}
             loadMoreError={dashboard.loadMoreError}
             operationError={dashboard.operationError}
@@ -116,6 +122,10 @@ export function AdminScreen({ service: serviceOverride }: AdminScreenProps = {})
             onRetry={() => void dashboard.loadQueue()}
             onLoadMore={() => void dashboard.loadMore()}
             onDecide={(item, decision) => void dashboard.updateModerationStatus(item, decision)}
+            onLoadRemovalTarget={service.getRemovalTarget}
+            onResolveRemoval={(item, shouldHide) =>
+              void dashboard.resolveRemovalRequest(item, shouldHide)
+            }
           />
         ) : (
           <ScrollView

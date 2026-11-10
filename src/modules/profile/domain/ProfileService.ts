@@ -30,6 +30,4 @@ export type ProfileService = {
   getMyPosts(): Promise<Post[]>;
   getActorPosts?(actorId: string): Promise<Post[]>;
   uploadAvatar?(media: LocalMediaFile): Promise<string>;
-  // Private: never shown to anyone else.
-  getMySavedPosts(): Promise<Post[]>;
 };

@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTogglePostLike } from '@/modules/forum';
 import { useActorPost } from '@/modules/profile/application/useActorPost';
+import { useContentRemoval } from '@/modules/removal';
 import { usePublicProfileService } from '@/modules/profile/usePublicProfileService';
 import { COLORS, OPACITY, RADIUS, SIZE, SPACING } from '@/shared/theme';
 import { Icon } from '@/shared/ui/atoms/Icon';
@@ -22,7 +23,9 @@ export function ActorPostScreen() {
   const service = usePublicProfileService();
   const post = useActorPost(service, userId, postId);
   const togglePostLike = useTogglePostLike();
-  const currentPost = post.status === 'success' ? post.data : null;
+  const { isHidden } = useContentRemoval();
+  const loadedPost = post.status === 'success' ? post.data : null;
+  const currentPost = loadedPost !== null && !isHidden(loadedPost.id) ? loadedPost : null;
 
   function handleBack() {
     if (router.canGoBack()) {
@@ -67,6 +70,7 @@ export function ActorPostScreen() {
               post={currentPost}
               onCommentsPress={() => router.push(`/comments/${currentPost.id}`)}
               onLikePress={() => togglePostLike(currentPost.id)}
+              onRemoved={handleBack}
             />
           </ScrollView>
         )}

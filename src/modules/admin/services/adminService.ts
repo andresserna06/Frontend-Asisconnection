@@ -1,9 +1,11 @@
 import { AdminError } from '@/modules/admin/domain/models/AdminError';
 import type { AdminService } from '@/modules/admin/domain/AdminService';
+import { parseRemovalRequest } from '@/modules/removal';
 import type { HttpClient } from '@/shared/lib/http';
 import { HttpError } from '@/shared/lib/http';
 
 type ApiAuthorDto = {
+  actor_id?: string | null;
   display_name: string;
   role_label: string;
   is_registered: boolean;
@@ -12,6 +14,7 @@ type ApiAuthorDto = {
 type ApiPendingItemDto = {
   id: string;
   item_type: 'POST' | 'COMMENT';
+  post_id?: string | null;
   content: string;
   image_url?: string | null;
   author: ApiAuthorDto;
@@ -26,6 +29,10 @@ type ApiPendingPageDto = {
     total_pages: number;
     has_next_page: boolean;
   };
+};
+
+type ApiContentPageDto = {
+  data: { id: string; content: string; author: ApiAuthorDto }[];
 };
 
 type ApiModeratorDto = {
@@ -95,7 +102,10 @@ export function createAdminService(client: HttpClient): AdminService {
             itemType: item.item_type,
             content: item.content,
             imageUrl: item.image_url ?? null,
+            postId: item.post_id ?? null,
+            removalRequest: item.item_type === 'COMMENT' ? parseRemovalRequest(item.content) : null,
             author: {
+              actorId: item.author.actor_id ?? null,
               displayName: item.author.display_name,
               roleLabel: item.author.role_label,
               isRegistered: item.author.is_registered,
@@ -117,6 +127,50 @@ export function createAdminService(client: HttpClient): AdminService {
           method: 'PATCH',
           body: { status },
         });
+      });
+    },
+
+    // Finds what a removal request points to and whether whoever asked is its author.
+    getRemovalTarget(item) {
+      return request(async () => {
+        const removal = item.removalRequest;
+        const postId = item.postId;
+        const actorId = item.author.actorId ?? null;
+        // The queue does not always include the actor id, so the username also identifies them.
+        const isRequester = (author: ApiAuthorDto) =>
+          (actorId !== null && author.actor_id === actorId) ||
+          author.display_name === item.author.displayName;
+        if (!removal || !postId) {
+          return { content: null, isRequestedByAuthor: false };
+        }
+
+        if (removal.kind === 'comment') {
+          const page = await client.request<ApiContentPageDto>(
+            `/posts/${encodeURIComponent(postId)}/comments?page=1&limit=50`,
+          );
+          const comment = page.data.find((entry) => entry.id === removal.commentId);
+          return {
+            content: comment?.content ?? null,
+            isRequestedByAuthor: comment !== undefined && isRequester(comment.author),
+          };
+        }
+
+        const ownPosts =
+          actorId !== null
+            ? await client.request<ApiContentPageDto>(
+                `/actors/${encodeURIComponent(actorId)}/posts?page=1&limit=50`,
+              )
+            : null;
+        const ownPost = ownPosts?.data.find((entry) => entry.id === postId);
+        if (ownPost !== undefined) {
+          return { content: ownPost.content, isRequestedByAuthor: true };
+        }
+        const feed = await client.request<ApiContentPageDto>('/posts?page=1&limit=50');
+        const post = feed.data.find((entry) => entry.id === postId);
+        return {
+          content: post?.content ?? null,
+          isRequestedByAuthor: post !== undefined && isRequester(post.author),
+        };
       });
     },
 

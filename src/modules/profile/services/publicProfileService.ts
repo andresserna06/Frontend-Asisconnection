@@ -7,6 +7,11 @@ import type {
 import type { PublicProfile } from '@/modules/profile/domain/models/PublicProfile';
 import { type CategoryCode, toCategoryCode } from '@/shared/domain/models/CategoryCode';
 import type { Post } from '@/shared/domain/models/Post';
+import {
+  countPostsRemovedByAuthor,
+  getAvatarPhotoUrl,
+  isRemovedByAuthor,
+} from '@/shared/lib/authorRemovalMarks';
 import { HttpError, type HttpClient } from '@/shared/lib/http';
 
 import { isActorUnfollowed, markActorUnfollowed } from './localUnfollowState';
@@ -83,7 +88,8 @@ type PostsPageResponse = {
   data: PublicPostItemResponse[];
 };
 
-function normalizeAvatarUrl(url: string | null | undefined): string | null {
+function normalizeAvatarUrl(rawAvatar: string | null | undefined): string | null {
+  const url = getAvatarPhotoUrl(rawAvatar);
   if (!url) {
     return null;
   }
@@ -138,7 +144,7 @@ function toPublicProfile(actor: ActorProfileResponse): PublicProfile {
     email: toVisibleValue(actor.email, actor.show_email),
     birthDate: toVisibleValue(actor.birth_date, actor.show_birth_date),
     city: toVisibleValue(actor.city, actor.show_city),
-    postCount: actor.posts_count ?? 0,
+    postCount: Math.max(0, (actor.posts_count ?? 0) - countPostsRemovedByAuthor(actor.avatar_url)),
     followerCount,
     followingCount: actor.following_count ?? 0,
   };
@@ -367,7 +373,9 @@ export function createPublicProfileService(client: HttpClient): PublicProfileSer
             `/actors/${encodeURIComponent(actorId)}/posts?page=1&limit=20`,
           ),
         ]);
-        return page.data.map((item) => toPost(item, categoriesById));
+        return page.data
+          .filter((item) => !isRemovedByAuthor(item.author.avatar_url, 'post', item.id))
+          .map((item) => toPost(item, categoriesById));
       } catch (error) {
         if (error instanceof HttpError && error.status === 404) {
           return [];

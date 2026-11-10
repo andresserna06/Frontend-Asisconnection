@@ -2,7 +2,6 @@ import { Image } from 'expo-image';
 import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { RoleBadge } from '@/modules/auth';
 import { CATEGORIES } from '@/modules/posts';
 import { PROFILE_STRINGS } from '@/modules/profile/ui/strings';
 import type { Post } from '@/shared/domain/models/Post';
@@ -19,7 +18,6 @@ import {
   SIZE,
   SPACING,
 } from '@/shared/theme';
-import { Avatar, getAvatarTone } from '@/shared/ui/atoms/Avatar';
 import { CategoryChip } from '@/shared/ui/atoms/CategoryChip';
 import { Icon } from '@/shared/ui/atoms/Icon';
 
@@ -28,8 +26,6 @@ const MAX_TEXT_LINES = 3;
 
 type ProfilePostCardProps = {
   post: Post;
-  // Saved posts are from other people, so they show who wrote them.
-  isAuthorShown: boolean;
   // When present, the whole card opens the post.
   onPress?: () => void;
 };
@@ -37,7 +33,6 @@ type ProfilePostCardProps = {
 // Compact post card of the profile lists (category stripe, text, thumbnail and counts).
 export const ProfilePostCard = memo(function ProfilePostCard({
   post,
-  isAuthorShown,
   onPress,
 }: ProfilePostCardProps) {
   const cardStyle = [styles.card, { borderLeftColor: CATEGORY_COLORS[post.category].main }];
@@ -51,19 +46,6 @@ export const ProfilePostCard = memo(function ProfilePostCard({
         />
         <Text style={styles.time}>{formatRelativeTime(post.createdAt)}</Text>
       </View>
-
-      {isAuthorShown && (
-        <View style={styles.row}>
-          <Avatar
-            name={post.author.fullName}
-            photoUrl={post.author.photoUrl}
-            size="small"
-            tone={getAvatarTone(post.author.id)}
-          />
-          <Text style={styles.author}>{post.author.fullName}</Text>
-          <RoleBadge roles={post.author.roles} />
-        </View>
-      )}
 
       <View style={styles.body}>
         <Text numberOfLines={MAX_TEXT_LINES} style={styles.text}>
@@ -140,11 +122,6 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.body,
     fontSize: FONT_SIZE.s12,
     color: COLORS.textTertiary,
-  },
-  author: {
-    fontFamily: FONT_FAMILY.headingBold,
-    fontSize: FONT_SIZE.s13,
-    color: COLORS.textTitle,
   },
   body: {
     flexDirection: 'row',

@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { RoleBadge } from '@/modules/auth';
 import { CATEGORIES } from '@/modules/posts';
 import { PROFILE_STRINGS } from '@/modules/profile/ui/strings';
+import { RemoveContentButton } from '@/modules/removal';
 import type { Post } from '@/shared/domain/models/Post';
 import { useReactionToggle } from '@/shared/hooks/useReactionToggle';
 import { formatRelativeTime } from '@/shared/lib/formatRelativeTime';
@@ -30,10 +31,16 @@ type ActorPostCardProps = {
   onCommentsPress: () => void;
   // Resolves with whether the viewer's like is active after the toggle.
   onLikePress: () => Promise<boolean>;
+  onRemoved: () => void;
 };
 
 // A post shown in full: complete text, large image, like and comments.
-export function ActorPostCard({ post, onCommentsPress, onLikePress }: ActorPostCardProps) {
+export function ActorPostCard({
+  post,
+  onCommentsPress,
+  onLikePress,
+  onRemoved,
+}: ActorPostCardProps) {
   const like = useReactionToggle(post.likeCount, onLikePress, `post:${post.id}`);
 
   return (
@@ -96,6 +103,16 @@ export function ActorPostCard({ post, onCommentsPress, onLikePress }: ActorPostC
           <Icon name="message-circle" size={SIZE.icon} color={COLORS.textSecondary} />
           <Text style={styles.count}>{post.commentCount}</Text>
         </Pressable>
+        <View style={styles.actionsSpacer} />
+        <RemoveContentButton
+          target={{
+            kind: 'post',
+            id: post.id,
+            authorName: post.author.fullName,
+            authorProfileId: post.author.id,
+          }}
+          onRemoved={onRemoved}
+        />
       </View>
     </View>
   );
@@ -153,6 +170,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.s20,
+  },
+  actionsSpacer: {
+    flex: 1,
   },
   action: {
     minHeight: SIZE.touchTarget,

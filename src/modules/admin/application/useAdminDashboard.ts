@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { AdminService } from '@/modules/admin/domain/AdminService';
 import { AdminError } from '@/modules/admin/domain/models/AdminError';
@@ -19,10 +19,15 @@ function toAdminError(error: unknown): AdminError {
   return error instanceof AdminError ? error : new AdminError('unknown');
 }
 
+function getItemKey(item: ModerationItem): string {
+  return `${item.itemType}:${item.id}`;
+}
+
 export function useAdminDashboard(
   service: AdminService,
   isEnabled = true,
   canManageModerators = isEnabled,
+  onContentChanged?: () => void,
 ) {
   const [section, setSection] = useState<AdminSection>('moderation');
   const [filter, setFilterValue] = useState<ModerationFilter>('ALL');
@@ -35,10 +40,30 @@ export function useAdminDashboard(
   );
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState<AdminError | null>(null);
-  const [busyItemId, setBusyItemId] = useState<string | null>(null);
   const [busyModeratorId, setBusyModeratorId] = useState<string | null>(null);
   const [isAssigningModerator, setIsAssigningModerator] = useState(false);
   const [operationError, setOperationError] = useState<AdminError | null>(null);
+  // Only the latest listing counts, so a slow response cannot overwrite a newer one.
+  const queueRequestRef = useRef(0);
+  // Items decided here: a stale listing cannot bring them back or let them be decided twice.
+  const decidedKeysRef = useRef(new Set<string>());
+
+  const withoutDecided = useCallback((page: ModerationQueuePage): ModerationQueuePage => {
+    const seenKeys = new Set<string>();
+    const items = page.items.filter((item) => {
+      const key = getItemKey(item);
+      if (decidedKeysRef.current.has(key) || seenKeys.has(key)) {
+        return false;
+      }
+      seenKeys.add(key);
+      return true;
+    });
+    return {
+      ...page,
+      items,
+      totalItems: Math.max(0, page.totalItems - (page.items.length - items.length)),
+    };
+  }, []);
 
   const setFilter = useCallback((nextFilter: ModerationFilter) => {
     setQueue({ status: 'loading' });
@@ -48,15 +73,22 @@ export function useAdminDashboard(
 
   const loadQueue = useCallback(
     async (page = 1) => {
+      queueRequestRef.current += 1;
+      const requestId = queueRequestRef.current;
       setQueue({ status: 'loading' });
       setLoadMoreError(null);
       try {
-        setQueue({ status: 'success', data: await service.listPending(page, filter) });
+        const data = await service.listPending(page, filter);
+        if (requestId === queueRequestRef.current) {
+          setQueue({ status: 'success', data: withoutDecided(data) });
+        }
       } catch (error) {
-        setQueue({ status: 'error', error: toAdminError(error) });
+        if (requestId === queueRequestRef.current) {
+          setQueue({ status: 'error', error: toAdminError(error) });
+        }
       }
     },
-    [filter, service],
+    [filter, service, withoutDecided],
   );
 
   const loadModerators = useCallback(async () => {
@@ -89,24 +121,46 @@ export function useAdminDashboard(
       return;
     }
 
-    let isActive = true;
+    queueRequestRef.current += 1;
+    const requestId = queueRequestRef.current;
     service
       .listPending(1, filter)
       .then((data) => {
-        if (isActive) {
-          setQueue({ status: 'success', data });
+        if (requestId === queueRequestRef.current) {
+          setQueue({ status: 'success', data: withoutDecided(data) });
         }
       })
       .catch((error: unknown) => {
-        if (isActive) {
+        if (requestId === queueRequestRef.current) {
           setQueue({ status: 'error', error: toAdminError(error) });
         }
       });
 
     return () => {
-      isActive = false;
+      queueRequestRef.current += 1;
     };
-  }, [filter, isEnabled, service]);
+  }, [filter, isEnabled, service, withoutDecided]);
+
+  // Deciding every visible item leaves the next page to be fetched, without a spinner.
+  const hasEmptiedPage =
+    queue.status === 'success' && queue.data.items.length === 0 && queue.data.hasNextPage;
+
+  useEffect(() => {
+    if (!hasEmptiedPage) {
+      return;
+    }
+
+    queueRequestRef.current += 1;
+    const requestId = queueRequestRef.current;
+    service
+      .listPending(1, filter)
+      .then((data) => {
+        if (requestId === queueRequestRef.current) {
+          setQueue({ status: 'success', data: withoutDecided(data) });
+        }
+      })
+      .catch(() => undefined);
+  }, [filter, hasEmptiedPage, service, withoutDecided]);
 
   useEffect(() => {
     if (!isEnabled || !canManageModerators) {
@@ -137,15 +191,19 @@ export function useAdminDashboard(
       return;
     }
 
+    const requestId = queueRequestRef.current;
     setIsLoadingMore(true);
     setLoadMoreError(null);
     try {
       const nextPage = await service.listPending(queue.data.page + 1, filter);
       setQueue((current) =>
-        current.status === 'success'
+        current.status === 'success' && requestId === queueRequestRef.current
           ? {
               status: 'success',
-              data: { ...nextPage, items: [...current.data.items, ...nextPage.items] },
+              data: withoutDecided({
+                ...nextPage,
+                items: [...current.data.items, ...nextPage.items],
+              }),
             }
           : current,
       );
@@ -154,24 +212,80 @@ export function useAdminDashboard(
     } finally {
       setIsLoadingMore(false);
     }
-  }, [filter, isLoadingMore, queue, service]);
+  }, [filter, isLoadingMore, queue, service, withoutDecided]);
 
-  const updateModerationStatus = useCallback(
-    async (item: ModerationItem, status: ModerationDecision) => {
+  // The item leaves the queue at once; it only comes back if the server refuses the decision.
+  const decideItem = useCallback(
+    async (item: ModerationItem, submit: () => Promise<void>) => {
+      const key = getItemKey(item);
+      if (decidedKeysRef.current.has(key)) {
+        return false;
+      }
+
+      decidedKeysRef.current.add(key);
       setOperationError(null);
-      setBusyItemId(item.id);
+      setQueue((current) =>
+        current.status === 'success'
+          ? {
+              status: 'success',
+              data: {
+                ...current.data,
+                items: current.data.items.filter((entry) => getItemKey(entry) !== key),
+                totalItems: Math.max(0, current.data.totalItems - 1),
+              },
+            }
+          : current,
+      );
+
       try {
-        await service.updateModerationStatus(item.id, item.itemType, status);
-        await loadQueue();
+        await submit();
+        onContentChanged?.();
         return true;
       } catch (error) {
-        setOperationError(toAdminError(error));
+        const adminError = toAdminError(error);
+        setOperationError(adminError);
+        // Not found means someone else already handled it: there is nothing to bring back.
+        if (adminError.kind !== 'notFound') {
+          decidedKeysRef.current.delete(key);
+          setQueue((current) =>
+            current.status === 'success'
+              ? {
+                  status: 'success',
+                  data: {
+                    ...current.data,
+                    items: [item, ...current.data.items],
+                    totalItems: current.data.totalItems + 1,
+                  },
+                }
+              : current,
+          );
+        }
         return false;
-      } finally {
-        setBusyItemId(null);
       }
     },
-    [loadQueue, service],
+    [onContentChanged],
+  );
+
+  const updateModerationStatus = useCallback(
+    (item: ModerationItem, status: ModerationDecision) =>
+      decideItem(item, () => service.updateModerationStatus(item.id, item.itemType, status)),
+    [decideItem, service],
+  );
+
+  // Hiding rejects the target; either way the request itself leaves the queue.
+  const resolveRemovalRequest = useCallback(
+    (item: ModerationItem, shouldHide: boolean) =>
+      decideItem(item, async () => {
+        const removal = item.removalRequest;
+        if (shouldHide && removal?.kind === 'post' && item.postId) {
+          await service.updateModerationStatus(item.postId, 'POST', 'REJECTED');
+        }
+        if (shouldHide && removal?.kind === 'comment') {
+          await service.updateModerationStatus(removal.commentId, 'COMMENT', 'REJECTED');
+        }
+        await service.updateModerationStatus(item.id, 'COMMENT', 'REJECTED');
+      }),
+    [decideItem, service],
   );
 
   const assignModerator = useCallback(
@@ -220,7 +334,6 @@ export function useAdminDashboard(
     searchResults,
     isLoadingMore,
     loadMoreError,
-    busyItemId,
     busyModeratorId,
     isAssigningModerator,
     operationError,
@@ -229,6 +342,7 @@ export function useAdminDashboard(
     searchAccounts,
     loadMore,
     updateModerationStatus,
+    resolveRemovalRequest,
     assignModerator,
     revokeModerator,
   };

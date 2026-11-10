@@ -5,6 +5,7 @@ import type {
 import type { ForumCategory } from '@/modules/forum/domain/models/ForumCategory';
 import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
 import { toCategoryCode } from '@/shared/domain/models/CategoryCode';
+import { getAvatarPhotoUrl, isRemovedByAuthor } from '@/shared/lib/authorRemovalMarks';
 import { type HttpClient, HttpError } from '@/shared/lib/http';
 
 // Response bodies as the AsisConexión backend sends them (contracts/openapi.yaml).
@@ -140,7 +141,7 @@ function toForumPost(item: PublicPostItemResponse, lookup: CategoryLookup): Foru
       name: item.author.display_name,
       initials: toInitials(item.author.display_name),
       roleLabel: ROLE_LABELS[item.author.role_label] ?? item.author.role_label,
-      avatarUri: item.author.avatar_url ?? null,
+      avatarUri: getAvatarPhotoUrl(item.author.avatar_url),
     },
     publishedAtLabel: formatRelativeTime(item.created_at),
     content: item.content,
@@ -193,7 +194,9 @@ export function createForumService(client: HttpClient): ForumRepository {
         }
 
         const page = await client.request<PostsPageResponse>(query);
-        return page.data.map((item) => toForumPost(item, lookup));
+        return page.data
+          .filter((item) => !isRemovedByAuthor(item.author.avatar_url, 'post', item.id))
+          .map((item) => toForumPost(item, lookup));
       } catch (error) {
         throw toForumError(error);
       }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { AdminResource } from '@/modules/admin/application/useAdminDashboard';
 import type { AdminErrorKind } from '@/modules/admin/domain/models/AdminError';
@@ -17,6 +17,7 @@ import { Button } from '@/shared/ui/atoms/Button';
 import { Icon } from '@/shared/ui/atoms/Icon';
 import { Input } from '@/shared/ui/atoms/Input';
 import { TextButton } from '@/shared/ui/atoms/TextButton';
+import { ConfirmDialog } from '@/shared/ui/organisms/ConfirmDialog';
 
 import { ADMIN_STRINGS } from '../strings';
 
@@ -44,25 +45,13 @@ export function ModeratorManagementSection({
   onRetry,
 }: ModeratorManagementSectionProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [moderatorToRevoke, setModeratorToRevoke] = useState<ModeratorAccount | null>(null);
 
   async function handleSearch() {
     if (!onSearch) {
       return;
     }
     await onSearch(searchQuery);
-  }
-
-  function confirmRevoke(moderator: ModeratorAccount) {
-    Alert.alert(ADMIN_STRINGS.revokeTitle, ADMIN_STRINGS.revokeMessage, [
-      { text: ADMIN_STRINGS.cancel, style: 'cancel' },
-      {
-        text: ADMIN_STRINGS.revoke,
-        style: 'destructive',
-        onPress: () => {
-          void onRevoke(moderator.id);
-        },
-      },
-    ]);
   }
 
   return (
@@ -189,7 +178,7 @@ export function ModeratorManagementSection({
                 accessibilityLabel={`${ADMIN_STRINGS.revoke} ${moderator.username}`}
                 accessibilityState={{ disabled: busyModeratorId === moderator.id }}
                 disabled={busyModeratorId === moderator.id}
-                onPress={() => confirmRevoke(moderator)}
+                onPress={() => setModeratorToRevoke(moderator)}
                 style={({ pressed }) => [styles.revokeButton, pressed && styles.pressed]}
               >
                 {busyModeratorId === moderator.id ? (
@@ -201,6 +190,20 @@ export function ModeratorManagementSection({
             </View>
           ))
         : null}
+      <ConfirmDialog
+        visible={moderatorToRevoke !== null}
+        title={ADMIN_STRINGS.revokeTitle}
+        message={ADMIN_STRINGS.revokeMessage}
+        confirmLabel={ADMIN_STRINGS.revoke}
+        cancelLabel={ADMIN_STRINGS.cancel}
+        onConfirm={() => {
+          if (moderatorToRevoke !== null) {
+            void onRevoke(moderatorToRevoke.id);
+          }
+          setModeratorToRevoke(null);
+        }}
+        onCancel={() => setModeratorToRevoke(null)}
+      />
     </View>
   );
 }

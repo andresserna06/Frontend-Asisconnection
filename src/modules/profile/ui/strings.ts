@@ -84,13 +84,8 @@ export const PROFILE_STRINGS = {
     memberSince: 'Miembro desde',
     notAdded: 'Sin agregar',
   },
-  tabs: {
-    posts: (count: number) => `Publicaciones (${count})`,
-    saved: (count: number) => `Guardados (${count})`,
-  },
   empty: {
     posts: 'Aún no has publicado nada.',
-    saved: 'Aún no has guardado publicaciones.',
   },
   post: {
     open: (text: string) => `Abrir publicación: ${text}`,

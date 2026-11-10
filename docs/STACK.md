@@ -27,6 +27,7 @@ Principio: **lo mínimo que cubre las funcionalidades de los diseños**. Casi to
 | Hoja de Comentarios que sube desde abajo | Pantalla modal de Expo Router (`transparentModal`) + `Animated` | No |
 | Interruptores, chips, pestañas, botones | Componentes propios (`shared/ui`, Atomic Design) | No |
 | Guardar el token de sesión | `expo-secure-store` | Sí |
+| Datos no sensibles solo en el dispositivo (contenido ocultado) | `@react-native-async-storage/async-storage` | Sí. El token nunca va aquí |
 | Estado de la sesión | React Context (`AuthProvider`) | No |
 | Llamadas al backend (login, sesión) | `fetch` en `shared/lib/http`, usado por los services de cada módulo | No |
 | Listas que vienen del servidor (Foro, comentarios, notificaciones): carga, error, recargar, «me gusta» y «seguir» al instante | **TanStack Query** (`@tanstack/react-query`) | Sí. Se instala en T-06 (Foro), no antes |

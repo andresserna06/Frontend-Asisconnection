@@ -9,6 +9,10 @@ import { useAdminService } from '@/modules/admin/useAdminService';
 import { createHttpClient } from '@/shared/lib/http';
 
 jest.mock('@/modules/auth', () => ({ useAuth: jest.fn() }));
+jest.mock('@tanstack/react-query', () => ({
+  ...jest.requireActual('@tanstack/react-query'),
+  useQueryClient: () => ({ invalidateQueries: jest.fn() }),
+}));
 jest.mock('@/modules/admin/useAdminService', () => ({ useAdminService: jest.fn() }));
 
 const SAFE_AREA_METRICS = {

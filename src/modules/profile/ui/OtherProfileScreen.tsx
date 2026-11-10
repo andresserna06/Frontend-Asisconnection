@@ -8,6 +8,7 @@ import { usePublicProfileConnection } from '@/modules/profile/application/usePub
 import { usePublicProfile } from '@/modules/profile/application/usePublicProfile';
 import type { PublicProfileErrorKind } from '@/modules/profile/domain/models/PublicProfileError';
 import { usePublicProfileService } from '@/modules/profile/usePublicProfileService';
+import { useContentRemoval } from '@/modules/removal';
 import { useCollapsingHeader } from '@/shared/hooks/useCollapsingHeader';
 import { formatLongDate } from '@/shared/lib/formatDate';
 import {
@@ -41,6 +42,10 @@ export function OtherProfileScreen() {
   const expandedHeaderHeight = insets.top + HEADER_ROW_HEIGHT;
   const { headerHeight, onScroll } = useCollapsingHeader(expandedHeaderHeight);
   const hasActorPostsSupport = typeof service.getActorPosts === 'function';
+  const { isHidden } = useContentRemoval();
+  const visiblePosts =
+    posts.status === 'success' ? posts.data.filter((post) => !isHidden(post.id)) : [];
+  const hiddenPostCount = posts.status === 'success' ? posts.data.length - visiblePosts.length : 0;
   const isOwnProfile =
     !isAnonymous && profile.status === 'success' && profile.data.username === user?.username;
 
@@ -135,7 +140,7 @@ export function OtherProfileScreen() {
             </View>
 
             <StatsCard
-              postCount={profile.data.postCount}
+              postCount={Math.max(0, profile.data.postCount - hiddenPostCount)}
               followerCount={profile.data.followerCount}
               followingCount={profile.data.followingCount}
             />
@@ -174,7 +179,9 @@ export function OtherProfileScreen() {
 
             <View style={styles.publications}>
               <Text accessibilityRole="header" style={styles.sectionTitle}>
-                {PROFILE_STRINGS.publicProfile.posts(profile.data.postCount)}
+                {PROFILE_STRINGS.publicProfile.posts(
+                  Math.max(0, profile.data.postCount - hiddenPostCount),
+                )}
               </Text>
               {!hasActorPostsSupport ? (
                 <Text style={styles.stateText}>
@@ -188,15 +195,14 @@ export function OtherProfileScreen() {
                   message={PROFILE_STRINGS.listError}
                   onRetry={posts.reload}
                 />
-              ) : posts.data.length === 0 ? (
+              ) : visiblePosts.length === 0 ? (
                 <Text style={styles.stateText}>{PROFILE_STRINGS.publicProfile.postsEmpty}</Text>
               ) : (
                 <View style={styles.postsList}>
-                  {posts.data.map((post) => (
+                  {visiblePosts.map((post) => (
                     <ProfilePostCard
                       key={post.id}
                       post={post}
-                      isAuthorShown={false}
                       onPress={() =>
                         router.push({
                           pathname: '/users/[userId]/posts/[postId]',

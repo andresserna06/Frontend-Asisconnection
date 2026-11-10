@@ -13,6 +13,10 @@ import { createHttpClient } from '@/shared/lib/http';
 import { ProfileScreen } from './ProfileScreen';
 
 // The screen gets its service from the composition root; tests swap it for a fake.
+jest.mock('@/modules/removal', () => ({
+  RemoveContentButton: () => null,
+  useContentRemoval: () => ({ isHidden: () => false }),
+}));
 jest.mock('@/modules/profile/useProfileService', () => ({ useProfileService: jest.fn() }));
 jest.mock('@/modules/profile/application/useMyPhotoUrl', () => ({
   useRefreshMyPhotoUrl: () => jest.fn(),
@@ -71,19 +75,9 @@ describe('ProfileScreen', () => {
     expect(screen.getByText('14 de mayo de 1988')).toBeOnTheScreen();
     expect(screen.getByText('Marzo de 2026')).toBeOnTheScreen();
     expect(await screen.findByText('Texto de una publicación propia.')).toBeOnTheScreen();
-    expect(screen.getByRole('tab', { name: 'Publicaciones (1)' })).toBeSelected();
+    expect(screen.getByRole('header', { name: 'Publicaciones (1)' })).toBeOnTheScreen();
+    expect(screen.queryByText(/Guardados/)).toBeNull();
     expect(screen.queryByRole('button', { name: 'Iniciar sesión' })).toBeNull();
-  });
-
-  it('shows the saved posts with their author', async () => {
-    await renderScreen();
-    await screen.findByText('Texto de una publicación propia.');
-
-    await fireEvent.press(screen.getByRole('tab', { name: 'Guardados (1)' }));
-
-    expect(await screen.findByText('Texto de una publicación guardada.')).toBeOnTheScreen();
-    expect(screen.getByText('Otra Persona')).toBeOnTheScreen();
-    expect(screen.queryByText('Texto de una publicación propia.')).toBeNull();
   });
 
   it('marks missing data instead of leaving it blank', async () => {

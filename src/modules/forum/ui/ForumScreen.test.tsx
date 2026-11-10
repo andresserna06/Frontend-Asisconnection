@@ -9,6 +9,10 @@ import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
 
 import { ForumScreen } from './ForumScreen';
 
+jest.mock('@/modules/removal', () => ({
+  RemoveContentButton: () => null,
+  useContentRemoval: () => ({ isHidden: () => false }),
+}));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn() },
 }));

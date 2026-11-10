@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
+import { RemoveContentButton } from '@/modules/removal';
 import {
   CATEGORY_COLORS,
   COLORS,
@@ -171,7 +172,15 @@ export function ForumPostCard({
           <Icon name="message-circle" size={SIZE.iconSmall} color={COLORS.textSecondary} />
           <Text style={styles.count}>{post.commentCount}</Text>
         </Pressable>
-        <Icon name="bookmark" size={SIZE.iconSmall} color={COLORS.textSecondary} />
+        <View style={styles.actionsSpacer} />
+        <RemoveContentButton
+          target={{
+            kind: 'post',
+            id: post.id,
+            authorName: post.author.name,
+            authorProfileId: post.author.profileId,
+          }}
+        />
       </View>
     </View>
   );
@@ -347,6 +356,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.s20,
     paddingHorizontal: SPACING.s14,
+  },
+  actionsSpacer: {
+    flex: 1,
   },
   action: {
     minHeight: 40,

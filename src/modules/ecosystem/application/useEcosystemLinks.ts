@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 
 import type { EcosystemService } from '@/modules/ecosystem/domain/EcosystemService';
-import type { EcosystemLink } from '@/modules/ecosystem/domain/models/EcosystemLink';
+import {
+  PUBLISHED_PROJECT_URLS,
+  type EcosystemLink,
+} from '@/modules/ecosystem/domain/models/EcosystemLink';
 
 function normalizeKey(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -33,7 +36,13 @@ export function useEcosystemLinks(service: EcosystemService) {
   }, [service]);
 
   function findLinkForTitle(title: string): EcosystemLink | null {
-    return linksByKey[normalizeKey(title)] ?? null;
+    const key = normalizeKey(title);
+    const link = linksByKey[key] ?? null;
+    const publishedUrl = PUBLISHED_PROJECT_URLS[key];
+    if (publishedUrl === undefined) {
+      return link;
+    }
+    return { id: key, projectName: title, description: link?.description ?? '', url: publishedUrl };
   }
 
   return { findLinkForTitle };
