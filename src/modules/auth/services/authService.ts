@@ -40,7 +40,10 @@ type CurrentSessionResponse = {
   local_role?: string | null;
 };
 // RFC 7807 body of every error response.
-type ProblemDetailsResponse = { errors?: { field: string; message: string }[] } | null;
+type ProblemDetailsResponse = {
+  detail?: string;
+  errors?: { field: string; message: string }[];
+} | null;
 
 // Backend field name -> login form field.
 const FIELD_BY_BACKEND_NAME: Record<string, keyof FieldErrors> = {
@@ -66,6 +69,17 @@ function toFieldErrors(body: unknown): FieldErrors {
   return fieldErrors;
 }
 
+function toProblemDetail(body: unknown): string | undefined {
+  const problem = body as ProblemDetailsResponse;
+  if (problem?.errors && problem.errors.length > 0) {
+    return problem.errors.map((item) => item.message).join(' ');
+  }
+  if (typeof problem?.detail === 'string' && problem.detail.trim().length > 0) {
+    return problem.detail.trim();
+  }
+  return undefined;
+}
+
 // Translates a failed request into the auth domain error. `unauthorizedKind` is what a
 // 401 means for the endpoint that failed.
 function toAuthError(error: unknown, unauthorizedKind: AuthErrorKind): AuthError {
@@ -78,13 +92,15 @@ function toAuthError(error: unknown, unauthorizedKind: AuthErrorKind): AuthError
       // 502: the central identity service (Render) is down or rate-limited.
       return new AuthError('network');
     case 400:
-      return new AuthError('validation', toFieldErrors(error.body));
+      return new AuthError('validation', toFieldErrors(error.body), toProblemDetail(error.body));
     case 401:
       return new AuthError(unauthorizedKind);
     case 403:
-      return new AuthError('forbidden');
+      return new AuthError('forbidden', {}, toProblemDetail(error.body));
+    case 409:
+      return new AuthError('conflict', {}, toProblemDetail(error.body));
     default:
-      return new AuthError('unknown');
+      return new AuthError('unknown', {}, toProblemDetail(error.body));
   }
 }
 

@@ -65,7 +65,7 @@ export function LoginScreen() {
   const consentIssue = formIssues.acceptConsent
     ? FORM_ISSUE_MESSAGES[formIssues.acceptConsent]
     : null;
-  const formError = error ? AUTH_ERROR_MESSAGES[error.kind] : null;
+  const formError = !isRegisterOpen && error ? AUTH_ERROR_MESSAGES[error.kind] : null;
 
   function handleSubmit() {
     submit({ email, password, acceptConsent });
@@ -197,7 +197,10 @@ export function LoginScreen() {
               <Button
                 label={LOGIN_STRINGS.createAccount}
                 variant="outline"
-                onPress={() => setIsRegisterOpen(true)}
+                onPress={() => {
+                  clearFeedback();
+                  setIsRegisterOpen(true);
+                }}
               />
               <TextButton
                 label={LOGIN_STRINGS.guest}
@@ -214,9 +217,14 @@ export function LoginScreen() {
 
         <RegisterModal
           visible={isRegisterOpen}
-          onClose={() => setIsRegisterOpen(false)}
+          onClose={() => {
+            clearFeedback();
+            setIsRegisterOpen(false);
+          }}
           onSubmit={submitRegister}
           isSubmitting={isSubmitting}
+          serverError={error}
+          onClearError={() => clearFeedback()}
         />
       </View>
     </ResponsiveScreen>

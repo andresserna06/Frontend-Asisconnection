@@ -2,18 +2,29 @@ import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { RegisterCredentials } from '@/modules/auth/domain/AuthService';
+import type { AuthError } from '@/modules/auth/domain/models/AuthError';
 import type { RoleCode } from '@/shared/domain/models/RoleCode';
-import { BORDER_WIDTH, COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SPACING } from '@/shared/theme';
+import {
+  BORDER_WIDTH,
+  COLORS,
+  CONTENT_MAX_WIDTH,
+  FONT_FAMILY,
+  FONT_SIZE,
+  RADIUS,
+  SPACING,
+} from '@/shared/theme';
 import { Button } from '@/shared/ui/atoms/Button';
 import { TextField } from '@/shared/ui/molecules/TextField';
 import { ConsentCheckbox } from './ConsentCheckbox';
-import { LOGIN_STRINGS } from '../strings';
+import { AUTH_ERROR_MESSAGES, LOGIN_STRINGS } from '../strings';
 
 type RegisterModalProps = {
   visible: boolean;
   onClose: () => void;
   onSubmit: (credentials: RegisterCredentials) => Promise<void>;
   isSubmitting: boolean;
+  serverError?: AuthError | null;
+  onClearError?: () => void;
 };
 
 const REGISTRATION_ROLES: { code: Exclude<RoleCode, 'MODERATOR' | 'ADMIN'>; label: string }[] = [
@@ -23,13 +34,29 @@ const REGISTRATION_ROLES: { code: Exclude<RoleCode, 'MODERATOR' | 'ADMIN'>; labe
   { code: 'BENEFICIARIO', label: 'Beneficiario' },
 ];
 
-export function RegisterModal({ visible, onClose, onSubmit, isSubmitting }: RegisterModalProps) {
+export function RegisterModal({
+  visible,
+  onClose,
+  onSubmit,
+  isSubmitting,
+  serverError = null,
+  onClearError,
+}: RegisterModalProps) {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<Exclude<RoleCode, 'MODERATOR' | 'ADMIN'>>('ACUDIENTE');
   const [acceptConsent, setAcceptConsent] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  const displayedError =
+    validationError ??
+    (serverError ? (serverError.detail ?? AUTH_ERROR_MESSAGES[serverError.kind]) : null);
+
+  function clearErrors() {
+    setValidationError(null);
+    onClearError?.();
+  }
 
   async function handleRegister() {
     if (!username.trim()) {
@@ -60,7 +87,7 @@ export function RegisterModal({ visible, onClose, onSubmit, isSubmitting }: Regi
       });
       onClose();
     } catch {
-      // Error is set in parent state
+      // Server error is passed down via `serverError` prop and rendered inside the modal
     }
   }
 
@@ -77,7 +104,10 @@ export function RegisterModal({ visible, onClose, onSubmit, isSubmitting }: Regi
               label={LOGIN_STRINGS.usernameLabel}
               placeholder={LOGIN_STRINGS.usernamePlaceholder}
               value={username}
-              onChangeText={setUsername}
+              onChangeText={(value) => {
+                setUsername(value);
+                clearErrors();
+              }}
               autoCapitalize="none"
             />
 
@@ -85,7 +115,10 @@ export function RegisterModal({ visible, onClose, onSubmit, isSubmitting }: Regi
               label={LOGIN_STRINGS.emailLabel}
               placeholder={LOGIN_STRINGS.emailPlaceholder}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(value) => {
+                setEmail(value);
+                clearErrors();
+              }}
               keyboardType="email-address"
               autoCapitalize="none"
             />
@@ -94,7 +127,10 @@ export function RegisterModal({ visible, onClose, onSubmit, isSubmitting }: Regi
               label={LOGIN_STRINGS.passwordLabel}
               placeholder="Mínimo 8 caracteres"
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(value) => {
+                setPassword(value);
+                clearErrors();
+              }}
               secureTextEntry
               autoCapitalize="none"
             />
@@ -107,7 +143,10 @@ export function RegisterModal({ visible, onClose, onSubmit, isSubmitting }: Regi
                   return (
                     <Pressable
                       key={r.code}
-                      onPress={() => setRole(r.code)}
+                      onPress={() => {
+                        setRole(r.code);
+                        clearErrors();
+                      }}
                       style={[styles.roleChip, isSelected && styles.roleChipSelected]}
                     >
                       <Text
@@ -124,10 +163,17 @@ export function RegisterModal({ visible, onClose, onSubmit, isSubmitting }: Regi
             <ConsentCheckbox
               label={LOGIN_STRINGS.consent}
               isChecked={acceptConsent}
-              onToggle={() => setAcceptConsent((c) => !c)}
+              onToggle={() => {
+                setAcceptConsent((c) => !c);
+                clearErrors();
+              }}
             />
 
-            {validationError && <Text style={styles.errorText}>{validationError}</Text>}
+            {displayedError !== null && (
+              <Text accessibilityRole="alert" style={styles.errorText}>
+                {displayedError}
+              </Text>
+            )}
 
             <View style={styles.actions}>
               <Button
@@ -151,6 +197,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
+    width: '100%',
+    maxWidth: CONTENT_MAX_WIDTH,
+    alignSelf: 'center',
     backgroundColor: COLORS.surface,
     borderTopLeftRadius: RADIUS.cardLarge,
     borderTopRightRadius: RADIUS.cardLarge,

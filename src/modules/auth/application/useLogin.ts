@@ -8,7 +8,7 @@ import { type LoginFormIssues, validateLoginForm } from '@/modules/auth/domain/v
 import { useAuth } from './AuthProvider';
 
 export function useLogin() {
-  const { signIn, signInAnonymous, registerAccount } = useAuth();
+  const { signIn, signInAnonymous, registerAccount, register } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formIssues, setFormIssues] = useState<LoginFormIssues>({});
   const [error, setError] = useState<AuthError | null>(null);
@@ -39,21 +39,26 @@ export function useLogin() {
   }
 
   async function submitAnonymous(acceptConsent: boolean, nickname?: string) {
-    if (isSubmittingRef.current || !signInAnonymous) {
+    if (isSubmittingRef.current) {
       return;
     }
     if (!acceptConsent) {
       setFormIssues({ acceptConsent: 'consentRequired' });
-      setError(null);
       return;
     }
 
-    setFormIssues({});
-    setError(null);
     isSubmittingRef.current = true;
     setIsSubmitting(true);
+    setFormIssues({});
+    setError(null);
     try {
-      await signInAnonymous({ acceptConsent, nickname });
+      if (signInAnonymous) {
+        await signInAnonymous({
+          acceptConsent: true,
+          nickname: nickname?.trim() || 'Invitado',
+          roleTag: 'BENEFICIARIO',
+        });
+      }
     } catch (caught) {
       setError(toAuthError(caught));
     } finally {
@@ -68,13 +73,18 @@ export function useLogin() {
     }
     isSubmittingRef.current = true;
     setIsSubmitting(true);
+    setFormIssues({});
+    setError(null);
     try {
       if (registerAccount) {
         await registerAccount(credentials);
+      } else if (register) {
+        await register(credentials);
       }
     } catch (caught) {
-      setError(toAuthError(caught));
-      throw caught;
+      const authError = toAuthError(caught);
+      setError(authError);
+      throw authError;
     } finally {
       isSubmittingRef.current = false;
       setIsSubmitting(false);
@@ -82,9 +92,11 @@ export function useLogin() {
   }
 
   // Called when the user edits a field: hide the feedback that no longer applies.
-  function clearFeedback(field: LoginField) {
-    setFormIssues((current) => ({ ...current, [field]: undefined }));
+  function clearFeedback(field?: LoginField) {
     setError(null);
+    if (field) {
+      setFormIssues((current) => ({ ...current, [field]: undefined }));
+    }
   }
 
   return {

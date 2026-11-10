@@ -37,6 +37,8 @@ export const AUTH_ERROR_MESSAGES: Record<AuthErrorKind, string> = {
   invalidCredentials: 'Correo o contraseña incorrectos.',
   sessionExpired: 'Tu sesión expiró. Inicia sesión de nuevo.',
   forbidden: 'No tienes permiso para entrar.',
+  conflict:
+    'Ya existe una cuenta registrada con ese correo electrónico o nombre de usuario. Inicia sesión o usa otro.',
   network: 'No pudimos conectarnos. Revisa tu internet e inténtalo de nuevo.',
   validation: 'Revisa los datos marcados.',
   unknown: 'Algo salió mal. Inténtalo de nuevo.',

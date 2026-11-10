@@ -179,6 +179,29 @@ describe('createAuthService', () => {
     expect(init?.method).toBe('POST');
   });
 
+  it('maps 409 on registration to conflict with server detail', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(409, {
+        status: 409,
+        title: 'Conflict',
+        detail: 'El correo o usuario ya se encuentra registrado.',
+      }),
+    );
+
+    await expect(
+      service.register?.({
+        username: 'HernanSerna',
+        email: 'hernan.serna@gmail.com',
+        password: 'ClaveSegura123',
+        role: 'VOLUNTARIO',
+        acceptConsent: true,
+      }),
+    ).rejects.toMatchObject({
+      kind: 'conflict',
+      detail: 'El correo o usuario ya se encuentra registrado.',
+    });
+  });
+
   it('starts an anonymous guest session via POST /sessions/anonymous', async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse(201, {
