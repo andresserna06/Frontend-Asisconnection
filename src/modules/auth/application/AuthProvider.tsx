@@ -135,6 +135,19 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
           throw error;
         }
       },
+      async uploadFile<T>(path: string, formData: FormData) {
+        if (!httpClient.uploadFile) {
+          throw new HttpError(null);
+        }
+        try {
+          return await httpClient.uploadFile<T>(path, formData, token ?? undefined);
+        } catch (error) {
+          if (error instanceof HttpError && error.status === 401 && token !== null) {
+            await signOut();
+          }
+          throw error;
+        }
+      },
     }),
     [httpClient, token, signOut],
   );

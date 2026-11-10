@@ -6,6 +6,7 @@ import type {
   ActorConnectionResult,
   ProfileService,
 } from '@/modules/profile/domain/ProfileService';
+import type { Post } from '@/shared/domain/models/Post';
 import { useAsyncData } from '@/shared/hooks/useAsyncData';
 
 // Application hook for screen 5b (Perfil de otra persona) and follow/connection actions.
@@ -18,6 +19,16 @@ export function usePublicProfile(service: ProfileService, actorId: string) {
   }, [service, actorId]);
 
   const profile = useAsyncData<MyProfile>(fetchProfile);
+
+  const fetchPosts = useCallback(() => {
+    if (!service.getActorPosts) {
+      return Promise.resolve([]);
+    }
+    return service.getActorPosts(actorId);
+  }, [service, actorId]);
+
+  const posts = useAsyncData<Post[]>(fetchPosts);
+
   const [connection, setConnection] = useState<ActorConnectionResult | null>(null);
   const [followError, setFollowError] = useState<ProfileError | null>(null);
   const [isFollowingLoading, setIsFollowingLoading] = useState(false);
@@ -38,6 +49,7 @@ export function usePublicProfile(service: ProfileService, actorId: string) {
 
   return {
     profile,
+    posts,
     connection,
     followError,
     isFollowingLoading,

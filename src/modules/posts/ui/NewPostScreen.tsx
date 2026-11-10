@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -32,6 +34,8 @@ export function NewPostScreen() {
   const { submit, clearFeedback, isSubmitting, draftIssue, error } = useCreatePost(service);
   const [content, setContent] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey | null>(null);
+  const [selectedPhotoUri, setSelectedPhotoUri] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const primaryRole = user === null ? null : getPrimaryRole(user.roles);
   const initials = user?.username.slice(0, 2).toUpperCase() ?? 'AS';
 
@@ -41,8 +45,56 @@ export function NewPostScreen() {
       ? POST_ERROR_MESSAGES[error.kind]
       : null;
 
+  async function handlePickImage() {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Permiso necesario', 'Se requiere acceso a la galería para adjuntar fotos.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]?.uri) {
+      setSelectedPhotoUri(result.assets[0].uri);
+    }
+  }
+
+  async function handleTakePhoto() {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Permiso necesario', 'Se requiere acceso a la cámara para tomar fotos.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]?.uri) {
+      setSelectedPhotoUri(result.assets[0].uri);
+    }
+  }
+
   async function handlePublish() {
-    const result = await submit({ category: selectedCategory, content });
+    let mediaUrls: string[] | undefined;
+    if (selectedPhotoUri) {
+      try {
+        setIsUploadingPhoto(true);
+        const uploadedUrl = service.uploadMedia
+          ? await service.uploadMedia(selectedPhotoUri)
+          : selectedPhotoUri;
+        mediaUrls = [uploadedUrl];
+      } catch {
+        setIsUploadingPhoto(false);
+        Alert.alert('Error', 'No se pudo subir la imagen adjunta. Intenta de nuevo.');
+        return;
+      } finally {
+        setIsUploadingPhoto(false);
+      }
+    }
+
+    const result = await submit({ category: selectedCategory, content, mediaUrls });
     if (result === null) {
       return;
     }
@@ -83,15 +135,19 @@ export function NewPostScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={POST_STRINGS.publish}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isUploadingPhoto}
           onPress={handlePublish}
           style={({ pressed }) => [
             styles.publishButton,
-            (pressed || isSubmitting) && styles.pressed,
+            (pressed || isSubmitting || isUploadingPhoto) && styles.pressed,
           ]}
         >
           <Text style={styles.publishLabel}>
-            {isSubmitting ? POST_STRINGS.publishing : POST_STRINGS.publish}
+            {isUploadingPhoto
+              ? 'Subiendo foto...'
+              : isSubmitting
+                ? POST_STRINGS.publishing
+                : POST_STRINGS.publish}
           </Text>
         </Pressable>
       </View>
@@ -124,6 +180,21 @@ export function NewPostScreen() {
           style={styles.input}
           textAlignVertical="top"
         />
+
+        {selectedPhotoUri !== null && (
+          <View style={styles.imagePreviewContainer}>
+            <Image source={selectedPhotoUri} style={styles.imagePreview} contentFit="cover" />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Eliminar foto adjunta"
+              hitSlop={8}
+              onPress={() => setSelectedPhotoUri(null)}
+              style={({ pressed }) => [styles.removeImageButton, pressed && styles.pressed]}
+            >
+              <Icon name="x" size={SIZE.iconSmall} color={COLORS.onPrimary} />
+            </Pressable>
+          </View>
+        )}
 
         <View style={styles.categorySection}>
           <Text style={styles.sectionLabel}>{POST_STRINGS.chooseTopic}</Text>
@@ -174,12 +245,7 @@ export function NewPostScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={POST_STRINGS.openGallery}
-            onPress={() =>
-              Alert.alert(
-                POST_STRINGS.galleryUnavailableTitle,
-                POST_STRINGS.mediaUnavailableMessage,
-              )
-            }
+            onPress={handlePickImage}
             style={({ pressed }) => [styles.galleryButton, pressed && styles.pressed]}
           >
             <Text style={styles.galleryAction}>{POST_STRINGS.galleryLabel}</Text>
@@ -188,15 +254,17 @@ export function NewPostScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={POST_STRINGS.openCamera}
-          onPress={() =>
-            Alert.alert(POST_STRINGS.cameraUnavailableTitle, POST_STRINGS.mediaUnavailableMessage)
-          }
+          onPress={handleTakePhoto}
           style={({ pressed }) => [styles.cameraButton, pressed && styles.pressed]}
         >
           <Icon name="camera" size={SIZE.icon} color={COLORS.primary} />
           <Text style={styles.cameraLabel}>{POST_STRINGS.cameraLabel}</Text>
         </Pressable>
-        <Text style={styles.galleryEmpty}>{POST_STRINGS.galleryEmpty}</Text>
+        <Text style={styles.galleryEmpty}>
+          {selectedPhotoUri !== null
+            ? '1 foto seleccionada lista para publicar'
+            : POST_STRINGS.galleryEmpty}
+        </Text>
       </View>
     </View>
   );
@@ -299,6 +367,31 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.body,
     fontSize: FONT_SIZE.s17,
     lineHeight: 25,
+  },
+  imagePreviewContainer: {
+    position: 'relative',
+    marginTop: SPACING.s8,
+    borderRadius: RADIUS.card,
+    overflow: 'hidden',
+    height: 180,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.inputBorder,
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: SPACING.s8,
+    right: SPACING.s8,
+    backgroundColor: COLORS.danger,
+    width: 32,
+    height: 32,
+    borderRadius: RADIUS.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   categorySection: {
     gap: SPACING.s8,

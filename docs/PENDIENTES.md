@@ -48,8 +48,8 @@ Cómo se usa:
 
 - [ ] **UI-05 · Header Verde Colapsable (`HeaderTeal`) en `ProfileScreen.tsx`**
   - Envolver `ProfileScreen.tsx` con el mismo header verde institucional (`COLORS.primary`, esquinas inferiores `RADIUS.cardLarge = 22` y animación `useCollapsingHeader`) que usan `ForumScreen`, `NotificationsScreen` y `EcosystemScreen`, colocando allí el título *«Mi perfil»* y el ícono de engranaje hacia `/profile/settings`.
-- [ ] **UI-06 · Selector de Cámara y Galería en `NewPostScreen.tsx` (`expo-image-picker`)**
-  - Conectar los botones de *«Cámara»* y *«Recientes»* en `src/modules/posts/ui/NewPostScreen.tsx` con `expo-image-picker` para previsualizar la foto adjunta y enviar su URL en `mediaUrls`.
+- [x] **UI-06 · Selector de Cámara y Galería en `NewPostScreen.tsx` y Avatar en `ProfileScreen.tsx` (`expo-image-picker`)**
+  - Conectados con `expo-image-picker` y subida a Cloudinary vía `POST /v1/media/upload`. Previsualización de imagen adjunta con botón de descarte (`x`) y spinner de carga en el avatar.
 - [ ] **UI-07 · Restricción Visual del Chip «Noticias» (Avisos) en `NewPostScreen.tsx`**
   - Ocultar o deshabilitar el chip de la categoría institucional (`announcements` / `Noticias`) cuando el usuario autenticado no tenga rol `'ADMIN'` o `'MODERATOR'`.
 - [ ] **UI-08 · Extracción de Átomos y Organismos a `src/shared/ui/` (T-05)**

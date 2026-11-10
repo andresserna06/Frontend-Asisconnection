@@ -15,7 +15,22 @@ Formato de cada entrada:
 
 ---
 
-## 2026-11-08 · Alineación Total de Modelo de Privacidad, Moderación, Perfil Público y Ecosistema (Backend + Frontend)
+## 2026-11-09 · Integración Multimedia (Cloudinary) en Perfil y Foro, y Auto-aprobación para Administradores
+- Qué se hizo:
+  - **Backend (`Asisconnection`)**:
+    - Se creó el módulo `MediaModule` (`src/modules/media/`) con `POST /v1/media/upload` integrado con Cloudinary mediante streaming en memoria RAM (`upload_stream`), validación de 5 MB y tipos MIME de imagen.
+    - Se implementó `GET /v1/actors/:id/posts` para consultar el muro de publicaciones aprobadas de un perfil de tercero con validación RFC 7807 (404 si no existe).
+    - **Rectificación de Moderación Privilegiada**: En `posts.service.ts`, si el autor posee rol `ADMIN` o `MODERATOR` (y el filtro automático no rechaza el contenido), la publicación o comentario se aprueba automáticamente (`status = 'APPROVED'`), evitando que las publicaciones administrativas queden estancadas en `PENDING`.
+  - **Frontend (`Frontend-Asisconnection`)**:
+    - Se instaló y configuró `expo-image-picker` compatible con Expo SDK 57.
+    - Se añadió `uploadFile<T>` en `createHttpClient.ts` para enviar peticiones `multipart/form-data` con `Authorization: Bearer <token>` sin forzar el header `Content-Type` manual (permitiendo que el runtime nativo genere el boundary).
+    - `ProfileScreen.tsx`: Se conectó el botón de cámara del avatar para seleccionar imagen de la galería con recorte 1:1, subirla al backend y persistirla con `PATCH /v1/actors/me`. Se añadió indicador de carga visual (`ActivityIndicator`) en `ProfileSummary.tsx`.
+    - `NewPostScreen.tsx`: Se conectaron los botones de cámara y galería para adjuntar fotos a nuevas publicaciones, con caja de previsualización (180 px de altura, `RADIUS.card = 18`) y botón flotante de descarte con icono `x`.
+    - Contratos de servicio ampliados con `uploadAvatar` y `getActorPosts` en `ProfileService`, y `uploadMedia` en `PostsService`, manteniendo la separación estricta de capas (`ui → application → domain`).
+- Cómo se probó:
+  - Backend: `npm run lint` (0 errores, 0 warnings), `npm run test` (15/15 tests pasando).
+  - Frontend: `npx tsc --noEmit` (0 errores), `npx eslint` (0 errores, 0 warnings), `npm test` (30 suites pasando, 119/119 tests en verde).
+- Queda pendiente: Configurar en el Dashboard de Render las variables `CLOUDINARY_*`, y avanzar con las tareas visuales de UI restantes (`UI-01` a `UI-04`).
 - Qué se hizo:
   - **Backend (`Asisconnection`)**:
     - Se completó el seed `redirection-links.seed.ts` y `RedirectionLinkRepository.onModuleInit` con los 5 proyectos oficiales del ecosistema (`SUMA 21`, `AULA UP`, `SAGA-UP`, `SON UP`, `LUPE`).

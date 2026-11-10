@@ -6,6 +6,7 @@ import { type CategoryCode, toCategoryCode } from '@/shared/domain/models/Catego
 import type { Post } from '@/shared/domain/models/Post';
 import type { RoleCode } from '@/shared/domain/models/RoleCode';
 import { type HttpClient, HttpError } from '@/shared/lib/http';
+import { uploadMedia } from '@/shared/lib/uploadMedia';
 
 type ActorProfileResponse = {
   id: string;
@@ -219,8 +220,31 @@ export function createProfileService(client: HttpClient): ProfileService {
       }
     },
 
+    async getActorPosts(actorId: string) {
+      try {
+        const [categoriesById, page] = await Promise.all([
+          loadCategoriesById(),
+          client.request<PostsPageResponse>(`/actors/${actorId}/posts?page=1&limit=20`),
+        ]);
+        return page.data.map((item) => toPost(item, categoriesById));
+      } catch (error) {
+        if (error instanceof HttpError && error.status === 404) {
+          return [];
+        }
+        throw toProfileError(error);
+      }
+    },
+
     async getMySavedPosts() {
       return [];
+    },
+
+    async uploadAvatar(localUri: string) {
+      try {
+        return await uploadMedia(client, localUri);
+      } catch (error) {
+        throw toProfileError(error);
+      }
     },
   };
 }

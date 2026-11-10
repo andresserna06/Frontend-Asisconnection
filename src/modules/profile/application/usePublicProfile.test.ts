@@ -2,8 +2,26 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 
 import { ProfileError } from '@/modules/profile/domain/models/ProfileError';
 import type { ProfileService } from '@/modules/profile/domain/ProfileService';
+import type { Post } from '@/shared/domain/models/Post';
 
 import { usePublicProfile } from './usePublicProfile';
+
+const SAMPLE_POST: Post = {
+  id: 'post-10',
+  category: 'questions',
+  text: 'Pregunta comunitaria de Carlos',
+  imageUrl: null,
+  imageDescription: null,
+  createdAt: '2026-11-09T10:00:00.000Z',
+  likeCount: 5,
+  commentCount: 2,
+  author: {
+    id: 'actor-2',
+    fullName: 'Carlos Ruiz',
+    roles: ['VOLUNTARIO'],
+    photoUrl: null,
+  },
+};
 
 const SAMPLE_PUBLIC_PROFILE = {
   id: 'actor-2',
@@ -27,6 +45,7 @@ describe('usePublicProfile', () => {
       getMyPosts: jest.fn(),
       getMySavedPosts: jest.fn(),
       getPublicProfile: jest.fn().mockResolvedValue(SAMPLE_PUBLIC_PROFILE),
+      getActorPosts: jest.fn().mockResolvedValue([SAMPLE_POST]),
       followActor: jest.fn().mockResolvedValue({ id: 'conn-1', status: 'ACCEPTED' }),
     };
 
@@ -34,10 +53,15 @@ describe('usePublicProfile', () => {
 
     await waitFor(() => {
       expect(result.current.profile.status).toBe('success');
+      expect(result.current.posts.status).toBe('success');
     });
 
     if (result.current.profile.status === 'success') {
       expect(result.current.profile.data.fullName).toBe('Carlos Ruiz');
+    }
+
+    if (result.current.posts.status === 'success') {
+      expect(result.current.posts.data).toEqual([SAMPLE_POST]);
     }
 
     await act(async () => {

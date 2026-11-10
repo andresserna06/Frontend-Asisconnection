@@ -27,6 +27,8 @@ export type ProfileService = {
   followActor?(actorId: string): Promise<ActorConnectionResult>;
   // Newest first.
   getMyPosts(): Promise<Post[]>;
+  getActorPosts?(actorId: string): Promise<Post[]>;
+  uploadAvatar?(localUri: string): Promise<string>;
   // Private: never shown to anyone else.
   getMySavedPosts(): Promise<Post[]>;
 };

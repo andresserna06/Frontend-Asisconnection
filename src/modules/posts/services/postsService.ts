@@ -6,6 +6,7 @@ import {
 import type { PostsService } from '@/modules/posts/domain/PostsService';
 import { toCategoryCode } from '@/shared/domain/models/CategoryCode';
 import { type HttpClient, HttpError } from '@/shared/lib/http';
+import { uploadMedia } from '@/shared/lib/uploadMedia';
 
 type CategoryItemResponse = {
   id: string;
@@ -76,18 +77,30 @@ export function createPostsService(client: HttpClient): PostsService {
   }
 
   return {
-    async createPost({ category, content }) {
+    async createPost({ category, content, mediaUrls }) {
       try {
         const categoryId = await resolveCategoryId(category);
         const response = await client.request<PendingSubmissionResponse>('/posts', {
           method: 'POST',
-          body: { category_id: categoryId, content },
+          body: {
+            category_id: categoryId,
+            content,
+            ...(mediaUrls && mediaUrls.length > 0 ? { media_urls: mediaUrls } : {}),
+          },
         });
         return {
           id: response.id,
           status: response.status,
           message: response.message,
         };
+      } catch (error) {
+        throw toPostsHttpError(error);
+      }
+    },
+
+    async uploadMedia(localUri: string) {
+      try {
+        return await uploadMedia(client, localUri);
       } catch (error) {
         throw toPostsHttpError(error);
       }

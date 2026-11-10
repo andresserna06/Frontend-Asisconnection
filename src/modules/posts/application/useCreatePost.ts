@@ -21,6 +21,7 @@ export function useCreatePost(service: PostsService) {
   async function submit(input: {
     category: CategoryCode | null;
     content: string;
+    mediaUrls?: string[];
   }): Promise<PostSubmissionResult | null> {
     if (isSubmittingRef.current) {
       return null;
@@ -47,6 +48,7 @@ export function useCreatePost(service: PostsService) {
       const result = await service.createPost({
         category: input.category,
         content: trimmedContent,
+        mediaUrls: input.mediaUrls,
       });
       await queryClient.invalidateQueries({ queryKey: ['forum', 'feed'] });
       return result;

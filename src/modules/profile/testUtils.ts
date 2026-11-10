@@ -1,5 +1,8 @@
 import type { MyProfile } from '@/modules/profile/domain/models/MyProfile';
-import type { ProfileService } from '@/modules/profile/domain/ProfileService';
+import type {
+  ActorConnectionResult,
+  ProfileService,
+} from '@/modules/profile/domain/ProfileService';
 import type { Post } from '@/shared/domain/models/Post';
 
 // Test doubles for the profile module (fictitious data). Only imported from *.test.ts(x).
@@ -46,8 +49,15 @@ export const TEST_SAVED_POST: Post = {
 export function createFakeProfileService(overrides: Partial<ProfileService> = {}) {
   return {
     getMyProfile: jest.fn<Promise<MyProfile>, []>(async () => TEST_PROFILE),
+    getPublicProfile: jest.fn<Promise<MyProfile>, [string]>(async () => TEST_PROFILE),
     getMyPosts: jest.fn<Promise<Post[]>, []>(async () => [TEST_POST]),
+    getActorPosts: jest.fn<Promise<Post[]>, [string]>(async () => [TEST_POST]),
     getMySavedPosts: jest.fn<Promise<Post[]>, []>(async () => [TEST_SAVED_POST]),
+    followActor: jest.fn<Promise<ActorConnectionResult>, [string]>(async () => ({
+      id: 'conn-1',
+      status: 'ACCEPTED',
+    })),
+    uploadAvatar: jest.fn<Promise<string>, [string]>(async () => 'https://example.test/avatar.jpg'),
     ...overrides,
   };
 }

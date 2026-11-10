@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { RoleBadge, type RoleCode } from '@/modules/auth';
 import { PROFILE_STRINGS } from '@/modules/profile/ui/strings';
@@ -24,24 +24,37 @@ type ProfileSummaryProps = {
   fullName: string;
   roles: readonly RoleCode[];
   photoUrl: string | null;
+  isUploading?: boolean;
   onChangePhoto: () => void;
 };
 
 // Avatar with the camera button, name and role.
-export function ProfileSummary({ fullName, roles, photoUrl, onChangePhoto }: ProfileSummaryProps) {
+export function ProfileSummary({
+  fullName,
+  roles,
+  photoUrl,
+  isUploading = false,
+  onChangePhoto,
+}: ProfileSummaryProps) {
   return (
     <View style={styles.container}>
       <View style={styles.avatar}>
         <Avatar name={fullName} photoUrl={photoUrl} size="large" />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={PROFILE_STRINGS.changePhoto}
-          hitSlop={CAMERA_HIT_SLOP}
-          onPress={onChangePhoto}
-          style={({ pressed }) => [styles.camera, pressed && styles.pressed]}
-        >
-          <Icon name="camera" size={SIZE.iconSmall} color={COLORS.textTitle} />
-        </Pressable>
+        {isUploading ? (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          </View>
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={PROFILE_STRINGS.changePhoto}
+            hitSlop={CAMERA_HIT_SLOP}
+            onPress={onChangePhoto}
+            style={({ pressed }) => [styles.camera, pressed && styles.pressed]}
+          >
+            <Icon name="camera" size={SIZE.iconSmall} color={COLORS.textTitle} />
+          </Pressable>
+        )}
       </View>
       <View style={styles.identity}>
         <Text accessibilityRole="header" style={styles.name}>
@@ -62,6 +75,19 @@ const styles = StyleSheet.create({
   avatar: {
     width: SIZE.avatarLarge,
     height: SIZE.avatarLarge,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    right: -SPACING.s4,
+    bottom: -SPACING.s2,
+    width: SIZE.avatarAction,
+    height: SIZE.avatarAction,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.surface,
+    borderWidth: BORDER_WIDTH.medium,
+    borderColor: COLORS.inputBorder,
+    borderRadius: RADIUS.pill,
   },
   camera: {
     position: 'absolute',
