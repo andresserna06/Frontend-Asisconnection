@@ -1,6 +1,9 @@
+import { Platform } from 'react-native';
+
 import type { LocalMediaFile } from '@/shared/domain/models/LocalMediaFile';
 
 import type { HttpClient } from './http';
+import { resolveBlobFromUri } from './http/resolveBlob';
 
 export type UploadMediaResult = {
   url: string;
@@ -39,7 +42,7 @@ export function buildMediaFormData(media: LocalMediaFile): FormData {
   const fileName = media.fileName ?? uriName ?? `upload.${extensionFor(mimeType)}`;
   const formData = new FormData();
 
-  if (media.webFile !== null) {
+  if (media.webFile != null) {
     formData.append('file', media.webFile, fileName);
   } else {
     // React Native's FormData reads the file from this descriptor.
@@ -52,9 +55,21 @@ export async function uploadMedia(client: HttpClient, media: LocalMediaFile): Pr
   if (!client.uploadFile) {
     throw new Error('El cliente HTTP no tiene habilitada la subida de archivos');
   }
+
+  let fileToUpload: Blob | null = media.webFile;
+  if (
+    fileToUpload == null &&
+    (Platform.OS === 'web' || media.uri.startsWith('blob:') || media.uri.startsWith('data:'))
+  ) {
+    fileToUpload = await resolveBlobFromUri(media.uri);
+  }
+
+  const effectiveMedia: LocalMediaFile =
+    fileToUpload != null ? { ...media, webFile: fileToUpload } : media;
+
   const result = await client.uploadFile<UploadMediaResult>(
     '/media/upload',
-    buildMediaFormData(media),
+    buildMediaFormData(effectiveMedia),
   );
   return result.url;
 }

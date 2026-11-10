@@ -136,7 +136,7 @@ export function ProfileScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={PROFILE_STRINGS.openAdminPanel}
-          onPress={() => router.push('/admin')}
+          onPress={() => router.push('/admin' as never)}
           style={({ pressed }) => [styles.adminButton, pressed && styles.pressed]}
         >
           <Text style={styles.adminButtonText}>{PROFILE_STRINGS.adminPanel}</Text>

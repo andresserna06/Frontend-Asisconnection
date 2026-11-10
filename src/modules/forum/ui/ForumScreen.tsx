@@ -64,7 +64,11 @@ export function ForumScreen() {
             onCommentsPress={() => router.push(`/comments/${item.id}`)}
             onAuthorPress={
               profileId
-                ? () => router.push({ pathname: '/users/[userId]', params: { userId: profileId } })
+                ? () =>
+                    router.push({
+                      pathname: '/users/[userId]' as never,
+                      params: { userId: profileId },
+                    })
                 : undefined
             }
             onLikePress={() => togglePostLike(item.id)}
