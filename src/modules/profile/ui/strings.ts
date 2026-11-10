@@ -23,6 +23,7 @@ export const PROFILE_STRINGS = {
     info: 'Información',
     follow: 'Seguir',
     following: 'Siguiendo',
+    unfollow: 'Dejar de seguir',
     requestSent: 'Solicitud pendiente',
     blocked: 'No disponible',
     signInToFollow: 'Inicia sesión para seguir',

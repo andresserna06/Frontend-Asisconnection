@@ -84,6 +84,27 @@ export function usePublicProfileConnection(
     }
   }, [actorId, isAnonymous, service]);
 
+  const requestUnfollow = useCallback(async () => {
+    if (actorId === undefined || isAnonymous) {
+      return;
+    }
+
+    setIsRequesting(true);
+    setOperationError(null);
+    try {
+      const relationship = service.requestUnfollow
+        ? await service.requestUnfollow(actorId)
+        : ('notFollowing' as const);
+      setConnection({ status: 'ready', actorId, relationship });
+    } catch (error) {
+      setOperationError(
+        error instanceof PublicProfileError ? error : new PublicProfileError('unknown'),
+      );
+    } finally {
+      setIsRequesting(false);
+    }
+  }, [actorId, isAnonymous, service]);
+
   const retryConnectionStatus = useCallback(async () => {
     if (actorId === undefined || isAnonymous) {
       return;
@@ -116,6 +137,7 @@ export function usePublicProfileConnection(
     isRequesting,
     operationError,
     requestFollow,
+    requestUnfollow,
     retryConnectionStatus,
   };
 }

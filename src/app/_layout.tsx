@@ -42,7 +42,7 @@ function RootNavigator() {
   const isSignedIn = status === 'signedIn';
   const isAdmin = user?.roles.includes('ADMIN') ?? false;
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack key={user?.username ?? 'guest'} screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={isSignedIn}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="users/[userId]" />

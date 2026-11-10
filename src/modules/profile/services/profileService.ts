@@ -9,6 +9,8 @@ import type { RoleCode } from '@/shared/domain/models/RoleCode';
 import { type HttpClient, HttpError } from '@/shared/lib/http';
 import { uploadMedia } from '@/shared/lib/uploadMedia';
 
+import { countUnfollowedActors } from './localUnfollowState';
+
 type ActorProfileResponse = {
   id: string;
   user_account_id: string;
@@ -181,7 +183,7 @@ export function createProfileService(client: HttpClient): ProfileService {
       memberSince: actor.created_at,
       postCount: actor.posts_count ?? 0,
       followerCount: actor.followers_count ?? 0,
-      followingCount: actor.following_count ?? 0,
+      followingCount: Math.max(0, (actor.following_count ?? 0) - countUnfollowedActors()),
       savedCount: 0,
       shortBio: actor.short_bio ?? null,
       showEmail: actor.show_email ?? false,

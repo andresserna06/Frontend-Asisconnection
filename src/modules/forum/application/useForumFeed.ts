@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { ForumFilter } from '@/modules/forum/domain/models/ForumCategory';
 import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
+import { getReactionViewer } from '@/shared/hooks/useReactionToggle';
 
 import { useForumRepository } from './ForumRepositoryProvider';
 
@@ -13,8 +14,9 @@ export type ForumFeedState =
 
 export function useForumFeed(filter: ForumFilter): ForumFeedState {
   const repository = useForumRepository();
+  const viewerKey = getReactionViewer();
   const query = useQuery({
-    queryKey: ['forum', 'feed', filter],
+    queryKey: ['forum', 'feed', viewerKey, filter],
     enabled: repository !== null,
     queryFn: async () => {
       if (repository === null) {

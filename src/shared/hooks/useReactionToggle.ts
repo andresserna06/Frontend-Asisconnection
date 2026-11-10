@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 
 type ReactionState = {
+  viewerKey: string;
   // Count sent by the server the last time the list was loaded.
   baseCount: number;
   // Whether that count already included the viewer's reaction.
@@ -15,9 +16,26 @@ export type ReactionToggle = {
   toggle(): void;
 };
 
-const STORAGE_KEY = 'asisconnection.reactions.v1';
+const STORAGE_KEY = 'asisconnection.reactions.v2';
 const memoryReactions = new Map<string, boolean>();
 let isHydratedFromStorage = false;
+let currentViewerId = 'default';
+
+export function setReactionViewer(viewerId: string | null | undefined): void {
+  const normalized = viewerId?.trim().toLowerCase();
+  currentViewerId = normalized && normalized.length > 0 ? normalized : 'guest';
+}
+
+export function getReactionViewer(): string {
+  return currentViewerId;
+}
+
+function toScopedKey(reactionKey?: string, viewerId = currentViewerId): string | undefined {
+  if (!reactionKey) {
+    return undefined;
+  }
+  return `${viewerId}:${reactionKey}`;
+}
 
 function getWebStorage(): Pick<Storage, 'getItem' | 'setItem'> | null {
   try {
@@ -60,20 +78,26 @@ function hydrateReactionsIfNeeded() {
   }
 }
 
-export function getRememberedReaction(reactionKey?: string): boolean {
-  if (!reactionKey) {
+export function getRememberedReaction(reactionKey?: string, viewerId = currentViewerId): boolean {
+  const scoped = toScopedKey(reactionKey, viewerId);
+  if (!scoped) {
     return false;
   }
   hydrateReactionsIfNeeded();
-  return memoryReactions.get(reactionKey) ?? false;
+  return memoryReactions.get(scoped) ?? false;
 }
 
-export function rememberReaction(reactionKey: string | undefined, isActive: boolean): void {
-  if (!reactionKey) {
+export function rememberReaction(
+  reactionKey: string | undefined,
+  isActive: boolean,
+  viewerId = currentViewerId,
+): void {
+  const scoped = toScopedKey(reactionKey, viewerId);
+  if (!scoped) {
     return;
   }
   hydrateReactionsIfNeeded();
-  memoryReactions.set(reactionKey, isActive);
+  memoryReactions.set(scoped, isActive);
   const storage = getWebStorage();
   if (!storage) {
     return;
@@ -94,6 +118,7 @@ export function rememberReaction(reactionKey: string | undefined, isActive: bool
 export function clearRememberedReactionsForTests(): void {
   memoryReactions.clear();
   isHydratedFromStorage = false;
+  currentViewerId = 'default';
   const storage = getWebStorage();
   try {
     storage?.setItem(STORAGE_KEY, '{}');
@@ -104,28 +129,37 @@ export function clearRememberedReactionsForTests(): void {
 
 // Pure rule, exported for tests: given what we believed before the tap and what the
 // server answered (`active`), returns the corrected state.
-export function applyToggleResult(before: ReactionState, isActive: boolean): ReactionState {
+export function applyToggleResult<T extends { wasActive: boolean; isActive: boolean }>(
+  before: T,
+  isActive: boolean,
+): T {
   // The server ended in the same state we believed we started from: our belief was wrong,
   // so the reaction was the opposite before the tap (e.g. already counted after a reload).
   const wasActive = before.isActive === isActive ? !isActive : before.wasActive;
   return { ...before, wasActive, isActive };
 }
 
-export function countReactions(state: ReactionState): number {
+export function countReactions(state: {
+  baseCount: number;
+  wasActive: boolean;
+  isActive: boolean;
+}): number {
   return Math.max(0, state.baseCount - (state.wasActive ? 1 : 0) + (state.isActive ? 1 : 0));
 }
 
 // The backend counts reactions but does not say whether the viewer already reacted.
-// The real state is learned from the answer of the toggle endpoint and remembered by
-// `reactionKey`, so the heart stays marked across modal close/reopen and page reloads.
+// The real state is learned from the answer of the toggle endpoint and remembered per
+// viewer + `reactionKey`, so each account sees only its own likes.
 export function useReactionToggle(
   serverCount: number,
   request: () => Promise<boolean>,
   reactionKey?: string,
 ): ReactionToggle {
+  const viewerKey = toScopedKey(reactionKey) ?? currentViewerId;
   const [state, setState] = useState<ReactionState>(() => {
     const remembered = getRememberedReaction(reactionKey) && serverCount > 0;
     return {
+      viewerKey,
       baseCount: serverCount,
       wasActive: remembered,
       isActive: remembered,
@@ -134,12 +168,23 @@ export function useReactionToggle(
   const [isPending, setIsPending] = useState(false);
   const isPendingRef = useRef(false);
 
-  // The list was reloaded: the new count already reflects the last known reaction.
   let current = state;
-  if (serverCount !== state.baseCount) {
+  if (viewerKey !== state.viewerKey) {
+    // The active account changed: load only the new viewer's remembered reaction.
+    const remembered = getRememberedReaction(reactionKey) && serverCount > 0;
+    current = {
+      viewerKey,
+      baseCount: serverCount,
+      wasActive: remembered,
+      isActive: remembered,
+    };
+    setState(current);
+  } else if (serverCount !== state.baseCount) {
+    // The list was reloaded for the same viewer: the new count already reflects the last known reaction.
     const remembered = getRememberedReaction(reactionKey);
     const activeAfterReload = (state.isActive || remembered) && serverCount > 0;
     current = {
+      viewerKey,
       baseCount: serverCount,
       wasActive: activeAfterReload,
       isActive: activeAfterReload,
@@ -151,20 +196,21 @@ export function useReactionToggle(
     if (isPendingRef.current) {
       return;
     }
+    const activeViewer = currentViewerId;
     const before = current;
     const optimisticActive = !before.isActive;
     isPendingRef.current = true;
     setIsPending(true);
-    rememberReaction(reactionKey, optimisticActive);
+    rememberReaction(reactionKey, optimisticActive, activeViewer);
     setState({ ...before, isActive: optimisticActive });
 
     request()
       .then((isActive) => {
-        rememberReaction(reactionKey, isActive);
+        rememberReaction(reactionKey, isActive, activeViewer);
         setState(applyToggleResult(before, isActive));
       })
       .catch(() => {
-        rememberReaction(reactionKey, before.isActive);
+        rememberReaction(reactionKey, before.isActive, activeViewer);
         setState(before);
       })
       .finally(() => {

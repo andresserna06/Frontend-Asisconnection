@@ -18,6 +18,7 @@ import { AuthError, toAuthError } from '@/modules/auth/domain/models/AuthError';
 import type { LoginCredentials } from '@/modules/auth/domain/models/LoginCredentials';
 import type { Session } from '@/modules/auth/domain/models/Session';
 import type { User } from '@/modules/auth/domain/models/User';
+import { setReactionViewer } from '@/shared/hooks/useReactionToggle';
 import { type HttpClient, HttpError } from '@/shared/lib/http';
 
 export type AuthStatus = 'loading' | 'signedOut' | 'signedIn';
@@ -53,6 +54,7 @@ type AuthProviderProps = {
 export function AuthProvider({ service, storage, httpClient, children }: AuthProviderProps) {
   const [state, setState] = useState<AuthState>({ status: 'loading' });
   const token = state.status === 'signedIn' ? state.session.token : null;
+  setReactionViewer(state.status === 'signedIn' ? state.session.user.username : null);
 
   // Restore the saved session when the app opens.
   useEffect(() => {
@@ -95,6 +97,7 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
     async (credentials: LoginCredentials) => {
       const session = await service.login(credentials);
       await storage.saveToken(session.token, session.isAnonymous);
+      setReactionViewer(session.user.username);
       setState({ status: 'signedIn', session });
     },
     [service, storage],
@@ -111,6 +114,7 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
         roleTag: credentials?.roleTag,
       });
       await storage.saveToken(session.token, session.isAnonymous ?? true);
+      setReactionViewer(session.user.username);
       setState({
         status: 'signedIn',
         session: { ...session, isAnonymous: session.isAnonymous ?? true },
@@ -126,6 +130,7 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
       }
       const session = await service.register(credentials);
       await storage.saveToken(session.token, session.isAnonymous ?? false);
+      setReactionViewer(session.user.username);
       setState({ status: 'signedIn', session });
     },
     [service, storage],
@@ -134,6 +139,7 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
   // The device token is local (no logout endpoint): signing out only forgets it.
   const signOut = useCallback(async () => {
     await storage.clearToken().catch(() => undefined);
+    setReactionViewer(null);
     setState({ status: 'signedOut' });
   }, [storage]);
 

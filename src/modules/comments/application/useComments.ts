@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { countComments } from '@/modules/comments/domain/CommentsRepository';
 import type { Comment, NewComment } from '@/modules/comments/domain/models/Comment';
+import { getReactionViewer } from '@/shared/hooks/useReactionToggle';
 
 import { useCommentsRepository } from './CommentsRepositoryProvider';
 
@@ -13,8 +14,9 @@ export type CommentsState =
 
 export function useComments(postId: string): CommentsState {
   const repository = useCommentsRepository();
+  const viewerKey = getReactionViewer();
   const query = useQuery({
-    queryKey: ['comments', postId],
+    queryKey: ['comments', viewerKey, postId],
     enabled: repository !== null,
     queryFn: async () => {
       if (repository === null) {
@@ -47,7 +49,7 @@ export function useAddComment(postId: string) {
       return repository.addComment({ ...comment, postId });
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['comments', postId] });
+      await queryClient.invalidateQueries({ queryKey: ['comments'] });
       await queryClient.invalidateQueries({ queryKey: ['forum', 'feed'] });
     },
   });

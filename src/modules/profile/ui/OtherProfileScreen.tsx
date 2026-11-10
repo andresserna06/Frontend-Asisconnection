@@ -41,9 +41,14 @@ export function OtherProfileScreen() {
   const { headerHeight, onScroll } = useCollapsingHeader(expandedHeaderHeight);
   const hasActorPostsSupport = typeof service.getActorPosts === 'function';
 
-  // After following, the follower count changes: fetch it again without a spinner.
+  // After following or unfollowing, the follower count changes: fetch it again without a spinner.
   async function handleFollow() {
     await follow.requestFollow();
+    await refresh();
+  }
+
+  async function handleUnfollow() {
+    await follow.requestUnfollow();
     await refresh();
   }
 
@@ -128,6 +133,7 @@ export function OtherProfileScreen() {
               isRequesting={follow.isRequesting}
               operationError={follow.operationError?.kind ?? null}
               onFollow={() => void handleFollow()}
+              onUnfollow={() => void handleUnfollow()}
               onRetry={() => void follow.retryConnectionStatus()}
               onSignIn={() => void handleSignIn()}
             />
@@ -203,6 +209,7 @@ type FollowActionProps = {
   isRequesting: boolean;
   operationError: PublicProfileErrorKind | null;
   onFollow: () => void;
+  onUnfollow: () => void;
   onRetry: () => void;
   onSignIn: () => void;
 };
@@ -212,6 +219,7 @@ function FollowAction({
   isRequesting,
   operationError,
   onFollow,
+  onUnfollow,
   onRetry,
   onSignIn,
 }: FollowActionProps) {
@@ -253,23 +261,24 @@ function FollowAction({
   }
 
   const relationship = connection.relationship;
-  const label =
-    relationship === 'following'
-      ? PROFILE_STRINGS.publicProfile.following
-      : relationship === 'pending'
-        ? PROFILE_STRINGS.publicProfile.requestSent
-        : relationship === 'blocked'
-          ? PROFILE_STRINGS.publicProfile.blocked
-          : PROFILE_STRINGS.publicProfile.follow;
-  const isDisabled = isRequesting || relationship !== 'notFollowing';
+  const isFollowing = relationship === 'following';
+  const label = isFollowing
+    ? PROFILE_STRINGS.publicProfile.unfollow
+    : relationship === 'pending'
+      ? PROFILE_STRINGS.publicProfile.requestSent
+      : relationship === 'blocked'
+        ? PROFILE_STRINGS.publicProfile.blocked
+        : PROFILE_STRINGS.publicProfile.follow;
+  const isDisabled = isRequesting || (relationship !== 'notFollowing' && !isFollowing);
 
   return (
     <View style={styles.followContainer}>
       <FollowButton
         label={label}
+        variant={isFollowing ? 'following' : 'primary'}
         isLoading={isRequesting}
         isDisabled={isDisabled}
-        onPress={onFollow}
+        onPress={isFollowing ? onUnfollow : onFollow}
       />
       {operationError !== null ? (
         <Text accessibilityRole="alert" style={styles.followError}>
@@ -282,6 +291,7 @@ function FollowAction({
 
 type FollowButtonProps = {
   label: string;
+  variant?: 'primary' | 'following';
   isDisabled?: boolean;
   isLoading?: boolean;
   onPress: () => void;
@@ -289,10 +299,12 @@ type FollowButtonProps = {
 
 function FollowButton({
   label,
+  variant = 'primary',
   isDisabled = false,
   isLoading = false,
   onPress,
 }: FollowButtonProps) {
+  const isFollowingVariant = variant === 'following';
   return (
     <Pressable
       accessibilityRole="button"
@@ -302,14 +314,19 @@ function FollowButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.followButton,
+        isFollowingVariant && styles.followButtonFollowing,
         isDisabled && styles.followButtonDisabled,
         pressed && styles.pressed,
       ]}
     >
       {isLoading ? (
-        <ActivityIndicator color={COLORS.onPrimary} />
+        <ActivityIndicator color={isFollowingVariant ? COLORS.primary : COLORS.onPrimary} />
       ) : (
-        <Text style={styles.followButtonText}>{label}</Text>
+        <Text
+          style={[styles.followButtonText, isFollowingVariant && styles.followButtonTextFollowing]}
+        >
+          {label}
+        </Text>
       )}
     </Pressable>
   );
@@ -391,6 +408,10 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.button,
     backgroundColor: COLORS.primary,
   },
+  followButtonFollowing: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.surface,
+  },
   followButtonDisabled: {
     opacity: 0.75,
   },
@@ -398,6 +419,9 @@ const styles = StyleSheet.create({
     color: COLORS.onPrimary,
     fontFamily: FONT_FAMILY.headingBold,
     fontSize: FONT_SIZE.s16,
+  },
+  followButtonTextFollowing: {
+    color: COLORS.primary,
   },
   followLoading: {
     minHeight: SIZE.buttonSecondary,

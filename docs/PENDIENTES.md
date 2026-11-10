@@ -14,7 +14,7 @@ Cómo se usa:
 - [x] **UI-01 · Registro y Modo Invitado en `LoginScreen.tsx`**
   - Integrado `submitAnonymous` (`POST /sessions/anonymous`) y `RegisterModal.tsx` (`POST /auth/registro`), incluyendo manejo explícito de conflictos `409 Conflict` y visualización de errores RFC 7807 dentro del modal.
 - [x] **UI-02 y T-11 · Pantalla `5b` — Perfil Público de Otra Persona y sus Publicaciones (`src/app/users/[userId].tsx`)**
-  - Integrada en `OtherProfileScreen.tsx` con `publicProfileService` (`GET /actors/{id}`, `GET /actors/{id}/posts`, `GET /connections`, `POST /connections`).
+  - Integrada en `OtherProfileScreen.tsx` con `publicProfileService` (`GET /actors/{id}`, `GET /actors/{id}/posts`, `GET /connections`, `POST /connections` y acción de `Dejar de seguir` sin generar notificaciones).
 - [x] **UI-03 y T-23 · Panel de Administración, Moderación Comunitaria y Directorio de Cuentas (`src/app/admin/index.tsx`)**
   - Integrado `AdminScreen.tsx` con cola paginada de moderación (`GET /admin/moderation/pending`, `PATCH /admin/moderation/posts|comments/:id/status`) accesible para `ADMIN` y `MODERATOR`, y gestión de moderadores (`GET /admin/accounts?search=...`, `GET /admin/moderators`, `PUT /admin/moderators/:userAccountId`, `DELETE /admin/moderators/:userAccountId`) exclusiva para `ADMIN`.
 - [x] **UI-04 · Modal de Edición de Perfil Propio en `ProfileScreen.tsx`**

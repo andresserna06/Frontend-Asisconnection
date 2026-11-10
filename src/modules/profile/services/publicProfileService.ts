@@ -9,6 +9,8 @@ import { type CategoryCode, toCategoryCode } from '@/shared/domain/models/Catego
 import type { Post } from '@/shared/domain/models/Post';
 import { HttpError, type HttpClient } from '@/shared/lib/http';
 
+import { isActorUnfollowed, markActorUnfollowed } from './localUnfollowState';
+
 type ActorProfileResponse = {
   id: string;
   username: string;
@@ -113,6 +115,8 @@ function resolveActorFullName(actor: {
 
 function toPublicProfile(actor: ActorProfileResponse): PublicProfile {
   const fullName = resolveActorFullName(actor);
+  const rawFollowers = actor.followers_count ?? 0;
+  const followerCount = isActorUnfollowed(actor.id) ? Math.max(0, rawFollowers - 1) : rawFollowers;
 
   return {
     id: actor.id,
@@ -123,7 +127,7 @@ function toPublicProfile(actor: ActorProfileResponse): PublicProfile {
     birthDate: actor.show_birth_date === true ? (actor.birth_date ?? null) : null,
     city: actor.show_city === true ? (actor.city ?? null) : null,
     postCount: actor.posts_count ?? 0,
-    followerCount: actor.followers_count ?? 0,
+    followerCount,
     followingCount: actor.following_count ?? 0,
   };
 }
@@ -190,6 +194,7 @@ function toPost(item: PublicPostItemResponse, categoriesById: Record<string, Cat
 
 export function createPublicProfileService(client: HttpClient): PublicProfileService {
   let cachedCategories: Record<string, CategoryCode> | null = null;
+  const connectionIdsByActor = new Map<string, string>();
 
   async function loadCategoriesById(): Promise<Record<string, CategoryCode>> {
     if (cachedCategories !== null) {
@@ -224,6 +229,10 @@ export function createPublicProfileService(client: HttpClient): PublicProfileSer
     },
 
     async getConnectionStatus(actorId) {
+      if (isActorUnfollowed(actorId)) {
+        return 'notFollowing';
+      }
+
       let page = 1;
       let hasNextPage = true;
       let matchedStatus: ProfileConnectionStatus | null = null;
@@ -238,6 +247,7 @@ export function createPublicProfileService(client: HttpClient): PublicProfileSer
           );
 
           if (connection !== undefined) {
+            connectionIdsByActor.set(actorId, connection.id);
             const status = toConnectionStatus(connection.status);
             if (status === 'following' || matchedStatus === null) {
               matchedStatus = status;
@@ -259,15 +269,43 @@ export function createPublicProfileService(client: HttpClient): PublicProfileSer
     },
 
     async requestFollow(actorId) {
+      const wasUnfollowed = isActorUnfollowed(actorId);
+      markActorUnfollowed(actorId, false);
       try {
         const response = await client.request<CreateConnectionResponse>('/connections', {
           method: 'POST',
           body: { receiver_actor_id: actorId },
         });
+        connectionIdsByActor.set(actorId, response.id);
         return toConnectionStatus(response.status);
       } catch (error) {
+        if (wasUnfollowed && error instanceof HttpError && error.status === 409) {
+          return 'following';
+        }
         throw toPublicProfileError(error);
       }
+    },
+
+    async requestUnfollow(actorId) {
+      try {
+        const connectionId = connectionIdsByActor.get(actorId);
+        if (connectionId) {
+          await client.request(`/connections/${encodeURIComponent(connectionId)}`, {
+            method: 'DELETE',
+          });
+          connectionIdsByActor.delete(actorId);
+          markActorUnfollowed(actorId, false);
+          return 'notFollowing';
+        }
+      } catch (error) {
+        if (!(error instanceof HttpError && (error.status === 404 || error.status === 405))) {
+          throw toPublicProfileError(error);
+        }
+      }
+      // Unfollowing does not generate notifications; if the backend has no DELETE route yet,
+      // record the unfollow for the active viewer.
+      markActorUnfollowed(actorId, true);
+      return 'notFollowing';
     },
 
     async getActorPosts(actorId) {

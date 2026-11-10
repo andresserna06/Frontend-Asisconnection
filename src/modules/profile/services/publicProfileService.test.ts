@@ -1,6 +1,11 @@
 import { HttpError, type HttpClient } from '@/shared/lib/http';
 
+import { clearUnfollowedActorsForTests } from './localUnfollowState';
 import { createPublicProfileService } from './publicProfileService';
+
+beforeEach(() => {
+  clearUnfollowedActorsForTests();
+});
 
 describe('publicProfileService', () => {
   it('loads public profile fields and omits personal data whose visibility is disabled', async () => {
@@ -82,6 +87,28 @@ describe('publicProfileService', () => {
       method: 'POST',
       body: { receiver_actor_id: 'actor-1' },
     });
+  });
+
+  it('unfollows an actor without generating notifications even when the backend returns 404 on DELETE', async () => {
+    const request = jest
+      .fn()
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'connection-1',
+            requester_actor_id: 'actor-current',
+            receiver_actor_id: 'actor-1',
+            status: 'ACCEPTED',
+          },
+        ],
+        meta: { has_next_page: false },
+      })
+      .mockRejectedValueOnce(new HttpError(404));
+    const service = createPublicProfileService({ request } as HttpClient);
+
+    await expect(service.getConnectionStatus('actor-1')).resolves.toBe('following');
+    await expect(service.requestUnfollow?.('actor-1')).resolves.toBe('notFollowing');
+    await expect(service.getConnectionStatus('actor-1')).resolves.toBe('notFollowing');
   });
 
   it('loads approved posts for a public actor via GET /actors/:id/posts', async () => {
