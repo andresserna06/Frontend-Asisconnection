@@ -8,7 +8,12 @@ import {
   type ReactNode,
 } from 'react';
 
-import type { AuthService, TokenStorage } from '@/modules/auth/domain/AuthService';
+import type {
+  AnonymousCredentials,
+  AuthService,
+  RegisterCredentials,
+  TokenStorage,
+} from '@/modules/auth/domain/AuthService';
 import { toAuthError } from '@/modules/auth/domain/models/AuthError';
 import type { LoginCredentials } from '@/modules/auth/domain/models/LoginCredentials';
 import type { Session } from '@/modules/auth/domain/models/Session';
@@ -24,6 +29,8 @@ type AuthContextValue = {
   user: User | null;
   // Rejects with AuthError; the session only changes on success.
   signIn(credentials: LoginCredentials): Promise<void>;
+  signInAnonymous?(credentials?: Partial<AnonymousCredentials>): Promise<void>;
+  registerAccount?(credentials: RegisterCredentials): Promise<void>;
   // Always ends signed out, even if the backend call fails.
   signOut(): Promise<void>;
   // HTTP client for the other modules' services: sends the session token and signs out
@@ -82,6 +89,28 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
     setState({ status: 'signedIn', session });
   }
 
+  async function signInAnonymous(credentials?: Partial<AnonymousCredentials>) {
+    if (!service.loginAnonymous) {
+      throw new Error('Anonymous login is not supported by service');
+    }
+    const session = await service.loginAnonymous({
+      acceptConsent: credentials?.acceptConsent ?? true,
+      nickname: credentials?.nickname,
+      roleTag: credentials?.roleTag,
+    });
+    await storage.saveToken(session.token);
+    setState({ status: 'signedIn', session });
+  }
+
+  async function registerAccount(credentials: RegisterCredentials) {
+    if (!service.register) {
+      throw new Error('Registration is not supported by service');
+    }
+    const session = await service.register(credentials);
+    await storage.saveToken(session.token);
+    setState({ status: 'signedIn', session });
+  }
+
   // The device token is local (no logout endpoint): signing out only forgets it.
   const signOut = useCallback(async () => {
     await storage.clearToken().catch(() => undefined);
@@ -109,6 +138,8 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
     status: state.status,
     user: state.status === 'signedIn' ? state.session.user : null,
     signIn,
+    signInAnonymous,
+    registerAccount,
     signOut,
     authorizedClient,
   };

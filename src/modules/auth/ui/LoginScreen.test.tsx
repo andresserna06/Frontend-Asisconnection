@@ -87,15 +87,29 @@ describe('LoginScreen', () => {
     expect(await screen.findByText('Correo o contraseña incorrectos.')).toBeOnTheScreen();
   });
 
-  it('shows the coming-soon notice for features not built yet', async () => {
+  it('shows the coming-soon notice for forgot password', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     await renderScreen();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Crear cuenta' }));
     await fireEvent.press(screen.getByRole('button', { name: '¿Olvidaste tu contraseña?' }));
+
+    expect(alertSpy).toHaveBeenCalledTimes(1);
+    alertSpy.mockRestore();
+  });
+
+  it('opens register modal when pressing Crear cuenta', async () => {
+    await renderScreen();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Crear cuenta' }));
+
+    expect(screen.getByText('Crear nueva cuenta')).toBeOnTheScreen();
+  });
+
+  it('logs in as guest when pressing Ingresar como invitado', async () => {
+    const service = await renderScreen();
+
     await fireEvent.press(screen.getByRole('button', { name: 'Ingresar como invitado' }));
 
-    expect(alertSpy).toHaveBeenCalledTimes(3);
-    alertSpy.mockRestore();
+    expect(service.loginAnonymous).toHaveBeenCalled();
   });
 });

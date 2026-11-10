@@ -4,11 +4,20 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SettingsScreen } from './SettingsScreen';
 
 const mockSignOut = jest.fn().mockResolvedValue(undefined);
+const mockHttpClient = {
+  request: jest.fn().mockResolvedValue({
+    show_email: false,
+    show_birth_date: false,
+    show_city: false,
+    require_follow_approval: false,
+  }),
+};
 
 jest.mock('@/modules/auth', () => ({
   useAuth: () => ({
     signOut: mockSignOut,
   }),
+  useAuthorizedHttpClient: () => mockHttpClient,
 }));
 
 const SAFE_AREA_METRICS = {

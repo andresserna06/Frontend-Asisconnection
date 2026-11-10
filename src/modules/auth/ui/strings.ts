@@ -17,6 +17,12 @@ export const LOGIN_STRINGS = {
   firstTime: '¿Primera vez aquí?',
   createAccount: 'Crear cuenta',
   guest: 'Ingresar como invitado',
+  registerTitle: 'Crear nueva cuenta',
+  usernameLabel: 'Nombre de usuario',
+  usernamePlaceholder: 'ej. maria.gomez',
+  roleLabel: 'Tu rol en la comunidad',
+  registerSubmit: 'Registrarme e ingresar',
+  registerCancel: 'Cancelar',
   footer: 'Fundación ASISCO UP · Manizales',
 } as const;
 

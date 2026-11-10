@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
-import { Alert } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import type { ProfileService } from '@/modules/profile/domain/ProfileService';
@@ -79,15 +78,12 @@ describe('ProfileScreen', () => {
     expect(getMyProfile).toHaveBeenCalledTimes(2);
   });
 
-  it('shows the coming soon notice for actions not built yet', async () => {
-    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+  it('opens edit profile modal when pressing Editar', async () => {
     await renderScreen();
     await screen.findByText('Persona Prueba');
 
     await fireEvent.press(screen.getByRole('button', { name: 'Editar' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Cambiar foto de perfil' }));
 
-    expect(alertSpy).toHaveBeenCalledTimes(2);
-    alertSpy.mockRestore();
+    expect(screen.getByText('Editar perfil')).toBeOnTheScreen();
   });
 });

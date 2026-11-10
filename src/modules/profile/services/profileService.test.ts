@@ -56,6 +56,11 @@ describe('createProfileService', () => {
       followerCount: 5,
       followingCount: 3,
       savedCount: 0,
+      shortBio: 'Acudiente',
+      showEmail: false,
+      showBirthDate: false,
+      showCity: false,
+      requireFollowApproval: false,
     });
     expect(fetchMock.mock.calls[0][0]).toBe(`${BASE_URL}/actors/me`);
   });

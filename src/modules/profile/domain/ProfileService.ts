@@ -6,6 +6,12 @@ export type UpdateProfileInput = {
   lastNames?: string;
   avatarUrl?: string | null;
   shortBio?: string | null;
+  birthDate?: string | null;
+  city?: string | null;
+  showEmail?: boolean;
+  showBirthDate?: boolean;
+  showCity?: boolean;
+  requireFollowApproval?: boolean;
 };
 
 // Contract implemented by the services layer (HTTP). Methods reject with ProfileError.

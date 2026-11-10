@@ -21,6 +21,19 @@ export function createFakeAuthService(overrides: Partial<AuthService> = {}) {
       token: TEST_TOKEN,
       user: TEST_USER,
     })),
+    loginAnonymous: jest.fn<
+      Promise<Session>,
+      Parameters<NonNullable<AuthService['loginAnonymous']>>
+    >(async () => ({
+      token: 'guest-token',
+      user: { username: 'Invitado', roles: ['BENEFICIARIO'] },
+    })),
+    register: jest.fn<Promise<Session>, Parameters<NonNullable<AuthService['register']>>>(
+      async () => ({
+        token: 'registered-token',
+        user: TEST_USER,
+      }),
+    ),
     getProfile: jest.fn<Promise<User>, [string]>(async () => TEST_USER),
     ...overrides,
   };

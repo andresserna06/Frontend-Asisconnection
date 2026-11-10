@@ -17,6 +17,12 @@ type ActorProfileResponse = {
   last_names: string | null;
   avatar_url: string | null;
   short_bio: string | null;
+  birth_date?: string | null;
+  city?: string | null;
+  show_email?: boolean;
+  show_birth_date?: boolean;
+  show_city?: boolean;
+  require_follow_approval?: boolean;
   posts_count?: number;
   followers_count?: number;
   following_count?: number;
@@ -128,13 +134,18 @@ export function createProfileService(client: HttpClient): ProfileService {
       roles: toRoleCodes(actor.primary_role),
       photoUrl: actor.avatar_url,
       email: actor.email ?? 'Sin agregar',
-      birthDate: null,
-      city: null,
+      birthDate: actor.birth_date ?? null,
+      city: actor.city ?? null,
       memberSince: actor.created_at,
       postCount: actor.posts_count ?? 0,
       followerCount: actor.followers_count ?? 0,
       followingCount: actor.following_count ?? 0,
       savedCount: 0,
+      shortBio: actor.short_bio ?? null,
+      showEmail: actor.show_email ?? false,
+      showBirthDate: actor.show_birth_date ?? false,
+      showCity: actor.show_city ?? false,
+      requireFollowApproval: actor.require_follow_approval ?? false,
     };
   }
 
@@ -157,6 +168,14 @@ export function createProfileService(client: HttpClient): ProfileService {
             ...(input.lastNames !== undefined ? { last_names: input.lastNames } : {}),
             ...(input.avatarUrl !== undefined ? { avatar_url: input.avatarUrl } : {}),
             ...(input.shortBio !== undefined ? { short_bio: input.shortBio } : {}),
+            ...(input.birthDate !== undefined ? { birth_date: input.birthDate } : {}),
+            ...(input.city !== undefined ? { city: input.city } : {}),
+            ...(input.showEmail !== undefined ? { show_email: input.showEmail } : {}),
+            ...(input.showBirthDate !== undefined ? { show_birth_date: input.showBirthDate } : {}),
+            ...(input.showCity !== undefined ? { show_city: input.showCity } : {}),
+            ...(input.requireFollowApproval !== undefined
+              ? { require_follow_approval: input.requireFollowApproval }
+              : {}),
           },
         });
         return toMyProfile(actor);

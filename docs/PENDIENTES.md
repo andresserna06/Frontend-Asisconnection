@@ -23,6 +23,5 @@ Cómo se usa:
 
 Lo que la app necesita y todavía no existe. Nadie edita el contrato del backend desde este repo.
 
-- [ ] Redesplegar en Render los cambios del backend (`GET /posts/:postId/comments`, `GET /actors/me/posts`, `GET /notifications`, `PATCH /notifications/read-all`, y campos enriquecidos en `AuthorBadgeDto` y `ActorProfileResponseDto`).
-- [ ] Añadir endpoint paginado de publicaciones aprobadas por actor público y definir operación para cancelar una conexión; requeridos para completar T-11 sin descargar y filtrar todo el feed.
-- [ ] Persistencia en servidor de publicaciones guardadas (`/actors/me/saved`) y preferencias de privacidad (Ajustes).
+- [ ] Añadir endpoint paginado de publicaciones aprobadas por actor público (`GET /v1/actors/{id}/posts` o filtro `actorId` en `/v1/posts`) y definir operación para cancelar una conexión (`DELETE /v1/connections/{id}`); requeridos para completar T-11 sin descargar y filtrar todo el feed.
+- [ ] Persistencia en servidor de publicaciones guardadas (`/actors/me/saved`).

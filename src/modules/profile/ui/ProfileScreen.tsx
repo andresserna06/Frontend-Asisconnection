@@ -1,15 +1,17 @@
+import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { useMyProfile } from '@/modules/profile/application/useMyProfile';
 import { toProfileError } from '@/modules/profile/domain/models/ProfileError';
+import type { UpdateProfileInput } from '@/modules/profile/domain/ProfileService';
 import type { Post } from '@/shared/domain/models/Post';
 import { PROFILE_ERROR_MESSAGES, PROFILE_STRINGS } from '@/modules/profile/ui/strings';
 import { useProfileService } from '@/modules/profile/useProfileService';
-import { showComingSoonNotice } from '@/shared/lib/showComingSoonNotice';
 import { COLORS, SPACING } from '@/shared/theme';
 
+import { EditProfileModal } from './components/EditProfileModal';
 import { InfoCard } from './components/InfoCard';
 import { ProfilePostCard } from './components/ProfilePostCard';
 import { ProfileSummary } from './components/ProfileSummary';
@@ -21,6 +23,7 @@ export function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const service = useProfileService();
   const { profile, posts, activeTab, selectTab } = useMyProfile(service);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   if (profile.status !== 'success') {
     return (
@@ -41,13 +44,20 @@ export function ProfileScreen() {
   const me = profile.data;
   const isSavedTab = activeTab === 'saved';
 
+  async function handleSaveProfile(input: UpdateProfileInput) {
+    if (service.updateMyProfile) {
+      await service.updateMyProfile(input);
+      profile.reload();
+    }
+  }
+
   const header = (
     <View style={styles.header}>
       <ProfileSummary
         fullName={me.fullName}
         roles={me.roles}
         photoUrl={me.photoUrl}
-        onChangePhoto={showComingSoonNotice}
+        onChangePhoto={() => setIsEditOpen(true)}
       />
       <StatsCard
         postCount={me.postCount}
@@ -56,7 +66,7 @@ export function ProfileScreen() {
       />
       <InfoCard
         profile={me}
-        onEdit={showComingSoonNotice}
+        onEdit={() => setIsEditOpen(true)}
         onOpenSettings={() => router.push('/profile/settings')}
       />
       <ProfileTabs
@@ -85,17 +95,26 @@ export function ProfileScreen() {
   }
 
   return (
-    <FlatList<Post>
-      style={styles.screen}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + SPACING.s18 }]}
-      data={posts.status === 'success' ? posts.data : []}
-      keyExtractor={(post) => post.id}
-      renderItem={({ item }) => <ProfilePostCard post={item} isAuthorShown={isSavedTab} />}
-      ListHeaderComponent={header}
-      ListEmptyComponent={listStatus}
-      ItemSeparatorComponent={Separator}
-      showsVerticalScrollIndicator={false}
-    />
+    <>
+      <FlatList<Post>
+        style={styles.screen}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + SPACING.s18 }]}
+        data={posts.status === 'success' ? posts.data : []}
+        keyExtractor={(post) => post.id}
+        renderItem={({ item }) => <ProfilePostCard post={item} isAuthorShown={isSavedTab} />}
+        ListHeaderComponent={header}
+        ListEmptyComponent={listStatus}
+        ItemSeparatorComponent={Separator}
+        showsVerticalScrollIndicator={false}
+      />
+
+      <EditProfileModal
+        visible={isEditOpen}
+        profile={me}
+        onClose={() => setIsEditOpen(false)}
+        onSave={handleSaveProfile}
+      />
+    </>
   );
 }
 

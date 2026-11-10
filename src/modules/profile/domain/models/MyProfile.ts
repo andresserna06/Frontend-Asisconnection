@@ -17,4 +17,9 @@ export type MyProfile = {
   followerCount: number;
   followingCount: number;
   savedCount: number;
+  shortBio?: string | null;
+  showEmail?: boolean;
+  showBirthDate?: boolean;
+  showCity?: boolean;
+  requireFollowApproval?: boolean;
 };

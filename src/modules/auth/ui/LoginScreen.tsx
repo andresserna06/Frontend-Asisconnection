@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLogin } from '@/modules/auth/application/useLogin';
 import { ConsentCheckbox } from '@/modules/auth/ui/components/ConsentCheckbox';
 import { PasswordField } from '@/modules/auth/ui/components/PasswordField';
+import { RegisterModal } from '@/modules/auth/ui/components/RegisterModal';
 import { AUTH_ERROR_MESSAGES, FORM_ISSUE_MESSAGES, LOGIN_STRINGS } from '@/modules/auth/ui/strings';
 import { STRINGS } from '@/shared/config/strings';
 import { showComingSoonNotice } from '@/shared/lib/showComingSoonNotice';
@@ -43,10 +44,19 @@ const ACCENT_CIRCLE = { size: 210, top: -90, right: -80 };
 
 export function LoginScreen() {
   const insets = useSafeAreaInsets();
-  const { submit, clearFeedback, isSubmitting, formIssues, error } = useLogin();
+  const {
+    submit,
+    submitAnonymous,
+    submitRegister,
+    clearFeedback,
+    isSubmitting,
+    formIssues,
+    error,
+  } = useLogin();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [acceptConsent, setAcceptConsent] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const passwordRef = useRef<TextInput>(null);
 
   const emailIssue = formIssues.email ? FORM_ISSUE_MESSAGES[formIssues.email] : null;
@@ -58,6 +68,10 @@ export function LoginScreen() {
 
   function handleSubmit() {
     submit({ email, password, acceptConsent });
+  }
+
+  function handleGuestLogin() {
+    submitAnonymous(acceptConsent || true);
   }
 
   function handleConsentToggle() {
@@ -181,12 +195,12 @@ export function LoginScreen() {
             <Button
               label={LOGIN_STRINGS.createAccount}
               variant="outline"
-              onPress={showComingSoonNotice}
+              onPress={() => setIsRegisterOpen(true)}
             />
             <TextButton
               label={LOGIN_STRINGS.guest}
               iconRight="arrow-right"
-              onPress={showComingSoonNotice}
+              onPress={handleGuestLogin}
             />
           </View>
 
@@ -195,6 +209,13 @@ export function LoginScreen() {
           <Text style={styles.footer}>{LOGIN_STRINGS.footer}</Text>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <RegisterModal
+        visible={isRegisterOpen}
+        onClose={() => setIsRegisterOpen(false)}
+        onSubmit={submitRegister}
+        isSubmitting={isSubmitting}
+      />
     </View>
   );
 }

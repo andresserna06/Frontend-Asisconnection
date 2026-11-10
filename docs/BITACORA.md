@@ -15,6 +15,20 @@ Formato de cada entrada:
 
 ---
 
+## 2026-11-09 · Integración funcional de endpoints (Auth, Ajustes y Perfil)
+
+- Qué se hizo:
+  - **Ajustes de Privacidad:** se creó `settingsService` conectado a `GET /actors/me` y `PATCH /actors/me`. Se conectaron los interruptores de visibilidad (`show_email`, `show_birth_date`, `show_city`, `require_follow_approval`) para persistir en backend con actualización optimista y reversión ante error.
+  - **Autenticación (Invitado y Registro):** se conectó «Ingresar como invitado» (`POST /sessions/anonymous`) directamente en `LoginScreen` y se creó `RegisterModal` para «Crear cuenta» (`POST /auth/registro`) con rol comunitario y aceptación de consentimiento (Ley 1581).
+  - **Edición de Perfil:** se conectó el botón de edición y cambio de foto en `ProfileScreen` mediante `EditProfileModal` llamando a `PATCH /actors/me`.
+- Archivos principales:
+  - `src/modules/settings/{domain/SettingsService,services/settingsService,useSettingsService,application/usePrivacySettings,ui/SettingsScreen}.tsx`
+  - `src/modules/auth/{application/AuthProvider,application/useLogin,ui/LoginScreen,ui/components/RegisterModal}.tsx`
+  - `src/modules/profile/{domain/ProfileService,services/profileService,ui/ProfileScreen,ui/components/EditProfileModal}.tsx`
+- Decisiones: se mantienen las capas arquitectónicas (`ui → application → domain` y `services` que implementa el dominio). Cada módulo compone su cliente autorizado desde su raíz.
+- Cómo se probó: `tsc --noEmit` sin errores (0 errores), `eslint src` limpio (0 errores, 0 advertencias), pruebas unitarias focalizadas de auth (7/7), settings (3/3) y profile (3/3) en verde.
+- Queda pendiente: T-11 (Perfil de otra persona con endpoints faltantes de backend) y vistas de moderación/administrador.
+
 ## 2026-11-09 · T-15 Ícono y splash de ASISCO UP
 
 - Qué se hizo: se generaron recursos de marca en PNG: icono cuadrado, foreground/monocromo adaptive para Android y wordmark de splash. Se actualizaron `icon`, `ios.icon`, `android.adaptiveIcon`, `web.favicon` y el plugin `expo-splash-screen`.

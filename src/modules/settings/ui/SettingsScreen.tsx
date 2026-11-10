@@ -8,16 +8,21 @@ import { Icon } from '@/shared/ui/atoms/Icon';
 import { ToggleRow } from '@/shared/ui/molecules/ToggleRow';
 import { usePrivacySettings } from '../application/usePrivacySettings';
 import type { PrivacySettings } from '../domain/models/PrivacySettings';
+import type { SettingsService } from '../domain/SettingsService';
+import { useSettingsService } from '../useSettingsService';
 import { SETTINGS_STRINGS } from './strings';
 
 type SettingsScreenProps = {
   initialSettings?: PrivacySettings;
+  service?: SettingsService;
 };
 
-export function SettingsScreen({ initialSettings }: SettingsScreenProps = {}) {
+export function SettingsScreen({ initialSettings, service }: SettingsScreenProps = {}) {
   const insets = useSafeAreaInsets();
   const { signOut } = useAuth();
-  const { settings, toggleSetting } = usePrivacySettings(initialSettings);
+  const defaultService = useSettingsService();
+  const activeService = service ?? defaultService;
+  const { settings, toggleSetting } = usePrivacySettings(activeService, initialSettings);
 
   const visibleItems: string[] = [];
   if (settings.showEmail) visibleItems.push(SETTINGS_STRINGS.emailLabel);
