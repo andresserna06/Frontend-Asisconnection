@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -14,9 +14,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForumFeed, useTogglePostLike } from '@/modules/forum/application/useForumFeed';
 import type { ForumFilter } from '@/modules/forum/domain/models/ForumCategory';
 import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
+import { STRINGS } from '@/shared/config/strings';
 import { useCollapsingHeader } from '@/shared/hooks/useCollapsingHeader';
+import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
 import {
   COLORS,
+  DESKTOP_LAYOUT,
   FONT_FAMILY,
   FONT_SIZE,
   LETTER_SPACING,
@@ -38,8 +41,13 @@ const HEADER_ROW_HEIGHT = 58;
 const FILTER_BAR_HEIGHT = 61;
 const POST_GAP = SPACING.s12;
 
-export function ForumScreen() {
+type ForumScreenProps = {
+  aside?: ReactNode;
+};
+
+export function ForumScreen({ aside }: ForumScreenProps) {
   const insets = useSafeAreaInsets();
+  const { isDesktop, hasAside } = useResponsiveLayout();
   const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   const [selectedFilter, setSelectedFilter] = useState<ForumFilter>('all');
   const feed = useForumFeed(selectedFilter);
@@ -58,9 +66,10 @@ export function ForumScreen() {
       const profileId = item.author.profileId;
 
       return (
-        <View style={[styles.postFrame, { height: postHeight }]}>
+        <View style={[styles.postFrame, !isDesktop && { height: postHeight }]}>
           <ForumPostCard
             post={item}
+            isAutoHeight={isDesktop}
             onCommentsPress={() => router.push(`/comments/${item.id}`)}
             onAuthorPress={
               profileId
@@ -72,43 +81,47 @@ export function ForumScreen() {
         </View>
       );
     },
-    [postHeight, togglePostLike],
+    [isDesktop, postHeight, togglePostLike],
   );
 
   return (
-    <ResponsiveScreen>
+    <ResponsiveScreen aside={aside} desktopWidth={DESKTOP_LAYOUT.feedWidth}>
       <HeaderTeal
-        title={FORUM_STRINGS.title}
+        title={isDesktop ? STRINGS.navigation.forums : FORUM_STRINGS.title}
         headerHeight={headerHeight}
         paddingTop={insets.top}
         titleStyle={{ fontSize: FONT_SIZE.s20, letterSpacing: LETTER_SPACING.wide / 4 }}
         leftAccessory={
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={FORUM_STRINGS.createPost}
-            onPress={() => router.push('/posts/new')}
-            style={({ pressed }) => [
-              styles.headerButton,
-              styles.createButton,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Icon name="plus" size={SIZE.icon} color={COLORS.text} />
-          </Pressable>
+          isDesktop ? null : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={FORUM_STRINGS.createPost}
+              onPress={() => router.push('/posts/new')}
+              style={({ pressed }) => [
+                styles.headerButton,
+                styles.createButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Icon name="plus" size={SIZE.icon} color={COLORS.text} />
+            </Pressable>
+          )
         }
         rightAccessory={
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={FORUM_STRINGS.notifications}
-            onPress={() => router.push('/notifications')}
-            style={({ pressed }) => [
-              styles.headerButton,
-              styles.notificationButton,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Icon name="bell" size={SIZE.icon} color={COLORS.onPrimary} />
-          </Pressable>
+          hasAside ? null : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={FORUM_STRINGS.notifications}
+              onPress={() => router.push('/notifications')}
+              style={({ pressed }) => [
+                styles.headerButton,
+                styles.notificationButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Icon name="bell" size={SIZE.icon} color={COLORS.onPrimary} />
+            </Pressable>
+          )
         }
       />
 
@@ -120,11 +133,15 @@ export function ForumScreen() {
         renderItem={renderPost}
         onScroll={handleScroll}
         scrollEventThrottle={16}
-        snapToInterval={postHeight + POST_GAP}
+        snapToInterval={isDesktop ? undefined : postHeight + POST_GAP}
         snapToAlignment="start"
-        decelerationRate="fast"
+        decelerationRate={isDesktop ? undefined : 'fast'}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.feedContent, { paddingBottom: insets.bottom + SPACING.s16 }]}
+        contentContainerStyle={[
+          styles.feedContent,
+          isDesktop && styles.desktopFeedContent,
+          { paddingBottom: insets.bottom + SPACING.s16 },
+        ]}
         ItemSeparatorComponent={() => <View style={{ height: POST_GAP }} />}
         refreshing={feed.status === 'success' && feed.isRefreshing}
         onRefresh={feed.status === 'success' ? feed.refresh : undefined}
@@ -227,6 +244,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: SPACING.s16,
     paddingTop: SPACING.s16,
+  },
+  desktopFeedContent: {
+    justifyContent: 'flex-start',
+    paddingHorizontal: 0,
   },
   postFrame: {
     width: '100%',

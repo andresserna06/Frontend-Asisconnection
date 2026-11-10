@@ -122,6 +122,7 @@ describe('OtherProfileScreen', () => {
 
     expect(requestFollow).toHaveBeenCalledWith('actor-1');
     expect(await screen.findByRole('button', { name: 'Solicitud pendiente' })).toBeDisabled();
+    expect(screen.getByLabelText('7 Seguidores')).toBeOnTheScreen();
   });
 
   it('allows unfollowing when already following', async () => {
@@ -155,6 +156,35 @@ describe('OtherProfileScreen', () => {
 
     expect(requestUnfollow).toHaveBeenCalledWith('actor-1');
     expect(await screen.findByRole('button', { name: 'Seguir' })).toBeOnTheScreen();
+    expect(screen.getByLabelText('6 Seguidores')).toBeOnTheScreen();
+  });
+
+  it('adds the follower as soon as the follow is accepted', async () => {
+    jest.mocked(useLocalSearchParams).mockReturnValue({ userId: 'actor-1' });
+    jest.mocked(useAuth).mockReturnValue({
+      status: 'signedIn',
+      user: { username: 'persona', roles: ['ACUDIENTE'] },
+      isAnonymous: false,
+      signIn: async () => undefined,
+      signInAnonymous: async () => undefined,
+      registerAccount: async () => undefined,
+      signOut: jest.fn(async () => undefined),
+      authorizedClient: { request: jest.fn() },
+    });
+    jest.mocked(usePublicProfileService).mockReturnValue({
+      getPublicProfile: jest.fn(async () => TEST_PUBLIC_PROFILE),
+      getConnectionStatus: jest.fn(async () => 'notFollowing'),
+      requestFollow: jest.fn(async () => 'following'),
+    } satisfies PublicProfileService);
+    await render(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <OtherProfileScreen />
+      </SafeAreaProvider>,
+    );
+
+    await fireEvent.press(await screen.findByRole('button', { name: 'Seguir' }));
+
+    expect(await screen.findByLabelText('8 Seguidores')).toBeOnTheScreen();
   });
 
   it('offers guest sign-in instead of requesting a follow', async () => {

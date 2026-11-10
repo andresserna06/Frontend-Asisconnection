@@ -13,4 +13,8 @@ export const NOTIFICATION_STRINGS = {
     'El servicio de notificaciones no aceptó la sesión. Tu sesión sigue activa; intenta de nuevo.',
   unavailable: 'No pudimos cargar las notificaciones. Revisa tu conexión e intenta de nuevo.',
   retry: 'Reintentar',
+  seeAll: 'Ver todas',
+  recentEmpty: 'No tienes notificaciones recientes.',
+  unread: 'Sin leer',
+  loading: 'Cargando notificaciones',
 } as const;

@@ -35,7 +35,7 @@ export const RADIUS = {
   cardLarge: 22,
   sheet: 24,
   ecosystemCard: 20,
-  ecosystemIcon: 15,
+  ecosystemIcon: 18,
   pill: 999,
 } as const;
 
@@ -60,14 +60,27 @@ export const SIZE = {
   sheetHandleHeight: 5,
   thumbnail: 72,
   tab: 46,
-  ecosystemIcon: 52,
-  ecosystemAction: 34,
-  ecosystemCardMin: 92,
-  ecosystemCardMax: 118,
+  ecosystemIcon: 68,
+  ecosystemCardMin: 140,
 } as const;
 
 export const CONTENT_MAX_WIDTH = 840;
 export const TABLET_MIN_WIDTH = 768;
+export const DESKTOP_MIN_WIDTH = 1024;
+export const DESKTOP_WIDE_MIN_WIDTH = 1280;
+
+export const DESKTOP_LAYOUT = {
+  sidebarWidth: 248,
+  columnWidth: 720,
+  feedWidth: 640,
+  asideWidth: 320,
+  dialogWidth: 600,
+  dialogMaxHeight: 720,
+  brandLogoWidth: 320,
+  authFormWidth: 460,
+  postMediaAspectRatio: 16 / 10,
+  postTextMinHeight: 160,
+} as const;
 
 export const BORDER_WIDTH = {
   hairline: 1,

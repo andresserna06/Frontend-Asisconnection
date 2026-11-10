@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/modules/auth';
+import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
 import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SIZE, SPACING } from '@/shared/theme';
 import { Icon } from '@/shared/ui/atoms/Icon';
 import { ToggleRow } from '@/shared/ui/molecules/ToggleRow';
@@ -23,6 +24,7 @@ export function SettingsScreen({
   service: serviceOverride,
 }: SettingsScreenProps = {}) {
   const insets = useSafeAreaInsets();
+  const { isDesktop } = useResponsiveLayout();
   const { signOut } = useAuth();
   const defaultService = useSettingsService();
   const service = serviceOverride ?? defaultService;
@@ -36,7 +38,13 @@ export function SettingsScreen({
   return (
     <ResponsiveScreen>
       <View style={styles.container}>
-        <View style={[styles.header, { paddingTop: insets.top + SPACING.s8 }]}>
+        <View
+          style={[
+            styles.header,
+            { paddingTop: insets.top + SPACING.s8 },
+            isDesktop && styles.desktopHeader,
+          ]}
+        >
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={SETTINGS_STRINGS.back}
@@ -140,6 +148,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     borderBottomLeftRadius: RADIUS.cardLarge,
     borderBottomRightRadius: RADIUS.cardLarge,
+  },
+  desktopHeader: {
+    marginTop: SPACING.s16,
+    borderRadius: RADIUS.cardLarge,
   },
   backButton: {
     width: SIZE.touchTarget,

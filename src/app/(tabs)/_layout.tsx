@@ -1,10 +1,12 @@
 import { Tabs } from 'expo-router';
 
 import { useAuth } from '@/modules/auth';
+import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
 import { BottomNavBar } from '@/shared/ui/organisms/BottomNavBar';
 
 export default function TabsLayout() {
   const { user } = useAuth();
+  const { isDesktop } = useResponsiveLayout();
   const profileInitials = user?.username.slice(0, 2).toUpperCase() ?? 'AS';
 
   return (
@@ -14,13 +16,15 @@ export default function TabsLayout() {
         tabBarShowLabel: false,
         tabBarHideOnKeyboard: false,
       }}
-      tabBar={({ state, navigation }) => (
-        <BottomNavBar
-          activeRoute={state.routes[state.index]?.name ?? 'index'}
-          profileInitials={profileInitials}
-          onNavigate={(route) => navigation.navigate(route)}
-        />
-      )}
+      tabBar={({ state, navigation }) =>
+        isDesktop ? null : (
+          <BottomNavBar
+            activeRoute={state.routes[state.index]?.name ?? 'index'}
+            profileInitials={profileInitials}
+            onNavigate={(route) => navigation.navigate(route)}
+          />
+        )
+      }
     >
       <Tabs.Screen name="index" options={{ title: 'Foros' }} />
       <Tabs.Screen name="ecosystem" options={{ title: 'Ecosistema' }} />

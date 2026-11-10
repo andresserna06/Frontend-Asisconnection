@@ -1,6 +1,8 @@
 export const ECOSYSTEM_STRINGS = {
   title: 'Ecosistema',
   subtitle: 'Los otros sistemas de la fundación.',
+  systemsCount: (count: number) => `${count} sistemas conectados`,
+  open: 'Abrir',
   items: [
     {
       id: 'suma21',
@@ -21,14 +23,14 @@ export const ECOSYSTEM_STRINGS = {
       title: 'SAGA-UP',
       description: 'Cooperación y alianzas',
       icon: 'share-2',
-      tone: 'neutral',
+      tone: 'info',
     },
     {
       id: 'sonup',
       title: 'SON UP',
       description: 'Seguimiento y desarrollo',
       icon: 'trending-up',
-      tone: 'secondary',
+      tone: 'achievement',
     },
     {
       id: 'lupe',

@@ -11,6 +11,8 @@ import { HttpError, type HttpClient } from '@/shared/lib/http';
 
 import { isActorUnfollowed, markActorUnfollowed } from './localUnfollowState';
 
+const MAX_FOLLOWERS = 50;
+
 type ActorProfileResponse = {
   id: string;
   username: string;
@@ -306,6 +308,45 @@ export function createPublicProfileService(client: HttpClient): PublicProfileSer
       // record the unfollow for the active viewer.
       markActorUnfollowed(actorId, true);
       return 'notFollowing';
+    },
+
+    // The backend lists connections by id only, so each follower's profile is requested apart.
+    async getMyFollowers() {
+      try {
+        const me = await client.request<ActorProfileResponse>('/actors/me');
+        const followerIds: string[] = [];
+        let page = 1;
+        let hasNextPage = true;
+
+        while (hasNextPage && followerIds.length < MAX_FOLLOWERS) {
+          const response = await client.request<ActorConnectionsPageResponse>(
+            `/connections?page=${page}&limit=50`,
+          );
+          for (const connection of response.data) {
+            if (connection.receiver_actor_id === me.id && connection.status === 'ACCEPTED') {
+              followerIds.push(connection.requester_actor_id);
+            }
+          }
+          hasNextPage = response.meta.has_next_page;
+          page += 1;
+        }
+
+        const results = await Promise.allSettled(
+          followerIds
+            .slice(0, MAX_FOLLOWERS)
+            .map((id) => client.request<ActorProfileResponse>(`/actors/${encodeURIComponent(id)}`)),
+        );
+        const followers = results.flatMap((result) =>
+          result.status === 'fulfilled' ? [toPublicProfile(result.value)] : [],
+        );
+        const firstFailure = results.find((result) => result.status === 'rejected');
+        if (followers.length === 0 && firstFailure?.status === 'rejected') {
+          throw firstFailure.reason;
+        }
+        return followers;
+      } catch (error) {
+        throw toPublicProfileError(error);
+      }
     },
 
     async getActorPosts(actorId) {

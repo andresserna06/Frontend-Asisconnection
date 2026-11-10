@@ -50,9 +50,10 @@ export function usePublicProfileConnection(
     };
   }, [actorId, isAnonymous, service]);
 
-  const requestFollow = useCallback(async () => {
+  // Both requests resolve with the new relationship, or null when it did not change.
+  const requestFollow = useCallback(async (): Promise<ProfileConnectionStatus | null> => {
     if (actorId === undefined || isAnonymous) {
-      return;
+      return null;
     }
 
     setIsRequesting(true);
@@ -60,6 +61,7 @@ export function usePublicProfileConnection(
     try {
       const relationship = await service.requestFollow(actorId);
       setConnection({ status: 'ready', actorId, relationship });
+      return relationship;
     } catch (error) {
       const followError =
         error instanceof PublicProfileError ? error : new PublicProfileError('unknown');
@@ -68,7 +70,7 @@ export function usePublicProfileConnection(
         try {
           const relationship = await service.getConnectionStatus(actorId);
           setConnection({ status: 'ready', actorId, relationship });
-          return;
+          return null;
         } catch (refreshError) {
           setOperationError(
             refreshError instanceof PublicProfileError
@@ -79,14 +81,15 @@ export function usePublicProfileConnection(
       } else {
         setOperationError(followError);
       }
+      return null;
     } finally {
       setIsRequesting(false);
     }
   }, [actorId, isAnonymous, service]);
 
-  const requestUnfollow = useCallback(async () => {
+  const requestUnfollow = useCallback(async (): Promise<ProfileConnectionStatus | null> => {
     if (actorId === undefined || isAnonymous) {
-      return;
+      return null;
     }
 
     setIsRequesting(true);
@@ -96,10 +99,12 @@ export function usePublicProfileConnection(
         ? await service.requestUnfollow(actorId)
         : ('notFollowing' as const);
       setConnection({ status: 'ready', actorId, relationship });
+      return relationship;
     } catch (error) {
       setOperationError(
         error instanceof PublicProfileError ? error : new PublicProfileError('unknown'),
       );
+      return null;
     } finally {
       setIsRequesting(false);
     }

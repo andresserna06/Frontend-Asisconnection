@@ -1,10 +1,13 @@
 import { useCallback, useRef, useState } from 'react';
 import { Animated, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 
+import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
+
 const SCROLL_THRESHOLD = 6;
 const ANIMATION_DURATION = 250;
 
 export function useCollapsingHeader(expandedHeight: number) {
+  const { isDesktop } = useResponsiveLayout();
   const [headerHeight] = useState(() => new Animated.Value(expandedHeight));
   const previousScrollOffset = useRef(0);
   const isHeaderVisible = useRef(true);
@@ -35,5 +38,6 @@ export function useCollapsingHeader(expandedHeight: number) {
     [expandedHeight, headerHeight],
   );
 
-  return { headerHeight, onScroll };
+  // On desktop the header stays fixed, even if it was collapsed before widening the window.
+  return { headerHeight: isDesktop ? expandedHeight : headerHeight, onScroll };
 }

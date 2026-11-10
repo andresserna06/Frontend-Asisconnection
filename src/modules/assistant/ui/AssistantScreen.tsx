@@ -3,6 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAssistant } from '@/modules/assistant/application/useAssistant';
 import { useAssistantService } from '@/modules/assistant/useAssistantService';
+import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
 import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SIZE, SPACING } from '@/shared/theme';
 import { Icon } from '@/shared/ui/atoms/Icon';
 import { ResponsiveScreen } from '@/shared/ui/templates/ResponsiveScreen';
@@ -14,6 +15,7 @@ function showAssistantUnavailable() {
 
 export function AssistantScreen() {
   const insets = useSafeAreaInsets();
+  const { isDesktop } = useResponsiveLayout();
   const service = useAssistantService();
   const { disclaimer, faqs, turns, selectOption, reset, escalate } = useAssistant(service);
 
@@ -39,7 +41,13 @@ export function AssistantScreen() {
   return (
     <ResponsiveScreen>
       <View style={styles.container}>
-        <View style={[styles.header, { paddingTop: insets.top + SPACING.s8 }]}>
+        <View
+          style={[
+            styles.header,
+            { paddingTop: insets.top + SPACING.s8 },
+            isDesktop && styles.desktopHeader,
+          ]}
+        >
           <View style={styles.assistantAvatar}>
             <Icon name="message-circle" size={SIZE.icon} color={COLORS.onPrimary} />
           </View>
@@ -140,6 +148,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+  },
+  desktopHeader: {
+    marginTop: SPACING.s16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.cardLarge,
   },
   assistantAvatar: {
     width: 40,

@@ -18,12 +18,14 @@ import {
 import {
   CATEGORY_COLORS,
   COLORS,
+  DESKTOP_LAYOUT,
   FONT_FAMILY,
   FONT_SIZE,
   RADIUS,
   SIZE,
   SPACING,
 } from '@/shared/theme';
+import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
 import { Icon } from '@/shared/ui/atoms/Icon';
 import type { CategoryKey } from '@/shared/theme';
 import { ResponsiveScreen } from '@/shared/ui/templates/ResponsiveScreen';
@@ -42,6 +44,7 @@ const ANNOUNCEMENT_CATEGORY: { key: CategoryKey; label: string } = {
 
 export function NewPostScreen() {
   const insets = useSafeAreaInsets();
+  const { isDesktop } = useResponsiveLayout();
   const { user } = useAuth();
   const service = usePostsService();
   const { submit, clearFeedback, isSubmitting, draftIssue, error } = useCreatePost(service);
@@ -122,161 +125,182 @@ export function NewPostScreen() {
     clearFeedback();
   }
 
-  return (
-    <ResponsiveScreen>
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={POST_STRINGS.cancel}
-            onPress={() => router.back()}
-            style={({ pressed }) => [styles.cancelButton, pressed && styles.pressed]}
-          >
-            <Icon name="x" size={SIZE.icon} color={COLORS.primary} />
-          </Pressable>
-          <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
-            {POST_STRINGS.title}
+  const editor = (
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.header}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={POST_STRINGS.cancel}
+          onPress={() => router.back()}
+          style={({ pressed }) => [styles.cancelButton, pressed && styles.pressed]}
+        >
+          <Icon name="x" size={SIZE.icon} color={COLORS.primary} />
+        </Pressable>
+        <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
+          {POST_STRINGS.title}
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={POST_STRINGS.publish}
+          disabled={isSubmitting || isUploadingPhoto}
+          onPress={handlePublish}
+          style={({ pressed }) => [
+            styles.publishButton,
+            (pressed || isSubmitting || isUploadingPhoto) && styles.pressed,
+          ]}
+        >
+          <Text style={styles.publishLabel}>
+            {isUploadingPhoto
+              ? POST_STRINGS.uploadingPhoto
+              : isSubmitting
+                ? POST_STRINGS.publishing
+                : POST_STRINGS.publish}
           </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={POST_STRINGS.publish}
-            disabled={isSubmitting || isUploadingPhoto}
-            onPress={handlePublish}
-            style={({ pressed }) => [
-              styles.publishButton,
-              (pressed || isSubmitting || isUploadingPhoto) && styles.pressed,
-            ]}
-          >
-            <Text style={styles.publishLabel}>
-              {isUploadingPhoto
-                ? POST_STRINGS.uploadingPhoto
-                : isSubmitting
-                  ? POST_STRINGS.publishing
-                  : POST_STRINGS.publish}
+        </Pressable>
+      </View>
+
+      <ScrollView
+        style={styles.editor}
+        contentContainerStyle={styles.editorContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.authorRow}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarLabel}>{initials}</Text>
+          </View>
+          <View style={styles.authorDetails}>
+            <Text numberOfLines={1} style={styles.authorName}>
+              {user?.username ?? 'Tu perfil'}
             </Text>
-          </Pressable>
+            {primaryRole !== null && <Text style={styles.roleLabel}>{primaryRole.label}</Text>}
+          </View>
         </View>
 
-        <ScrollView
-          style={styles.editor}
-          contentContainerStyle={styles.editorContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.authorRow}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarLabel}>{initials}</Text>
-            </View>
-            <View style={styles.authorDetails}>
-              <Text numberOfLines={1} style={styles.authorName}>
-                {user?.username ?? 'Tu perfil'}
-              </Text>
-              {primaryRole !== null && <Text style={styles.roleLabel}>{primaryRole.label}</Text>}
-            </View>
+        <TextInput
+          accessibilityLabel={POST_STRINGS.writePost}
+          multiline
+          value={content}
+          onChangeText={handleContentChange}
+          placeholder={POST_STRINGS.placeholder}
+          placeholderTextColor={COLORS.textTertiary}
+          style={styles.input}
+          textAlignVertical="top"
+        />
+
+        {selectedPhoto !== null && (
+          <View style={styles.imagePreviewContainer}>
+            <Image source={selectedPhoto.uri} style={styles.imagePreview} contentFit="cover" />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={POST_STRINGS.removePhoto}
+              hitSlop={8}
+              onPress={() => setSelectedPhoto(null)}
+              style={({ pressed }) => [styles.removeImageButton, pressed && styles.pressed]}
+            >
+              <Icon name="x" size={SIZE.iconSmall} color={COLORS.onPrimary} />
+            </Pressable>
           </View>
+        )}
 
-          <TextInput
-            accessibilityLabel={POST_STRINGS.writePost}
-            multiline
-            value={content}
-            onChangeText={handleContentChange}
-            placeholder={POST_STRINGS.placeholder}
-            placeholderTextColor={COLORS.textTertiary}
-            style={styles.input}
-            textAlignVertical="top"
-          />
+        <View style={styles.categorySection}>
+          <Text style={styles.sectionLabel}>{POST_STRINGS.chooseTopic}</Text>
+          <View style={styles.categoryRow}>
+            {availableCategories.map((category) => {
+              const isSelected = selectedCategory === category.key;
+              const palette = CATEGORY_COLORS[category.key];
 
-          {selectedPhoto !== null && (
-            <View style={styles.imagePreviewContainer}>
-              <Image source={selectedPhoto.uri} style={styles.imagePreview} contentFit="cover" />
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={POST_STRINGS.removePhoto}
-                hitSlop={8}
-                onPress={() => setSelectedPhoto(null)}
-                style={({ pressed }) => [styles.removeImageButton, pressed && styles.pressed]}
-              >
-                <Icon name="x" size={SIZE.iconSmall} color={COLORS.onPrimary} />
-              </Pressable>
-            </View>
-          )}
-
-          <View style={styles.categorySection}>
-            <Text style={styles.sectionLabel}>{POST_STRINGS.chooseTopic}</Text>
-            <View style={styles.categoryRow}>
-              {availableCategories.map((category) => {
-                const isSelected = selectedCategory === category.key;
-                const palette = CATEGORY_COLORS[category.key];
-
-                return (
-                  <Pressable
-                    key={category.key}
-                    accessibilityRole="radio"
-                    accessibilityState={{ checked: isSelected }}
-                    onPress={() => handleCategorySelect(category.key)}
-                    style={({ pressed }) => [
-                      styles.categoryChip,
-                      {
-                        backgroundColor: isSelected ? palette.main : COLORS.surface,
-                        borderColor: palette.main,
-                      },
-                      pressed && styles.pressed,
+              return (
+                <Pressable
+                  key={category.key}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: isSelected }}
+                  onPress={() => handleCategorySelect(category.key)}
+                  style={({ pressed }) => [
+                    styles.categoryChip,
+                    {
+                      backgroundColor: isSelected ? palette.main : COLORS.surface,
+                      borderColor: palette.main,
+                    },
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.categoryLabel,
+                      { color: isSelected ? COLORS.onPrimary : palette.onSoft },
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.categoryLabel,
-                        { color: isSelected ? COLORS.onPrimary : palette.onSoft },
-                      ]}
-                    >
-                      {category.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+                    {category.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
-
-          {feedbackMessage !== null && (
-            <Text accessibilityRole="alert" style={styles.feedbackError}>
-              {feedbackMessage}
-            </Text>
-          )}
-        </ScrollView>
-
-        <View style={[styles.gallery, { paddingBottom: insets.bottom + SPACING.s12 }]}>
-          <View style={styles.galleryHeader}>
-            <Text style={styles.galleryTitle}>{POST_STRINGS.galleryTitle}</Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={POST_STRINGS.openGallery}
-              onPress={handlePickImage}
-              style={({ pressed }) => [styles.galleryButton, pressed && styles.pressed]}
-            >
-              <Text style={styles.galleryAction}>{POST_STRINGS.galleryLabel}</Text>
-            </Pressable>
-          </View>
-          {IS_CAMERA_AVAILABLE ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={POST_STRINGS.openCamera}
-              onPress={handleTakePhoto}
-              style={({ pressed }) => [styles.cameraButton, pressed && styles.pressed]}
-            >
-              <Icon name="camera" size={SIZE.icon} color={COLORS.primary} />
-              <Text style={styles.cameraLabel}>{POST_STRINGS.cameraLabel}</Text>
-            </Pressable>
-          ) : null}
-          <Text style={styles.galleryEmpty}>
-            {selectedPhoto !== null ? POST_STRINGS.photoSelected : POST_STRINGS.galleryEmpty}
-          </Text>
         </View>
+
+        {feedbackMessage !== null && (
+          <Text accessibilityRole="alert" style={styles.feedbackError}>
+            {feedbackMessage}
+          </Text>
+        )}
+      </ScrollView>
+
+      <View style={[styles.gallery, { paddingBottom: insets.bottom + SPACING.s12 }]}>
+        <View style={styles.galleryHeader}>
+          <Text style={styles.galleryTitle}>{POST_STRINGS.galleryTitle}</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={POST_STRINGS.openGallery}
+            onPress={handlePickImage}
+            style={({ pressed }) => [styles.galleryButton, pressed && styles.pressed]}
+          >
+            <Text style={styles.galleryAction}>{POST_STRINGS.galleryLabel}</Text>
+          </Pressable>
+        </View>
+        {IS_CAMERA_AVAILABLE ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={POST_STRINGS.openCamera}
+            onPress={handleTakePhoto}
+            style={({ pressed }) => [styles.cameraButton, pressed && styles.pressed]}
+          >
+            <Icon name="camera" size={SIZE.icon} color={COLORS.primary} />
+            <Text style={styles.cameraLabel}>{POST_STRINGS.cameraLabel}</Text>
+          </Pressable>
+        ) : null}
+        <Text style={IS_CAMERA_AVAILABLE ? styles.galleryEmpty : styles.galleryEmptyInline}>
+          {selectedPhoto !== null ? POST_STRINGS.photoSelected : POST_STRINGS.galleryEmpty}
+        </Text>
       </View>
-    </ResponsiveScreen>
+    </View>
+  );
+
+  return isDesktop ? (
+    <View style={styles.desktopOverlay}>
+      <View style={styles.desktopDialog}>{editor}</View>
+    </View>
+  ) : (
+    <ResponsiveScreen>{editor}</ResponsiveScreen>
   );
 }
 
 const styles = StyleSheet.create({
+  // No close-on-backdrop here: a stray click must not discard the draft.
+  desktopOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.backdrop,
+  },
+  desktopDialog: {
+    width: '100%',
+    height: '85%',
+    maxHeight: DESKTOP_LAYOUT.dialogMaxHeight,
+    maxWidth: DESKTOP_LAYOUT.dialogWidth,
+    overflow: 'hidden',
+    borderRadius: RADIUS.sheet,
+  },
   container: {
     flex: 1,
     backgroundColor: COLORS.surface,
@@ -473,6 +497,12 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontFamily: FONT_FAMILY.bodySemiBold,
     fontSize: FONT_SIZE.s12,
+  },
+  // Without camera button (web) the text has nothing to sit beside.
+  galleryEmptyInline: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT_FAMILY.body,
+    fontSize: FONT_SIZE.s12_5,
   },
   galleryEmpty: {
     position: 'absolute',

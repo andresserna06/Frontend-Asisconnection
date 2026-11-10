@@ -27,7 +27,7 @@ export function usePublicProfile(
 ): {
   profile: PublicProfileState;
   reload: () => void;
-  refresh: () => Promise<void>;
+  adjustFollowerCount: (delta: number) => void;
   posts: AsyncData<Post[]> & AsyncDataControls;
   connection: ActorConnectionResult | null;
   followError: ProfileError | null;
@@ -40,7 +40,7 @@ export function usePublicProfile(
 ): {
   profile: PublicProfileState<MyProfile, ProfileError>;
   reload: () => void;
-  refresh: () => Promise<void>;
+  adjustFollowerCount: (delta: number) => void;
   posts: AsyncData<Post[]> & AsyncDataControls;
   connection: ActorConnectionResult | null;
   followError: ProfileError | null;
@@ -109,20 +109,26 @@ export function usePublicProfile(
     setReloadCounter((current) => current + 1);
   }, []);
 
-  // Fetches the profile again without the loading state (e.g. new follower count).
-  const refresh = useCallback(async () => {
-    if (actorId === undefined || actorId.trim().length === 0 || !service.getPublicProfile) {
-      return;
-    }
-    try {
-      const data = await service.getPublicProfile(actorId);
+  // Applies a follow or unfollow to the count on screen as soon as the operation succeeds.
+  const adjustFollowerCount = useCallback(
+    (delta: number) => {
       setRequestState((current) =>
-        current.actorId === actorId ? { ...current, result: { status: 'success', data } } : current,
+        current.actorId === actorId && current.result.status === 'success'
+          ? {
+              ...current,
+              result: {
+                status: 'success',
+                data: {
+                  ...current.result.data,
+                  followerCount: Math.max(0, current.result.data.followerCount + delta),
+                },
+              },
+            }
+          : current,
       );
-    } catch {
-      // A failed background refresh keeps the profile already shown.
-    }
-  }, [actorId, service]);
+    },
+    [actorId],
+  );
 
   const fetchPosts = useCallback(() => {
     if (
@@ -179,7 +185,7 @@ export function usePublicProfile(
   return {
     profile: currentProfile,
     reload,
-    refresh,
+    adjustFollowerCount,
     posts,
     connection,
     followError,

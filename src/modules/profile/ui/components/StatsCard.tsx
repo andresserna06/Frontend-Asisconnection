@@ -1,39 +1,76 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PROFILE_STRINGS } from '@/modules/profile/ui/strings';
-import { BORDER_WIDTH, COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SPACING } from '@/shared/theme';
+import {
+  BORDER_WIDTH,
+  COLORS,
+  FONT_FAMILY,
+  FONT_SIZE,
+  OPACITY,
+  RADIUS,
+  SPACING,
+} from '@/shared/theme';
 
 type StatsCardProps = {
   postCount: number;
   followerCount: number;
   followingCount: number;
+  // When present, the followers figure opens the list of followers.
+  onFollowersPress?: () => void;
 };
 
 type StatProps = {
   value: number;
   label: string;
   hasDividers?: boolean;
+  onPress?: () => void;
 };
 
-function Stat({ value, label, hasDividers = false }: StatProps) {
-  return (
-    <View
-      accessible
-      accessibilityLabel={`${value} ${label}`}
-      style={[styles.stat, hasDividers && styles.dividers]}
-    >
+function Stat({ value, label, hasDividers = false, onPress }: StatProps) {
+  const content = (
+    <>
       <Text style={styles.value}>{value}</Text>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, onPress !== undefined && styles.linkLabel]}>{label}</Text>
+    </>
+  );
+  const statStyle = [styles.stat, hasDividers && styles.dividers];
+
+  if (onPress !== undefined) {
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${value} ${label}`}
+        onPress={onPress}
+        style={({ pressed }) => [statStyle, pressed && styles.pressed]}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+
+  return (
+    <View accessible accessibilityLabel={`${value} ${label}`} style={statStyle}>
+      {content}
     </View>
   );
 }
 
 // Posts, followers and following counts.
-export function StatsCard({ postCount, followerCount, followingCount }: StatsCardProps) {
+export function StatsCard({
+  postCount,
+  followerCount,
+  followingCount,
+  onFollowersPress,
+}: StatsCardProps) {
   return (
     <View style={styles.card}>
       <Stat value={postCount} label={PROFILE_STRINGS.stats.posts} />
-      <Stat value={followerCount} label={PROFILE_STRINGS.stats.followers} hasDividers />
+      <Stat
+        value={followerCount}
+        label={PROFILE_STRINGS.stats.followers}
+        hasDividers
+        onPress={onFollowersPress}
+      />
       <Stat value={followingCount} label={PROFILE_STRINGS.stats.following} />
     </View>
   );
@@ -54,6 +91,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.s2,
   },
+  pressed: {
+    opacity: OPACITY.pressed,
+  },
   dividers: {
     borderLeftWidth: BORDER_WIDTH.hairline,
     borderRightWidth: BORDER_WIDTH.hairline,
@@ -68,5 +108,9 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.body,
     fontSize: FONT_SIZE.s12,
     color: COLORS.textSecondary,
+  },
+  linkLabel: {
+    fontFamily: FONT_FAMILY.bodySemiBold,
+    color: COLORS.primary,
   },
 });

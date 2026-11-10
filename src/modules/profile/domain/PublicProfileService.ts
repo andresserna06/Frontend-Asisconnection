@@ -9,4 +9,5 @@ export type PublicProfileService = {
   requestFollow(actorId: string): Promise<ProfileConnectionStatus>;
   requestUnfollow?(actorId: string): Promise<ProfileConnectionStatus>;
   getActorPosts?(actorId: string): Promise<Post[]>;
+  getMyFollowers?(): Promise<PublicProfile[]>;
 };

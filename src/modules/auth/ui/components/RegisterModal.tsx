@@ -4,10 +4,12 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import type { RegisterCredentials } from '@/modules/auth/domain/AuthService';
 import type { AuthError } from '@/modules/auth/domain/models/AuthError';
 import type { RoleCode } from '@/shared/domain/models/RoleCode';
+import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
 import {
   BORDER_WIDTH,
   COLORS,
   CONTENT_MAX_WIDTH,
+  DESKTOP_LAYOUT,
   FONT_FAMILY,
   FONT_SIZE,
   RADIUS,
@@ -16,6 +18,7 @@ import {
 import { Button } from '@/shared/ui/atoms/Button';
 import { TextField } from '@/shared/ui/molecules/TextField';
 import { ConsentCheckbox } from './ConsentCheckbox';
+import { PasswordField } from './PasswordField';
 import { AUTH_ERROR_MESSAGES, LOGIN_STRINGS } from '../strings';
 
 type RegisterModalProps = {
@@ -42,6 +45,7 @@ export function RegisterModal({
   serverError = null,
   onClearError,
 }: RegisterModalProps) {
+  const { isDesktop } = useResponsiveLayout();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -92,9 +96,14 @@ export function RegisterModal({
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={styles.sheet}>
+    <Modal
+      visible={visible}
+      animationType={isDesktop ? 'fade' : 'slide'}
+      transparent
+      onRequestClose={onClose}
+    >
+      <View style={[styles.overlay, isDesktop && styles.desktopOverlay]}>
+        <View style={[styles.sheet, isDesktop && styles.desktopSheet]}>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
             <Text accessibilityRole="header" style={styles.title}>
               {LOGIN_STRINGS.registerTitle}
@@ -123,7 +132,7 @@ export function RegisterModal({
               autoCapitalize="none"
             />
 
-            <TextField
+            <PasswordField
               label={LOGIN_STRINGS.passwordLabel}
               placeholder="Mínimo 8 caracteres"
               value={password}
@@ -131,8 +140,6 @@ export function RegisterModal({
                 setPassword(value);
                 clearErrors();
               }}
-              secureTextEntry
-              autoCapitalize="none"
             />
 
             <View style={styles.roleSection}>
@@ -195,6 +202,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'flex-end',
+  },
+  desktopOverlay: {
+    justifyContent: 'center',
+  },
+  desktopSheet: {
+    maxWidth: DESKTOP_LAYOUT.dialogWidth,
+    borderRadius: RADIUS.cardLarge,
   },
   sheet: {
     width: '100%',

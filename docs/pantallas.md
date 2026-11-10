@@ -14,6 +14,8 @@ Referencia para construir cada pantalla. Los nombres de archivo son los del prot
 
 **Diseño adaptable.** En tabletas y pantallas más amplias, las pantallas principales se muestran en una columna centrada de hasta 840 px; la hoja de comentarios también limita su ancho. La barra inferior conserva el fondo de borde a borde, centra las pestañas y permanece visible con el teclado. En tabletas, las tarjetas del Foro no superan 620 px de alto.
 
+**Escritorio (solo web, desde 1024 px).** No aplica a las apps nativas. Con sesión iniciada aparece una barra lateral fija (logo, Foros, Ecosistema, Asistente, Perfil y «Nueva publicación») que reemplaza a la barra inferior, en todas las pantallas. El contenido va en una columna de 720 px (640 px en el Foro); desde 1280 px el Foro suma un panel derecho con las últimas notificaciones y, por debajo de ese ancho, la campana queda en su header. Las publicaciones crecen según su contenido, sin scroll con imán. Comentarios, Nueva publicación, Registro y Editar perfil se abren como diálogos centrados. El login se divide en panel de marca y formulario.
+
 | #   | Pantalla                    | Ruta                   | Módulo        | Mockup           |
 | --- | --------------------------- | ---------------------- | ------------- | ---------------- |
 | 1   | Inicio de sesión            | `(auth)/login`         | auth          | Main             |
@@ -25,6 +27,8 @@ Referencia para construir cada pantalla. Los nombres de archivo son los del prot
 | 4   | Asistente                   | `(tabs)/assistant`     | assistant     | Chat             |
 | 5   | Perfil propio               | `(tabs)/profile`       | profile       | Perfil           |
 | 5b  | Perfil de otra persona      | `users/[userId]`       | profile       | PerfilUsuario    |
+| 5b1 | Publicación de un perfil    | `users/[userId]/posts/[postId]` | profile | Sin mockup       |
+| 5b2 | Mis seguidores              | `profile/followers`    | profile       | Sin mockup       |
 | 5c  | Ajustes del perfil          | `profile/settings`     | settings      | Ajustes          |
 | 6   | Administración (solo ADMIN) | `admin`                | admin         | Sin mockup       |
 
@@ -50,7 +54,7 @@ Referencia para construir cada pantalla. Los nombres de archivo son los del prot
 
 **5c · Ajustes.** «Así te ven los demás» (vista previa que se actualiza al instante). «Información que muestras»: interruptores para Correo, Fecha de nacimiento y Ciudad (apagado = «Solo yo»). «Quién puede seguirte»: cualquier miembro o con aprobación. **Cerrar sesión** al final (vuelve al Login).
 
-**6 · Administración.** Solo las cuentas con rol `ADMIN` ven el acceso en su perfil y pueden abrir la ruta protegida. Incluye la cola paginada de publicaciones/comentarios pendientes para aprobar o rechazar, y la lista de moderadores para asignar o revocar ese rol. La asignación requiere el `userAccountId` porque el backend aún no expone búsqueda de cuentas; detalle en `api-admin.md`.
+**6 · Administración.** Solo las cuentas con rol `ADMIN` ven el acceso en su perfil y pueden abrir la ruta protegida. Incluye la cola paginada de publicaciones/comentarios pendientes para aprobar o rechazar, y la lista de moderadores para asignar o revocar ese rol. Para asignar, se busca la cuenta por usuario o correo y se pulsa «Asignar» en el resultado; detalle en `api-admin.md`.
 
 ## Componentes compartidos que ya aparecen en varias pantallas
 

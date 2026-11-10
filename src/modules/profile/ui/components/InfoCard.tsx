@@ -23,11 +23,10 @@ const STRINGS = PROFILE_STRINGS.info;
 type InfoCardProps = {
   profile: Pick<MyProfile, 'email' | 'birthDate' | 'city' | 'memberSince'>;
   onEdit: () => void;
-  onOpenSettings: () => void;
 };
 
 // "Mi información": personal data only the person sees.
-export function InfoCard({ profile, onEdit, onOpenSettings }: InfoCardProps) {
+export function InfoCard({ profile, onEdit }: InfoCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.titleRow}>
@@ -46,13 +45,7 @@ export function InfoCard({ profile, onEdit, onOpenSettings }: InfoCardProps) {
 
       <View style={styles.note}>
         <Icon name="lock" size={SIZE.iconTiny} color={COLORS.textSecondary} />
-        <Text style={styles.noteText}>
-          {STRINGS.privacyNote}
-          <Text accessibilityRole="link" onPress={onOpenSettings} style={styles.noteLink}>
-            {STRINGS.privacyLink}
-          </Text>
-          .
-        </Text>
+        <Text style={styles.noteText}>{STRINGS.privacyNote}</Text>
       </View>
 
       <DataRow label={STRINGS.email} value={profile.email} />
@@ -119,9 +112,5 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.s12_5,
     lineHeight: LINE_HEIGHT.note,
     color: COLORS.textSecondary,
-  },
-  noteLink: {
-    fontFamily: FONT_FAMILY.bodyBold,
-    color: COLORS.primary,
   },
 });

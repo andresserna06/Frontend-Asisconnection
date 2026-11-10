@@ -27,6 +27,7 @@ import {
   BORDER_WIDTH,
   COLORS,
   CONTENT_MAX_WIDTH,
+  DESKTOP_LAYOUT,
   FONT_FAMILY,
   FONT_SIZE,
   OPACITY,
@@ -34,6 +35,7 @@ import {
   SIZE,
   SPACING,
 } from '@/shared/theme';
+import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
 import { Icon } from '@/shared/ui/atoms/Icon';
 
 import { CommentItem } from './components/CommentItem';
@@ -51,6 +53,7 @@ type CommentsScreenProps = {
 export function CommentsScreen({ postId }: CommentsScreenProps) {
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
+  const { isDesktop } = useResponsiveLayout();
   const { user } = useAuth();
   const state = useComments(postId);
   const { canComment, addComment, isSending } = useAddComment(postId);
@@ -100,7 +103,7 @@ export function CommentsScreen({ postId }: CommentsScreenProps) {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDesktop && styles.desktopContainer]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={COMMENTS_STRINGS.close}
@@ -110,10 +113,13 @@ export function CommentsScreen({ postId }: CommentsScreenProps) {
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={[styles.sheet, { height: windowHeight * SHEET_HEIGHT_RATIO }]}
+        style={[
+          styles.sheet,
+          isDesktop ? styles.desktopSheet : { height: windowHeight * SHEET_HEIGHT_RATIO },
+        ]}
       >
         <View accessibilityRole="header" style={styles.sheetHeader}>
-          <View style={styles.handle} />
+          {!isDesktop && <View style={styles.handle} />}
           <View style={styles.titleRow}>
             <Pressable
               accessibilityRole="button"
@@ -121,7 +127,11 @@ export function CommentsScreen({ postId }: CommentsScreenProps) {
               onPress={handleClose}
               style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
             >
-              <Icon name="chevron-down" size={SIZE.icon} color={COLORS.primary} />
+              <Icon
+                name={isDesktop ? 'x' : 'chevron-down'}
+                size={SIZE.icon}
+                color={COLORS.primary}
+              />
             </Pressable>
             <Text style={styles.title}>{COMMENTS_STRINGS.title}</Text>
             <View style={styles.headerButton} />
@@ -254,6 +264,15 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: RADIUS.sheet,
     borderTopRightRadius: RADIUS.sheet,
     backgroundColor: COLORS.surface,
+  },
+  desktopContainer: {
+    justifyContent: 'center',
+  },
+  desktopSheet: {
+    height: '85%',
+    maxHeight: DESKTOP_LAYOUT.dialogMaxHeight,
+    maxWidth: DESKTOP_LAYOUT.dialogWidth,
+    borderRadius: RADIUS.sheet,
   },
   sheetHeader: {
     alignItems: 'center',

@@ -43,22 +43,7 @@ export function ModeratorManagementSection({
   onRevoke,
   onRetry,
 }: ModeratorManagementSectionProps) {
-  const [userAccountId, setUserAccountId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [inputError, setInputError] = useState(false);
-
-  async function handleAssign() {
-    const accountId = userAccountId.trim();
-    if (accountId.length === 0) {
-      setInputError(true);
-      return;
-    }
-
-    setInputError(false);
-    if (await onAssign(accountId)) {
-      setUserAccountId('');
-    }
-  }
 
   async function handleSearch() {
     if (!onSearch) {
@@ -85,7 +70,7 @@ export function ModeratorManagementSection({
       {onSearch ? (
         <View style={styles.card}>
           <Text accessibilityRole="header" style={styles.sectionTitle}>
-            {ADMIN_STRINGS.searchTitle}
+            {ADMIN_STRINGS.assignTitle}
           </Text>
           <Input
             accessibilityLabel={ADMIN_STRINGS.searchLabel}
@@ -155,34 +140,6 @@ export function ModeratorManagementSection({
         </View>
       ) : null}
 
-      <View style={styles.card}>
-        <Text accessibilityRole="header" style={styles.sectionTitle}>
-          {ADMIN_STRINGS.assignTitle}
-        </Text>
-        <Input
-          accessibilityLabel={ADMIN_STRINGS.accountIdLabel}
-          autoCapitalize="none"
-          autoCorrect={false}
-          hasError={inputError}
-          onChangeText={setUserAccountId}
-          placeholder={ADMIN_STRINGS.accountIdPlaceholder}
-          value={userAccountId}
-        />
-        {inputError ? (
-          <Text accessibilityRole="alert" style={styles.error}>
-            {ADMIN_STRINGS.errors.invalidInput}
-          </Text>
-        ) : null}
-        <Text style={styles.hint}>{ADMIN_STRINGS.accountIdHint}</Text>
-        <Button
-          label={ADMIN_STRINGS.assign}
-          onPress={() => void handleAssign()}
-          isLoading={isAssigningModerator}
-          isDisabled={isAssigningModerator}
-          iconRight="user-plus"
-        />
-      </View>
-
       {operationError !== null ? (
         <Text accessibilityRole="alert" style={styles.error}>
           {ADMIN_STRINGS.errors[operationError.kind] ?? ADMIN_STRINGS.genericError}
@@ -225,9 +182,6 @@ export function ModeratorManagementSection({
                 <Text style={styles.secondary}>{moderator.email}</Text>
                 <Text style={styles.secondary}>
                   {ADMIN_STRINGS.role}: {moderator.role}
-                </Text>
-                <Text style={styles.accountId}>
-                  {ADMIN_STRINGS.accountId}: {moderator.id}
                 </Text>
               </View>
               <Pressable
@@ -275,11 +229,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  hint: {
-    color: COLORS.textSecondary,
-    fontFamily: FONT_FAMILY.body,
-    fontSize: FONT_SIZE.s13,
-  },
   error: {
     color: COLORS.danger,
     fontFamily: FONT_FAMILY.body,
@@ -321,11 +270,6 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontFamily: FONT_FAMILY.body,
     fontSize: FONT_SIZE.s13,
-  },
-  accountId: {
-    color: COLORS.textTertiary,
-    fontFamily: FONT_FAMILY.body,
-    fontSize: FONT_SIZE.s12,
   },
   assignChip: {
     minHeight: SIZE.touchTarget,

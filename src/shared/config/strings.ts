@@ -8,5 +8,7 @@ export const STRINGS = {
     ecosystem: 'Ecosistema',
     assistant: 'Asistente',
     profile: 'Perfil',
+    createPost: 'Nueva publicación',
+    main: 'Navegación principal',
   },
 } as const;

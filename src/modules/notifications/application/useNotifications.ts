@@ -12,6 +12,7 @@ export type UseNotificationsResult = {
   items: NotificationItem[];
   grouped: Record<NotificationPeriod, NotificationItem[]>;
   hasMarkedAllRead: boolean;
+  isLoading: boolean;
   error: 'unauthorized' | 'unavailable' | null;
   markAllRead: () => Promise<void>;
   reload: () => void;
@@ -25,6 +26,7 @@ export function useNotifications(
   const [hasMarkedAllRead, setHasMarkedAllRead] = useState(false);
   const [error, setError] = useState<'unauthorized' | 'unavailable' | null>(null);
   const [reloadCounter, setReloadCounter] = useState(0);
+  const [hasSettled, setHasSettled] = useState(false);
 
   useEffect(() => {
     if (!enabled) {
@@ -38,12 +40,14 @@ export function useNotifications(
         if (!isMounted) return;
         setItems(loaded);
         setError(null);
+        setHasSettled(true);
       })
       .catch((caught: unknown) => {
         if (!isMounted) return;
         setError(
           caught instanceof HttpError && caught.status === 401 ? 'unauthorized' : 'unavailable',
         );
+        setHasSettled(true);
       });
 
     return () => {
@@ -77,6 +81,7 @@ export function useNotifications(
     items,
     grouped,
     hasMarkedAllRead,
+    isLoading: enabled && !hasSettled,
     error,
     markAllRead,
     reload,

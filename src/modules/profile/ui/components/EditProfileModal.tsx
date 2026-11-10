@@ -3,7 +3,16 @@ import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { MyProfile } from '@/modules/profile/domain/models/MyProfile';
 import type { UpdateProfileInput } from '@/modules/profile/domain/ProfileService';
-import { COLORS, CONTENT_MAX_WIDTH, FONT_FAMILY, FONT_SIZE, RADIUS, SPACING } from '@/shared/theme';
+import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
+import {
+  COLORS,
+  CONTENT_MAX_WIDTH,
+  DESKTOP_LAYOUT,
+  FONT_FAMILY,
+  FONT_SIZE,
+  RADIUS,
+  SPACING,
+} from '@/shared/theme';
 import { Button } from '@/shared/ui/atoms/Button';
 import { TextField } from '@/shared/ui/molecules/TextField';
 
@@ -26,6 +35,7 @@ function splitFullName(fullName: string): { firstNames: string; lastNames: strin
 }
 
 export function EditProfileModal({ visible, profile, onClose, onSave }: EditProfileModalProps) {
+  const { isDesktop } = useResponsiveLayout();
   const initialNames = splitFullName(profile.fullName);
   const [firstNames, setFirstNames] = useState(initialNames.firstNames);
   const [lastNames, setLastNames] = useState(initialNames.lastNames);
@@ -53,9 +63,14 @@ export function EditProfileModal({ visible, profile, onClose, onSave }: EditProf
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={styles.sheet}>
+    <Modal
+      visible={visible}
+      animationType={isDesktop ? 'fade' : 'slide'}
+      transparent
+      onRequestClose={onClose}
+    >
+      <View style={[styles.overlay, isDesktop && styles.desktopOverlay]}>
+        <View style={[styles.sheet, isDesktop && styles.desktopSheet]}>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
             <Text accessibilityRole="header" style={styles.title}>
               Editar perfil
@@ -108,6 +123,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'flex-end',
+  },
+  desktopOverlay: {
+    justifyContent: 'center',
+  },
+  desktopSheet: {
+    maxWidth: DESKTOP_LAYOUT.dialogWidth,
+    borderRadius: RADIUS.cardLarge,
   },
   sheet: {
     width: '100%',

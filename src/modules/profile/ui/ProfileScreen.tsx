@@ -12,7 +12,16 @@ import { PROFILE_ERROR_MESSAGES, PROFILE_STRINGS } from '@/modules/profile/ui/st
 import { useProfileService } from '@/modules/profile/useProfileService';
 import { useCollapsingHeader } from '@/shared/hooks/useCollapsingHeader';
 import { pickImageFromLibrary } from '@/shared/lib/imagePicker';
-import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SIZE, SPACING } from '@/shared/theme';
+import {
+  BORDER_WIDTH,
+  COLORS,
+  FONT_FAMILY,
+  FONT_SIZE,
+  RADIUS,
+  SIZE,
+  SPACING,
+} from '@/shared/theme';
+import { Button } from '@/shared/ui/atoms/Button';
 import { Icon } from '@/shared/ui/atoms/Icon';
 import { HeaderTeal } from '@/shared/ui/organisms/HeaderTeal';
 import { ResponsiveScreen } from '@/shared/ui/templates/ResponsiveScreen';
@@ -83,6 +92,41 @@ export function ProfileScreen() {
     }
   }
 
+  // A guest has no personal profile: only the ways out of the guest session.
+  if (isAnonymous) {
+    return (
+      <ResponsiveScreen>
+        <View style={styles.screen}>
+          <HeaderTeal
+            title={PROFILE_STRINGS.headerTitle}
+            headerHeight={headerHeight}
+            paddingTop={insets.top + SPACING.s8}
+            leftAccessory={null}
+            rightAccessory={null}
+          />
+          <View style={styles.guestContent}>
+            <View style={styles.guestCard}>
+              <Text accessibilityRole="header" style={styles.guestTitle}>
+                {PROFILE_STRINGS.guest.title}
+              </Text>
+              <Text style={styles.guestMessage}>{PROFILE_STRINGS.guest.message}</Text>
+              <Button
+                label={PROFILE_STRINGS.signIn}
+                iconRight="arrow-right"
+                onPress={() => void handleSignIn()}
+              />
+              <Button
+                label={PROFILE_STRINGS.signOut}
+                variant="outline"
+                onPress={() => void signOut()}
+              />
+            </View>
+          </View>
+        </View>
+      </ResponsiveScreen>
+    );
+  }
+
   if (profile.status !== 'success') {
     return (
       <ResponsiveScreen>
@@ -96,7 +140,6 @@ export function ProfileScreen() {
               onRetry={profile.reload}
             />
           )}
-          {isAnonymous ? <GuestSignInButton onPress={() => void handleSignIn()} /> : null}
         </View>
       </ResponsiveScreen>
     );
@@ -131,6 +174,7 @@ export function ProfileScreen() {
         postCount={me.postCount}
         followerCount={me.followerCount}
         followingCount={me.followingCount}
+        onFollowersPress={() => router.push('/profile/followers')}
       />
       {canOpenModerationPanel ? (
         <Pressable
@@ -142,12 +186,7 @@ export function ProfileScreen() {
           <Text style={styles.adminButtonText}>{PROFILE_STRINGS.adminPanel}</Text>
         </Pressable>
       ) : null}
-      {isAnonymous ? <GuestSignInButton onPress={() => void handleSignIn()} /> : null}
-      <InfoCard
-        profile={me}
-        onEdit={() => setIsEditOpen(true)}
-        onOpenSettings={() => router.push('/profile/settings')}
-      />
+      <InfoCard profile={me} onEdit={() => setIsEditOpen(true)} />
       <ProfileTabs
         activeTab={activeTab}
         postCount={me.postCount}
@@ -200,7 +239,21 @@ export function ProfileScreen() {
             contentContainerStyle={[styles.content, { paddingTop: SPACING.s18 }]}
             data={posts.status === 'success' ? posts.data : []}
             keyExtractor={(post) => post.id}
-            renderItem={({ item }) => <ProfilePostCard post={item} isAuthorShown={isSavedTab} />}
+            renderItem={({ item }) => (
+              <ProfilePostCard
+                post={item}
+                isAuthorShown={isSavedTab}
+                onPress={
+                  isSavedTab
+                    ? undefined
+                    : () =>
+                        router.push({
+                          pathname: '/users/[userId]/posts/[postId]',
+                          params: { userId: me.id, postId: item.id },
+                        })
+                }
+              />
+            )}
             ListHeaderComponent={header}
             ListEmptyComponent={listStatus}
             ItemSeparatorComponent={Separator}
@@ -220,23 +273,6 @@ export function ProfileScreen() {
   );
 }
 
-type GuestSignInButtonProps = {
-  onPress: () => void;
-};
-
-function GuestSignInButton({ onPress }: GuestSignInButtonProps) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={PROFILE_STRINGS.signIn}
-      onPress={onPress}
-      style={({ pressed }) => [styles.adminButton, pressed && styles.pressed]}
-    >
-      <Text style={styles.adminButtonText}>{PROFILE_STRINGS.signIn}</Text>
-    </Pressable>
-  );
-}
-
 function Separator() {
   return <View style={styles.separator} />;
 }
@@ -248,6 +284,27 @@ const styles = StyleSheet.create({
   },
   centered: {
     justifyContent: 'center',
+  },
+  guestContent: {
+    padding: SPACING.s20,
+  },
+  guestCard: {
+    gap: SPACING.s14,
+    padding: SPACING.s20,
+    borderWidth: BORDER_WIDTH.hairline,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.card,
+    backgroundColor: COLORS.surface,
+  },
+  guestTitle: {
+    color: COLORS.textTitle,
+    fontFamily: FONT_FAMILY.heading,
+    fontSize: FONT_SIZE.s20,
+  },
+  guestMessage: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT_FAMILY.body,
+    fontSize: FONT_SIZE.s15,
   },
   headerActionButton: {
     width: SIZE.touchTarget,

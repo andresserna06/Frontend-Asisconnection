@@ -15,6 +15,30 @@ Formato de cada entrada:
 
 ---
 
+## 2026-11-10 · T-32 Ecosistema renovado, publicaciones propias, contador al seguir y lista de seguidores
+
+- Qué se hizo: nuevo texto de marca en el login; Ecosistema con banner y tarjetas más grandes y de colores; las publicaciones propias abren la pantalla de publicación; el contador de seguidores cambia en cuanto el servidor confirma seguir o dejar de seguir; «Seguidores» en Perfil abre la lista de quienes te siguen.
+- Archivos principales: `src/modules/ecosystem/ui/{EcosystemScreen.tsx,components/EcosystemCard.tsx}`, `src/modules/profile/ui/{FollowersScreen,OtherProfileScreen,ProfileScreen}.tsx`, `src/modules/profile/ui/components/StatsCard.tsx`, `src/modules/profile/application/{useMyFollowers,usePublicProfile,usePublicProfileConnection}.ts`, `src/modules/profile/services/publicProfileService.ts`, `src/app/profile/followers.tsx`.
+- Decisiones: una solicitud pendiente no suma seguidores hasta ser aceptada. El contador se ajusta con la respuesta de la operación en lugar de volver a consultar el perfil. `GET /connections` solo trae identificadores, así que cada seguidor se consulta con `GET /actors/{id}` (máximo 50 por pantalla).
+- Cómo se probó: `npx tsc --noEmit`, `npx expo lint`, `npm test` (45 suites, 195 pruebas), `npx expo export --platform web` y recorrido con Edge sin interfaz en 1440 y 390 px con la API simulada. No se probó contra el backend real ni en Expo Go o en un dispositivo.
+- Queda pendiente: sin `DELETE /connections/{id}`, dejar de seguir solo queda registrado en el dispositivo de quien lo hace (ver `PENDIENTES.md`).
+
+## 2026-11-10 · T-31 Ajustes de interfaz pedidos tras probar la web
+
+- Qué se hizo: mostrar u ocultar la contraseña en el registro; un solo acceso a Ajustes en Perfil (el engranaje); una sola forma de asignar moderadores (búsqueda de cuentas, sin el campo de ID); panel de últimas notificaciones en lugar del Ecosistema en el Foro de escritorio, y Notificaciones sale de la barra lateral; Perfil de invitado con «Iniciar sesión» y «Cerrar sesión»; las publicaciones de otro perfil abren una pantalla nueva con el texto completo, «me gusta» y comentarios.
+- Archivos principales: `src/modules/profile/ui/ActorPostScreen.tsx`, `src/modules/profile/ui/components/{ActorPostCard,ProfilePostCard,InfoCard}.tsx`, `src/modules/profile/application/useActorPost.ts`, `src/app/users/[userId]/posts/[postId].tsx`, `src/modules/notifications/ui/components/NotificationsPanel.tsx`, `src/modules/admin/ui/components/ModeratorManagementSection.tsx`, `src/modules/auth/ui/components/RegisterModal.tsx`, `src/shared/ui/organisms/DesktopSidebar.tsx`.
+- Decisiones: el backend no tiene `GET /posts/{id}`, así que la publicación se busca en `GET /actors/{id}/posts` (primeros 20 resultados, los mismos que muestra el perfil). Entre 1024 y 1279 px no hay panel derecho y la campana se conserva en el header del Foro. El invitado ve una vista propia porque no tiene perfil personal.
+- Cómo se probó: `npx tsc --noEmit`, `npx expo lint`, `npm test` (45 suites, 192 pruebas), `npx expo export --platform web` y recorrido con Edge sin interfaz en 1440, 1100 y 390 px con la API simulada. No se probó contra el backend real ni en Expo Go o en un dispositivo.
+- Queda pendiente: T-03b y T-28 a T-30 en `PENDIENTES.md`.
+
+## 2026-11-10 · T-27 Diseño de escritorio para la versión web
+
+- Qué se hizo: desde 1024 px en navegador la app usa un diseño de red social: barra lateral persistente, columna central, panel derecho desde 1280 px en el Foro, publicaciones de altura natural, diálogos centrados y login en dos paneles. Se agregó título y `lang="es"` al documento web, y en web se corrigió el header pegado arriba y el texto de «Recientes» recortado sin botón de cámara.
+- Archivos principales: `src/shared/hooks/useResponsiveLayout.ts`, `src/shared/ui/organisms/DesktopSidebar.tsx`, `src/shared/ui/templates/{DesktopShell,ResponsiveScreen}.tsx`, `src/shared/theme/layout.ts`, `src/app/{_layout,+html}.tsx`, `src/app/(tabs)/{_layout,index}.tsx`, `src/modules/ecosystem/ui/components/EcosystemHighlights.tsx` y las pantallas de Foro, Comentarios, Nueva publicación, Login, Ecosistema, Asistente y Ajustes.
+- Decisiones: un solo código y un solo punto de decisión (`useResponsiveLayout`), sin archivos `.web.tsx` ni proyecto aparte. El diseño de escritorio exige `Platform.OS === 'web'`, de modo que el APK conserva su diseño. La barra lateral vive en el layout raíz para seguir visible en Ajustes, perfiles y Administración, y no remonta el navegador al cambiar el ancho. `posts/new` usa `transparentModal` solo en web, como recomienda Expo para modales en navegador. No hay mockup de escritorio: se reutilizan tokens y colores del tema.
+- Cómo se probó: `npx tsc --noEmit`, `npx expo lint`, `npm test` (42 suites, 183 pruebas), `npx expo export` para web y Android, y recorrido con Edge sin interfaz en 1920, 1440, 1100, 820 y 390 px con la API simulada (sin desbordes horizontales ni errores de consola). No se probó contra el backend real ni en Expo Go o en un dispositivo.
+- Queda pendiente: T-03b (validar en dispositivo) y los puntos de web agregados a `PENDIENTES.md`.
+
 ## 2026-11-10 · Corrección de Subida Multimedia Web/Móvil, Cámara en Web, Contadores al Seguir, Persistencia de Likes y Perfil Recién Creado
 
 - Qué se hizo:

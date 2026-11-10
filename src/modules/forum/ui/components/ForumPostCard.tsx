@@ -6,6 +6,7 @@ import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
 import {
   CATEGORY_COLORS,
   COLORS,
+  DESKTOP_LAYOUT,
   FONT_FAMILY,
   FONT_SIZE,
   OPACITY,
@@ -20,6 +21,8 @@ import { FORUM_STRINGS } from '../strings';
 
 type ForumPostCardProps = {
   post: ForumPost;
+  // Desktop feed: the card grows with its content instead of filling a snapped page.
+  isAutoHeight?: boolean;
   onCommentsPress: () => void;
   onAuthorPress?: () => void;
   // Resolves with whether the viewer's like is active after the toggle.
@@ -30,6 +33,7 @@ const rejectLike = () => Promise.reject(new Error('Likes are not available.'));
 
 export function ForumPostCard({
   post,
+  isAutoHeight = false,
   onCommentsPress,
   onAuthorPress,
   onLikePress,
@@ -46,7 +50,7 @@ export function ForumPostCard({
   }
 
   return (
-    <View style={[styles.card, { borderTopColor: palette.main }]}>
+    <View style={[styles.card, !isAutoHeight && styles.fill, { borderTopColor: palette.main }]}>
       <View style={styles.authorRow}>
         {onAuthorPress ? (
           <Pressable
@@ -68,12 +72,18 @@ export function ForumPostCard({
               onPress={onAuthorPress}
               style={({ pressed }) => [styles.authorNameButton, pressed && styles.pressed]}
             >
-              <Text style={styles.authorName} numberOfLines={1}>
+              <Text
+                style={[styles.authorName, isAutoHeight && styles.desktopAuthorName]}
+                numberOfLines={1}
+              >
                 {post.author.name}
               </Text>
             </Pressable>
           ) : (
-            <Text style={styles.authorName} numberOfLines={1}>
+            <Text
+              style={[styles.authorName, isAutoHeight && styles.desktopAuthorName]}
+              numberOfLines={1}
+            >
               {post.author.name}
             </Text>
           )}
@@ -96,12 +106,18 @@ export function ForumPostCard({
       </View>
 
       {post.media === null ? (
-        <View style={[styles.textMedia, { backgroundColor: palette.soft }]}>
+        <View
+          style={[
+            styles.textMedia,
+            isAutoHeight ? styles.desktopTextMedia : styles.fill,
+            { backgroundColor: palette.soft },
+          ]}
+        >
           <Text style={[styles.textMediaContent, { color: palette.onSoft }]}>{post.content}</Text>
         </View>
       ) : (
         <>
-          <View style={styles.media}>
+          <View style={[styles.media, isAutoHeight ? styles.desktopMedia : styles.fill]}>
             <Image
               source={{
                 uri: post.media.kind === 'image' ? post.media.uri : post.media.thumbnailUri,
@@ -122,7 +138,10 @@ export function ForumPostCard({
               </View>
             )}
           </View>
-          <Text style={styles.content} numberOfLines={3}>
+          <Text
+            style={[styles.content, isAutoHeight && styles.desktopContent]}
+            numberOfLines={isAutoHeight ? undefined : 3}
+          >
             {post.content}
           </Text>
         </>
@@ -183,8 +202,10 @@ function AuthorAvatar({ post, palette }: AuthorAvatarProps) {
 }
 
 const styles = StyleSheet.create({
-  card: {
+  fill: {
     flex: 1,
+  },
+  card: {
     overflow: 'hidden',
     borderWidth: 1,
     borderTopWidth: 5,
@@ -228,6 +249,9 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.s14,
     color: COLORS.textTitle,
   },
+  desktopAuthorName: {
+    fontSize: FONT_SIZE.s16,
+  },
   authorNameButton: {
     minHeight: SIZE.touchTarget,
     justifyContent: 'center',
@@ -263,12 +287,17 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.s11_5,
   },
   media: {
-    flex: 1,
     minHeight: 120,
     marginHorizontal: SPACING.s12,
     overflow: 'hidden',
     borderRadius: RADIUS.button,
     backgroundColor: COLORS.surfaceMuted,
+  },
+  desktopMedia: {
+    aspectRatio: DESKTOP_LAYOUT.postMediaAspectRatio,
+  },
+  desktopTextMedia: {
+    minHeight: DESKTOP_LAYOUT.postTextMinHeight,
   },
   videoIndicator: {
     position: 'absolute',
@@ -288,7 +317,6 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.s11_5,
   },
   textMedia: {
-    flex: 1,
     minHeight: 120,
     justifyContent: 'center',
     gap: SPACING.s12,
@@ -308,6 +336,10 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.body,
     fontSize: FONT_SIZE.s13_5,
     lineHeight: 19,
+  },
+  desktopContent: {
+    fontSize: FONT_SIZE.s16,
+    lineHeight: 24,
   },
   actions: {
     minHeight: 44,

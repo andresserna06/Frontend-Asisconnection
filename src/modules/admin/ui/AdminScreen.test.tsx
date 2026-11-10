@@ -80,8 +80,12 @@ describe('AdminScreen', () => {
     expect(service.updateModerationStatus).toHaveBeenCalledWith('pending-post', 'POST', 'APPROVED');
   });
 
-  it('lets admins assign moderators using an account ID', async () => {
-    const service = createService();
+  it('lets admins find an account and assign it as moderator', async () => {
+    const service = createService({
+      searchAccounts: jest.fn(async () => [
+        { id: 'account-id', username: 'persona', email: 'persona@prueba.com', role: 'ACUDIENTE' },
+      ]),
+    });
     configureScreen('ADMIN', service);
     await render(
       <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
@@ -90,10 +94,13 @@ describe('AdminScreen', () => {
     );
 
     await fireEvent.press(await screen.findByRole('tab', { name: 'Moderadores' }));
-    await fireEvent.changeText(screen.getByLabelText('ID de cuenta'), 'account-id');
-    await fireEvent.press(screen.getByRole('button', { name: 'Asignar moderador' }));
+    await fireEvent.changeText(screen.getByLabelText('Buscar por usuario o correo'), 'persona');
+    await fireEvent.press(screen.getByRole('button', { name: 'Buscar cuentas' }));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Asignar persona' }));
 
+    expect(service.searchAccounts).toHaveBeenCalledWith('persona');
     expect(service.assignModerator).toHaveBeenCalledWith('account-id');
+    expect(screen.queryByText('Asignar moderador')).toBeNull();
   });
 
   it('does not request admin data for non-admin users', async () => {

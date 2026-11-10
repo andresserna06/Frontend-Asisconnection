@@ -37,6 +37,9 @@ Cómo se usa:
 ## 2. Fuera del Alcance del MVP de Backend / Por Validar en Dispositivo
 
 - [ ] **T-03b Probar el flujo completo en Expo Go físico**: Validar visualmente todas las pantallas en dispositivo móvil con Expo Go.
+- [ ] **T-28 Confirmaciones en web**: `Alert.alert` no hace nada en navegador. «Rechazar» (`ModerationCard`) y «Revocar» (`ModeratorManagementSection`) dependen de sus botones y hoy no ejecutan la acción en web; los avisos de publicación y comentario enviados tampoco se muestran.
+- [ ] **T-29 Sesión en web**: decidir si la sesión debe sobrevivir a recargar la pestaña. `secureTokenStorage.web.ts` la guarda solo en memoria y `expo-secure-store` no existe en web; persistirla cambia la regla de la sección 7 de `AGENTS.md`.
+- [ ] **T-30 Despliegue web**: agregar el dominio del Static Site a `CORS_ORIGINS` del backend (hoy un origen desconocido no recibe `access-control-allow-origin`) y validar el flujo contra el backend real.
 - [!] **Recuperar contraseña**: Enlace visible en el login (`showComingSoonNotice`); el backend no incluye endpoint de recuperación de contraseña en el MVP.
-- [!] **Cancelar seguimiento (`DELETE /v1/connections/{id}`)**: El backend actual permite crear y consultar conexiones (`POST /connections`, `GET /connections`), pero no incluye endpoint para eliminar una conexión existente.
+- [!] **Cancelar seguimiento (`DELETE /v1/connections/{id}`)**: El backend actual permite crear y consultar conexiones (`POST /connections`, `GET /connections`), pero no incluye endpoint para eliminar una conexión existente (confirmado: responde `Cannot DELETE`). Hasta tenerlo, dejar de seguir solo se recuerda en el dispositivo de quien lo hace: la otra persona conserva a ese seguidor en su contador y en su lista.
 - [!] **Persistencia en servidor de publicaciones guardadas (`/actors/me/saved`)**: Fuera del alcance del MVP de backend (`getMySavedPosts` retorna `[]`).

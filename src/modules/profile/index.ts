@@ -2,5 +2,7 @@
 export { usePublicProfile } from './application/usePublicProfile';
 export { useMyProfile } from './application/useMyProfile';
 export { useProfileService } from './useProfileService';
+export { ActorPostScreen } from './ui/ActorPostScreen';
+export { FollowersScreen } from './ui/FollowersScreen';
 export { ProfileScreen } from './ui/ProfileScreen';
 export { OtherProfileScreen } from './ui/OtherProfileScreen';

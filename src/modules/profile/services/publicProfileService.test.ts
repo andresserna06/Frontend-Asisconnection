@@ -8,6 +8,39 @@ beforeEach(() => {
 });
 
 describe('publicProfileService', () => {
+  it('lists as followers only the accepted connections received by the current actor', async () => {
+    const actor = (id: string) => ({
+      id,
+      username: id,
+      primary_role: 'ACUDIENTE',
+      first_names: null,
+      last_names: null,
+      avatar_url: null,
+      short_bio: null,
+    });
+    const request = jest.fn(async (path: string) => {
+      if (path === '/actors/me') {
+        return actor('me');
+      }
+      if (path.startsWith('/connections')) {
+        return {
+          data: [
+            { id: '1', requester_actor_id: 'fan', receiver_actor_id: 'me', status: 'ACCEPTED' },
+            { id: '2', requester_actor_id: 'me', receiver_actor_id: 'idol', status: 'ACCEPTED' },
+            { id: '3', requester_actor_id: 'wait', receiver_actor_id: 'me', status: 'PENDING' },
+          ],
+          meta: { has_next_page: false },
+        };
+      }
+      return actor(path.split('/').pop() ?? '');
+    });
+    const service = createPublicProfileService({ request } as unknown as HttpClient);
+
+    const followers = await service.getMyFollowers?.();
+
+    expect(followers?.map((follower) => follower.id)).toEqual(['fan']);
+  });
+
   it('loads public profile fields and omits personal data whose visibility is disabled', async () => {
     const request = jest.fn(async () => ({
       id: 'actor-1',

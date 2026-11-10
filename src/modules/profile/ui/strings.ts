@@ -7,6 +7,23 @@ export const PROFILE_STRINGS = {
   adminPanel: 'Panel de administración',
   openAdminPanel: 'Abrir panel de administración',
   signIn: 'Iniciar sesión',
+  signOut: 'Cerrar sesión',
+  guest: {
+    title: 'Estás como invitado',
+    message: 'Inicia sesión con tu cuenta para ver tu perfil y tus publicaciones.',
+  },
+  followers: {
+    header: 'Seguidores',
+    back: 'Volver al perfil',
+    empty: 'Aún no tienes seguidores.',
+    error: 'No pudimos cargar tus seguidores.',
+    open: (name: string) => `Abrir el perfil de ${name}`,
+  },
+  postDetail: {
+    header: 'Publicación',
+    back: 'Volver',
+    notFound: 'No encontramos esta publicación.',
+  },
   changePhoto: 'Cambiar foto de perfil',
   photo: {
     permissionDenied: 'Permite el acceso a tus fotos para cambiar tu foto de perfil.',
@@ -53,8 +70,7 @@ export const PROFILE_STRINGS = {
   info: {
     title: 'Mi información',
     edit: 'Editar',
-    privacyNote: 'Solo tú ves esto. Elige qué muestras a los demás en ',
-    privacyLink: 'Ajustes',
+    privacyNote: 'Solo tú ves esto. Puedes elegir qué muestras a los demás.',
     email: 'Correo',
     birthDate: 'Fecha de nacimiento',
     city: 'Ciudad',
@@ -70,6 +86,7 @@ export const PROFILE_STRINGS = {
     saved: 'Aún no has guardado publicaciones.',
   },
   post: {
+    open: (text: string) => `Abrir publicación: ${text}`,
     likes: (count: number) => `${count} me gusta`,
     comments: (count: number) => `${count} ${count === 1 ? 'comentario' : 'comentarios'}`,
   },

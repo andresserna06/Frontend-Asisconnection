@@ -24,6 +24,7 @@ export const LOGIN_STRINGS = {
   registerSubmit: 'Registrarme e ingresar',
   registerCancel: 'Cancelar',
   footer: 'Fundación ASISCO UP · Manizales',
+  brandDescription: 'Un espacio para compartir, aprender y acompañarnos en comunidad.',
 } as const;
 
 export const FORM_ISSUE_MESSAGES: Record<LoginFormIssue, string> = {

@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { memo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { RoleBadge } from '@/modules/auth';
 import { CATEGORIES } from '@/modules/posts';
@@ -14,6 +14,7 @@ import {
   FONT_FAMILY,
   FONT_SIZE,
   LINE_HEIGHT,
+  OPACITY,
   RADIUS,
   SIZE,
   SPACING,
@@ -29,15 +30,19 @@ type ProfilePostCardProps = {
   post: Post;
   // Saved posts are from other people, so they show who wrote them.
   isAuthorShown: boolean;
+  // When present, the whole card opens the post.
+  onPress?: () => void;
 };
 
 // Compact post card of the profile lists (category stripe, text, thumbnail and counts).
 export const ProfilePostCard = memo(function ProfilePostCard({
   post,
   isAuthorShown,
+  onPress,
 }: ProfilePostCardProps) {
-  return (
-    <View style={[styles.card, { borderLeftColor: CATEGORY_COLORS[post.category].main }]}>
+  const cardStyle = [styles.card, { borderLeftColor: CATEGORY_COLORS[post.category].main }];
+  const content = (
+    <>
       <View style={styles.row}>
         <CategoryChip
           label={CATEGORIES[post.category].label}
@@ -92,8 +97,23 @@ export const ProfilePostCard = memo(function ProfilePostCard({
           <Text style={styles.countText}>{post.commentCount}</Text>
         </View>
       </View>
-    </View>
+    </>
   );
+
+  if (onPress !== undefined) {
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={PROFILE_STRINGS.post.open(post.text)}
+        onPress={onPress}
+        style={({ pressed }) => [cardStyle, pressed && styles.pressed]}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+
+  return <View style={cardStyle}>{content}</View>;
 });
 
 const styles = StyleSheet.create({
@@ -107,6 +127,9 @@ const styles = StyleSheet.create({
     borderLeftWidth: BORDER_WIDTH.stripe,
     borderColor: COLORS.border,
     borderRadius: RADIUS.card,
+  },
+  pressed: {
+    opacity: OPACITY.pressed,
   },
   row: {
     flexDirection: 'row',

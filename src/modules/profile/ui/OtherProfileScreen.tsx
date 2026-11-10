@@ -35,21 +35,23 @@ export function OtherProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const { isAnonymous, signOut } = useAuth();
   const service = usePublicProfileService();
-  const { profile, reload, refresh, posts } = usePublicProfile(service, userId);
+  const { profile, reload, adjustFollowerCount, posts } = usePublicProfile(service, userId);
   const follow = usePublicProfileConnection(service, userId, isAnonymous);
   const expandedHeaderHeight = insets.top + HEADER_ROW_HEIGHT;
   const { headerHeight, onScroll } = useCollapsingHeader(expandedHeaderHeight);
   const hasActorPostsSupport = typeof service.getActorPosts === 'function';
 
-  // After following or unfollowing, the follower count changes: fetch it again without a spinner.
+  // A pending request does not count as a follower until it is accepted.
   async function handleFollow() {
-    await follow.requestFollow();
-    await refresh();
+    if ((await follow.requestFollow()) === 'following') {
+      adjustFollowerCount(1);
+    }
   }
 
   async function handleUnfollow() {
-    await follow.requestUnfollow();
-    await refresh();
+    if ((await follow.requestUnfollow()) === 'notFollowing') {
+      adjustFollowerCount(-1);
+    }
   }
 
   function handleRetry() {
@@ -176,7 +178,17 @@ export function OtherProfileScreen() {
               ) : (
                 <View style={styles.postsList}>
                   {posts.data.map((post) => (
-                    <ProfilePostCard key={post.id} post={post} isAuthorShown={false} />
+                    <ProfilePostCard
+                      key={post.id}
+                      post={post}
+                      isAuthorShown={false}
+                      onPress={() =>
+                        router.push({
+                          pathname: '/users/[userId]/posts/[postId]',
+                          params: { userId, postId: post.id },
+                        })
+                      }
+                    />
                   ))}
                 </View>
               )}

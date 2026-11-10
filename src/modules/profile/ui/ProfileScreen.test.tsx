@@ -111,6 +111,23 @@ describe('ProfileScreen', () => {
     expect(getMyProfile).toHaveBeenCalledTimes(2);
   });
 
+  it('opens an own post and the list of followers', async () => {
+    await renderScreen();
+
+    await fireEvent.press(
+      await screen.findByRole('button', {
+        name: 'Abrir publicación: Texto de una publicación propia.',
+      }),
+    );
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/users/[userId]/posts/[postId]',
+      params: { userId: 'user-1', postId: 'post-1' },
+    });
+
+    await fireEvent.press(screen.getByRole('button', { name: '38 Seguidores' }));
+    expect(router.push).toHaveBeenCalledWith('/profile/followers');
+  });
+
   it('opens edit profile modal when pressing Editar', async () => {
     await renderScreen();
     await screen.findByText('Persona Prueba');
@@ -136,7 +153,7 @@ describe('ProfileScreen', () => {
     expect(screen.queryByRole('button', { name: 'Cerrar sesión' })).toBeNull();
   });
 
-  it('lets a guest end the session and go to login from their profile', async () => {
+  async function renderGuestScreen() {
     jest.mocked(useProfileService).mockReturnValue(createFakeProfileService());
     jest.mocked(useAuth).mockReturnValue(createAuthValue(true));
     await render(
@@ -144,13 +161,25 @@ describe('ProfileScreen', () => {
         <ProfileScreen />
       </SafeAreaProvider>,
     );
+  }
 
-    await screen.findByText('Persona Prueba');
+  it('lets a guest go to login from their profile', async () => {
+    await renderGuestScreen();
+
+    expect(screen.queryByText('Persona Prueba')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Iniciar sesión' }));
 
     await waitFor(() => {
       expect(mockSignOut).toHaveBeenCalledTimes(1);
       expect(router.replace).toHaveBeenCalledWith('/login');
     });
+  });
+
+  it('lets a guest end the session from their profile', async () => {
+    await renderGuestScreen();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Cerrar sesión' }));
+
+    await waitFor(() => expect(mockSignOut).toHaveBeenCalledTimes(1));
   });
 });
