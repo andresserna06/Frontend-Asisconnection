@@ -20,6 +20,7 @@ export function createFakeAuthService(overrides: Partial<AuthService> = {}) {
     login: jest.fn<Promise<Session>, Parameters<AuthService['login']>>(async () => ({
       token: TEST_TOKEN,
       user: TEST_USER,
+      isAnonymous: false,
     })),
     loginAnonymous: jest.fn<
       Promise<Session>,
@@ -27,11 +28,13 @@ export function createFakeAuthService(overrides: Partial<AuthService> = {}) {
     >(async () => ({
       token: 'guest-token',
       user: { username: 'Invitado', roles: ['BENEFICIARIO'] },
+      isAnonymous: true,
     })),
     register: jest.fn<Promise<Session>, Parameters<NonNullable<AuthService['register']>>>(
       async () => ({
         token: 'registered-token',
         user: TEST_USER,
+        isAnonymous: false,
       }),
     ),
     getProfile: jest.fn<Promise<User>, [string]>(async () => TEST_USER),
@@ -39,18 +42,26 @@ export function createFakeAuthService(overrides: Partial<AuthService> = {}) {
   };
 }
 
-export function createMemoryStorage(initialToken: string | null = null) {
+export function createMemoryStorage(
+  initialToken: string | null = null,
+  initialIsAnonymous = false,
+) {
   let token = initialToken;
+  let isAnonymous = initialIsAnonymous;
   return {
     getToken: jest.fn(async () => token),
-    saveToken: jest.fn(async (value: string) => {
+    getIsAnonymous: jest.fn(async () => isAnonymous),
+    saveToken: jest.fn(async (value: string, anonymous: boolean) => {
       token = value;
+      isAnonymous = anonymous;
     }),
     clearToken: jest.fn(async () => {
       token = null;
+      isAnonymous = false;
     }),
     peek: () => token,
-  } satisfies TokenStorage & { peek: () => string | null };
+    isAnonymous: () => isAnonymous,
+  } satisfies TokenStorage & { peek: () => string | null; isAnonymous: () => boolean };
 }
 
 // Never reached unless a test mocks fetch (jest.spyOn(globalThis, 'fetch')).

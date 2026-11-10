@@ -4,13 +4,17 @@ import type { TokenStorage } from '@/modules/auth/domain/AuthService';
 // (never localStorage), so the session ends when the tab is reloaded. Never log it.
 export function createSecureTokenStorage(): TokenStorage {
   let token: string | null = null;
+  let isAnonymous = false;
   return {
     getToken: async () => token,
-    saveToken: async (newToken) => {
+    getIsAnonymous: async () => isAnonymous,
+    saveToken: async (newToken, newIsAnonymous) => {
       token = newToken;
+      isAnonymous = newIsAnonymous;
     },
     clearToken: async () => {
       token = null;
+      isAnonymous = false;
     },
   };
 }

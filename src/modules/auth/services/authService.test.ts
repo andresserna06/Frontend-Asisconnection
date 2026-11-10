@@ -49,6 +49,7 @@ describe('createAuthService', () => {
     await expect(service.login(CREDENTIALS)).resolves.toEqual({
       token: 'abc',
       user: { username: 'maria', roles: ['MODERATOR', 'ACUDIENTE'] },
+      isAnonymous: false,
     });
 
     const [url, init] = fetchMock.mock.calls[0];
@@ -141,6 +142,7 @@ describe('createAuthService', () => {
     ).resolves.toEqual({
       token: 'reg-tok',
       user: { username: 'carlos.voluntario', roles: ['VOLUNTARIO'] },
+      isAnonymous: false,
     });
 
     const [url, init] = fetchMock.mock.calls[0];
@@ -165,6 +167,7 @@ describe('createAuthService', () => {
     ).resolves.toEqual({
       token: 'anon-tok',
       user: { username: 'InvitadoFamiliar', roles: ['ACUDIENTE'] },
+      isAnonymous: true,
     });
 
     const [url, init] = fetchMock.mock.calls[0];

@@ -30,7 +30,7 @@ export default function RootLayout() {
 // The splash stays until fonts load and the saved session is restored, so the login
 // never flashes for a signed-in user.
 function RootNavigator() {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
   const areFontsReady = useAppFonts();
   const isReady = areFontsReady && status !== 'loading';
   useHideSplashScreen(isReady);
@@ -40,16 +40,21 @@ function RootNavigator() {
   }
 
   const isSignedIn = status === 'signedIn';
+  const isAdmin = user?.roles.includes('ADMIN') ?? false;
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={isSignedIn}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="users/[userId]" />
         <Stack.Screen name="posts/new" options={{ presentation: 'modal' }} />
         <Stack.Screen
           name="comments/[postId]"
           options={{ presentation: 'transparentModal', animation: 'slide_from_bottom' }}
         />
         <Stack.Screen name="profile/settings" />
+      </Stack.Protected>
+      <Stack.Protected guard={isSignedIn && isAdmin}>
+        <Stack.Screen name="admin/index" />
       </Stack.Protected>
       <Stack.Protected guard={!isSignedIn}>
         <Stack.Screen name="(auth)" />

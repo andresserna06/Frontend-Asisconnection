@@ -90,6 +90,7 @@ export function createAuthService(client: HttpClient): AuthService {
         });
         return {
           token: device_token,
+          isAnonymous: false,
           user: {
             username: user.username,
             roles: toRoles([user.local_role, user.rol, ...(user.external_roles ?? [])]),
@@ -123,6 +124,7 @@ export function createAuthService(client: HttpClient): AuthService {
         });
         return {
           token: device_token,
+          isAnonymous: false,
           user: {
             username: user.username,
             roles: toRoles([user.local_role, user.rol, ...(user.external_roles ?? [])]),
@@ -148,6 +150,7 @@ export function createAuthService(client: HttpClient): AuthService {
         );
         return {
           token: device_token,
+          isAnonymous: true,
           user: {
             username: nickname ?? 'Invitado',
             roles: toRoles([roleTag ?? 'BENEFICIARIO']),

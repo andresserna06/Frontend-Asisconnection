@@ -1,15 +1,26 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
+import { useAuth } from '@/modules/auth';
 import type { ProfileService } from '@/modules/profile/domain/ProfileService';
 import { ProfileError } from '@/modules/profile/domain/models/ProfileError';
+import type { MyProfile } from '@/modules/profile/domain/models/MyProfile';
 import { createFakeProfileService, TEST_PROFILE } from '@/modules/profile/testUtils';
 import { useProfileService } from '@/modules/profile/useProfileService';
+import { createHttpClient } from '@/shared/lib/http';
 
 import { ProfileScreen } from './ProfileScreen';
 
 // The screen gets its service from the composition root; tests swap it for a fake.
 jest.mock('@/modules/profile/useProfileService', () => ({ useProfileService: jest.fn() }));
+jest.mock('@/modules/auth', () => ({
+  ...jest.requireActual('@/modules/auth'),
+  useAuth: jest.fn(),
+}));
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn(), replace: jest.fn() },
+}));
 
 const SAFE_AREA_METRICS = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -18,6 +29,7 @@ const SAFE_AREA_METRICS = {
 
 async function renderScreen(service: ProfileService = createFakeProfileService()) {
   jest.mocked(useProfileService).mockReturnValue(service);
+  jest.mocked(useAuth).mockReturnValue(createAuthValue(false));
   await render(
     <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
       <ProfileScreen />
@@ -26,7 +38,27 @@ async function renderScreen(service: ProfileService = createFakeProfileService()
   return service;
 }
 
+function createAuthValue(isAnonymous: boolean): ReturnType<typeof useAuth> {
+  return {
+    status: 'signedIn',
+    user: { username: 'Invitado', roles: ['BENEFICIARIO'] },
+    isAnonymous,
+    signIn: async () => undefined,
+    signInAnonymous: async () => undefined,
+    registerAccount: async () => undefined,
+    signOut: mockSignOut,
+    authorizedClient: createHttpClient('https://api.example.test'),
+  };
+}
+
+const mockSignOut = jest.fn(async () => undefined);
+
 describe('ProfileScreen', () => {
+  beforeEach(() => {
+    mockSignOut.mockClear();
+    jest.mocked(router.replace).mockClear();
+  });
+
   it('shows the profile, the private data and the own posts', async () => {
     await renderScreen();
 
@@ -37,6 +69,7 @@ describe('ProfileScreen', () => {
     expect(screen.getByText('Marzo de 2026')).toBeOnTheScreen();
     expect(await screen.findByText('Texto de una publicación propia.')).toBeOnTheScreen();
     expect(screen.getByRole('tab', { name: 'Publicaciones (1)' })).toBeSelected();
+    expect(screen.queryByRole('button', { name: 'Iniciar sesión' })).toBeNull();
   });
 
   it('shows the saved posts with their author', async () => {
@@ -85,5 +118,39 @@ describe('ProfileScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Editar' }));
 
     expect(screen.getByText('Editar perfil')).toBeOnTheScreen();
+  });
+
+  it('shows the administration entry only for administrator profiles', async () => {
+    await renderScreen(
+      createFakeProfileService({
+        getMyProfile: jest.fn(async (): Promise<MyProfile> => ({
+          ...TEST_PROFILE,
+          roles: ['ADMIN'],
+        })),
+      }),
+    );
+
+    expect(
+      await screen.findByRole('button', { name: 'Abrir panel de administración' }),
+    ).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Cerrar sesión' })).toBeNull();
+  });
+
+  it('lets a guest end the session and go to login from their profile', async () => {
+    jest.mocked(useProfileService).mockReturnValue(createFakeProfileService());
+    jest.mocked(useAuth).mockReturnValue(createAuthValue(true));
+    await render(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <ProfileScreen />
+      </SafeAreaProvider>,
+    );
+
+    await screen.findByText('Persona Prueba');
+    await fireEvent.press(screen.getByRole('button', { name: 'Iniciar sesión' }));
+
+    await waitFor(() => {
+      expect(mockSignOut).toHaveBeenCalledTimes(1);
+      expect(router.replace).toHaveBeenCalledWith('/login');
+    });
   });
 });

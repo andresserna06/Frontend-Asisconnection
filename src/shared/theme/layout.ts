@@ -66,6 +66,9 @@ export const SIZE = {
   ecosystemCardMax: 118,
 } as const;
 
+export const CONTENT_MAX_WIDTH = 840;
+export const TABLET_MIN_WIDTH = 768;
+
 export const BORDER_WIDTH = {
   hairline: 1,
   medium: 1.5,

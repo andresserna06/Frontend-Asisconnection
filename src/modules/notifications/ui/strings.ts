@@ -8,4 +8,9 @@ export const NOTIFICATION_STRINGS = {
   markUnavailableMessage: 'Podrás marcar notificaciones cuando el servicio esté conectado.',
   periods: ['Hoy', 'Ayer', 'Últimos 7 días', 'Últimos 30 días'],
   empty: 'No hay notificaciones en este periodo.',
+  signInRequired: 'Inicia sesión con una cuenta para consultar tus notificaciones.',
+  unauthorized:
+    'El servicio de notificaciones no aceptó la sesión. Tu sesión sigue activa; intenta de nuevo.',
+  unavailable: 'No pudimos cargar las notificaciones. Revisa tu conexión e intenta de nuevo.',
+  retry: 'Reintentar',
 } as const;

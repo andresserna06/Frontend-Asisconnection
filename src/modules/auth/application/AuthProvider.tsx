@@ -27,6 +27,7 @@ type AuthState = { status: 'loading' | 'signedOut' } | { status: 'signedIn'; ses
 type AuthContextValue = {
   status: AuthStatus;
   user: User | null;
+  isAnonymous: boolean;
   // Rejects with AuthError; the session only changes on success.
   signIn(credentials: LoginCredentials): Promise<void>;
   signInAnonymous?(credentials?: Partial<AnonymousCredentials>): Promise<void>;
@@ -62,8 +63,14 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
         if (savedToken === null) {
           return { status: 'signedOut' } as const;
         }
-        const user = await service.getProfile(savedToken);
-        return { status: 'signedIn', session: { token: savedToken, user } } as const;
+        const [user, isAnonymous] = await Promise.all([
+          service.getProfile(savedToken),
+          storage.getIsAnonymous(),
+        ]);
+        return {
+          status: 'signedIn',
+          session: { token: savedToken, user, isAnonymous },
+        } as const;
       } catch (error) {
         // Only an expired session invalidates the token; offline keeps it for the next launch.
         if (toAuthError(error).kind === 'sessionExpired') {
@@ -85,7 +92,7 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
 
   async function signIn(credentials: LoginCredentials) {
     const session = await service.login(credentials);
-    await storage.saveToken(session.token);
+    await storage.saveToken(session.token, session.isAnonymous);
     setState({ status: 'signedIn', session });
   }
 
@@ -98,7 +105,7 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
       nickname: credentials?.nickname,
       roleTag: credentials?.roleTag,
     });
-    await storage.saveToken(session.token);
+    await storage.saveToken(session.token, session.isAnonymous);
     setState({ status: 'signedIn', session });
   }
 
@@ -107,7 +114,7 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
       throw new Error('Registration is not supported by service');
     }
     const session = await service.register(credentials);
-    await storage.saveToken(session.token);
+    await storage.saveToken(session.token, session.isAnonymous);
     setState({ status: 'signedIn', session });
   }
 
@@ -124,7 +131,12 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
         try {
           return await httpClient.request<T>(path, { ...options, token: token ?? undefined });
         } catch (error) {
-          if (error instanceof HttpError && error.status === 401 && token !== null) {
+          if (
+            error instanceof HttpError &&
+            error.status === 401 &&
+            token !== null &&
+            options.signOutOnUnauthorized !== false
+          ) {
             await signOut();
           }
           throw error;
@@ -137,6 +149,7 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
   const value: AuthContextValue = {
     status: state.status,
     user: state.status === 'signedIn' ? state.session.user : null,
+    isAnonymous: state.status === 'signedIn' && state.session.isAnonymous,
     signIn,
     signInAnonymous,
     registerAccount,

@@ -20,6 +20,7 @@ export function createNotificationsService(client: HttpClient): NotificationsSer
     async listNotifications(): Promise<NotificationItem[]> {
       const response = await client.request<ApiNotificationsPageDto>(
         '/notifications?page=1&limit=50',
+        { signOutOnUnauthorized: false },
       );
       return response.data.map((item) => ({
         id: item.id,
@@ -34,6 +35,7 @@ export function createNotificationsService(client: HttpClient): NotificationsSer
     async markAllRead(): Promise<void> {
       await client.request('/notifications/read-all', {
         method: 'PATCH',
+        signOutOnUnauthorized: false,
       });
     },
   };

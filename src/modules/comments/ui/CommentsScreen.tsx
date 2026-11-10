@@ -26,6 +26,7 @@ import type { Comment } from '@/modules/comments/domain/models/Comment';
 import {
   BORDER_WIDTH,
   COLORS,
+  CONTENT_MAX_WIDTH,
   FONT_FAMILY,
   FONT_SIZE,
   OPACITY,
@@ -246,6 +247,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.backdrop,
   },
   sheet: {
+    width: '100%',
+    maxWidth: CONTENT_MAX_WIDTH,
+    alignSelf: 'center',
     overflow: 'hidden',
     borderTopLeftRadius: RADIUS.sheet,
     borderTopRightRadius: RADIUS.sheet,

@@ -121,6 +121,7 @@ function toForumPost(item: PublicPostItemResponse, lookup: CategoryLookup): Foru
     category,
     author: {
       id: item.author.actor_id ?? item.author.display_name,
+      profileId: item.author.actor_id ?? null,
       name: item.author.display_name,
       initials: toInitials(item.author.display_name),
       roleLabel: ROLE_LABELS[item.author.role_label] ?? item.author.role_label,

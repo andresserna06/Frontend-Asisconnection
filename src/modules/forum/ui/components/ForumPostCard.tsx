@@ -20,10 +20,16 @@ import { FORUM_STRINGS } from '../strings';
 type ForumPostCardProps = {
   post: ForumPost;
   onCommentsPress: () => void;
+  onAuthorPress?: () => void;
   onLikePress?: () => void;
 };
 
-export function ForumPostCard({ post, onCommentsPress, onLikePress }: ForumPostCardProps) {
+export function ForumPostCard({
+  post,
+  onCommentsPress,
+  onAuthorPress,
+  onLikePress,
+}: ForumPostCardProps) {
   const palette = CATEGORY_COLORS[post.category];
   const [isLiked, setIsLiked] = useState(false);
   const likeCount = post.likeCount + (isLiked ? 1 : 0);
@@ -36,22 +42,35 @@ export function ForumPostCard({ post, onCommentsPress, onLikePress }: ForumPostC
   return (
     <View style={[styles.card, { borderTopColor: palette.main }]}>
       <View style={styles.authorRow}>
-        {post.author.avatarUri === null ? (
-          <View style={[styles.avatar, { backgroundColor: palette.soft }]}>
-            <Text style={[styles.initials, { color: palette.onSoft }]}>{post.author.initials}</Text>
-          </View>
+        {onAuthorPress ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={FORUM_STRINGS.openAuthorProfile(post.author.name)}
+            onPress={onAuthorPress}
+            style={({ pressed }) => [styles.avatarButton, pressed && styles.pressed]}
+          >
+            <AuthorAvatar post={post} palette={palette} />
+          </Pressable>
         ) : (
-          <Image
-            source={{ uri: post.author.avatarUri }}
-            style={styles.avatar}
-            contentFit="cover"
-            accessibilityLabel={FORUM_STRINGS.photoOf(post.author.name)}
-          />
+          <AuthorAvatar post={post} palette={palette} />
         )}
         <View style={styles.authorDetails}>
-          <Text style={styles.authorName} numberOfLines={1}>
-            {post.author.name}
-          </Text>
+          {onAuthorPress ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={FORUM_STRINGS.openAuthorProfile(post.author.name)}
+              onPress={onAuthorPress}
+              style={({ pressed }) => [styles.authorNameButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.authorName} numberOfLines={1}>
+                {post.author.name}
+              </Text>
+            </Pressable>
+          ) : (
+            <Text style={styles.authorName} numberOfLines={1}>
+              {post.author.name}
+            </Text>
+          )}
           <View style={styles.authorMeta}>
             <Text style={styles.roleLabel}>{post.author.roleLabel}</Text>
             <Text style={styles.publishedAt}>{post.publishedAtLabel}</Text>
@@ -133,6 +152,26 @@ export function ForumPostCard({ post, onCommentsPress, onLikePress }: ForumPostC
   );
 }
 
+type AuthorAvatarProps = {
+  post: ForumPost;
+  palette: (typeof CATEGORY_COLORS)[keyof typeof CATEGORY_COLORS];
+};
+
+function AuthorAvatar({ post, palette }: AuthorAvatarProps) {
+  return post.author.avatarUri === null ? (
+    <View style={[styles.avatar, { backgroundColor: palette.soft }]}>
+      <Text style={[styles.initials, { color: palette.onSoft }]}>{post.author.initials}</Text>
+    </View>
+  ) : (
+    <Image
+      source={{ uri: post.author.avatarUri }}
+      style={styles.avatar}
+      contentFit="cover"
+      accessibilityLabel={FORUM_STRINGS.photoOf(post.author.name)}
+    />
+  );
+}
+
 const styles = StyleSheet.create({
   card: {
     flex: 1,
@@ -159,6 +198,12 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.pill,
     overflow: 'hidden',
   },
+  avatarButton: {
+    width: SIZE.touchTarget,
+    height: SIZE.touchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   initials: {
     fontFamily: FONT_FAMILY.headingBold,
     fontSize: FONT_SIZE.s12_5,
@@ -172,6 +217,12 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.headingBold,
     fontSize: FONT_SIZE.s14,
     color: COLORS.textTitle,
+  },
+  authorNameButton: {
+    minHeight: SIZE.touchTarget,
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
   },
   authorMeta: {
     flexDirection: 'row',

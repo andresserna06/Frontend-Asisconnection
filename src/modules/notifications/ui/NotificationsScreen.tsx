@@ -2,10 +2,12 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useAuth } from '@/modules/auth';
 import { useCollapsingHeader } from '@/shared/hooks/useCollapsingHeader';
 import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SIZE, SPACING } from '@/shared/theme';
 import { Icon } from '@/shared/ui/atoms/Icon';
 import { HeaderTeal } from '@/shared/ui/organisms/HeaderTeal';
+import { ResponsiveScreen } from '@/shared/ui/templates/ResponsiveScreen';
 import { useNotifications } from '../application/useNotifications';
 import type { NotificationsService } from '../domain/NotificationsService';
 import { NOTIFICATION_PERIODS } from '../domain/models/NotificationItem';
@@ -20,80 +22,111 @@ type NotificationsScreenProps = {
 
 export function NotificationsScreen({ service: serviceOverride }: NotificationsScreenProps = {}) {
   const insets = useSafeAreaInsets();
+  const { isAnonymous } = useAuth();
   const expandedHeaderHeight = insets.top + HEADER_ROW_HEIGHT;
   const { headerHeight, onScroll } = useCollapsingHeader(expandedHeaderHeight);
   const defaultService = useNotificationsService();
   const service = serviceOverride ?? defaultService;
-  const { grouped, hasMarkedAllRead, markAllRead } = useNotifications(service);
+  const { grouped, hasMarkedAllRead, error, markAllRead, reload } = useNotifications(
+    service,
+    !isAnonymous,
+  );
 
   return (
-    <View style={styles.container}>
-      <HeaderTeal
-        title={NOTIFICATION_STRINGS.header}
-        headerHeight={headerHeight}
-        paddingTop={insets.top + SPACING.s8}
-        leftAccessory={
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={NOTIFICATION_STRINGS.back}
-            onPress={() => router.back()}
-            style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
-          >
-            <Icon name="chevron-left" size={SIZE.icon} color={COLORS.onPrimary} />
-          </Pressable>
-        }
-        rightAccessory={
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={NOTIFICATION_STRINGS.markRead}
-            onPress={() => {
-              void markAllRead();
-            }}
-            style={({ pressed }) => [styles.readButton, pressed && styles.pressed]}
-          >
-            <Icon name="check" size={SIZE.iconSmall} color={COLORS.onPrimary} />
-            <Text style={styles.readLabel}>
-              {hasMarkedAllRead
-                ? NOTIFICATION_STRINGS.markedRead
-                : NOTIFICATION_STRINGS.markReadShort}
-            </Text>
-          </Pressable>
-        }
-      />
+    <ResponsiveScreen>
+      <View style={styles.container}>
+        <HeaderTeal
+          title={NOTIFICATION_STRINGS.header}
+          headerHeight={headerHeight}
+          paddingTop={insets.top + SPACING.s8}
+          leftAccessory={
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={NOTIFICATION_STRINGS.back}
+              onPress={() => router.back()}
+              style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+            >
+              <Icon name="chevron-left" size={SIZE.icon} color={COLORS.onPrimary} />
+            </Pressable>
+          }
+          rightAccessory={
+            isAnonymous ? null : (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={NOTIFICATION_STRINGS.markRead}
+                onPress={() => {
+                  void markAllRead();
+                }}
+                style={({ pressed }) => [styles.readButton, pressed && styles.pressed]}
+              >
+                <Icon name="check" size={SIZE.iconSmall} color={COLORS.onPrimary} />
+                <Text style={styles.readLabel}>
+                  {hasMarkedAllRead
+                    ? NOTIFICATION_STRINGS.markedRead
+                    : NOTIFICATION_STRINGS.markReadShort}
+                </Text>
+              </Pressable>
+            )
+          }
+        />
 
-      <ScrollView
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {NOTIFICATION_PERIODS.map((period) => {
-          const periodItems = grouped[period];
-          return (
-            <View key={period} style={styles.period}>
-              <Text accessibilityRole="header" style={styles.periodTitle}>
-                {period}
-              </Text>
-              {periodItems.length === 0 ? (
-                <View style={styles.emptyPeriod}>
-                  <Text style={styles.emptyText}>{NOTIFICATION_STRINGS.empty}</Text>
+        {isAnonymous ? (
+          <View style={styles.guestMessage}>
+            <Text accessibilityRole="alert" style={styles.guestMessageText}>
+              {NOTIFICATION_STRINGS.signInRequired}
+            </Text>
+          </View>
+        ) : error !== null ? (
+          <View style={styles.guestMessage}>
+            <Text accessibilityRole="alert" style={styles.guestMessageText}>
+              {error === 'unauthorized'
+                ? NOTIFICATION_STRINGS.unauthorized
+                : NOTIFICATION_STRINGS.unavailable}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              onPress={reload}
+              style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.retryLabel}>{NOTIFICATION_STRINGS.retry}</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <ScrollView
+            onScroll={onScroll}
+            scrollEventThrottle={16}
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            {NOTIFICATION_PERIODS.map((period) => {
+              const periodItems = grouped[period];
+              return (
+                <View key={period} style={styles.period}>
+                  <Text accessibilityRole="header" style={styles.periodTitle}>
+                    {period}
+                  </Text>
+                  {periodItems.length === 0 ? (
+                    <View style={styles.emptyPeriod}>
+                      <Text style={styles.emptyText}>{NOTIFICATION_STRINGS.empty}</Text>
+                    </View>
+                  ) : (
+                    periodItems.map((item) => (
+                      <View
+                        key={item.id}
+                        style={[styles.notificationRow, !item.isRead && styles.unreadRow]}
+                      >
+                        <Text style={styles.notificationTitle}>{item.title}</Text>
+                        <Text style={styles.notificationBody}>{item.body}</Text>
+                      </View>
+                    ))
+                  )}
                 </View>
-              ) : (
-                periodItems.map((item) => (
-                  <View
-                    key={item.id}
-                    style={[styles.notificationRow, !item.isRead && styles.unreadRow]}
-                  >
-                    <Text style={styles.notificationTitle}>{item.title}</Text>
-                    <Text style={styles.notificationBody}>{item.body}</Text>
-                  </View>
-                ))
-              )}
-            </View>
-          );
-        })}
-      </ScrollView>
-    </View>
+              );
+            })}
+          </ScrollView>
+        )}
+      </View>
+    </ResponsiveScreen>
   );
 }
 
@@ -131,6 +164,32 @@ const styles = StyleSheet.create({
   content: {
     paddingTop: SPACING.s6,
     paddingBottom: SPACING.s16,
+  },
+  guestMessage: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: SPACING.s24,
+  },
+  guestMessageText: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT_FAMILY.body,
+    fontSize: FONT_SIZE.s16,
+    textAlign: 'center',
+  },
+  retryButton: {
+    minHeight: SIZE.touchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginTop: SPACING.s12,
+    paddingHorizontal: SPACING.s20,
+    borderRadius: RADIUS.button,
+    backgroundColor: COLORS.primary,
+  },
+  retryLabel: {
+    color: COLORS.onPrimary,
+    fontFamily: FONT_FAMILY.bodyBold,
+    fontSize: FONT_SIZE.s14,
   },
   period: {
     marginBottom: SPACING.s14,

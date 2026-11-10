@@ -81,7 +81,7 @@ describe('useLogin', () => {
     expect(service.login).toHaveBeenCalledTimes(1);
 
     await act(async () => {
-      finishLogin({ token: TEST_TOKEN, user: TEST_USER });
+      finishLogin({ token: TEST_TOKEN, user: TEST_USER, isAnonymous: false });
       await firstSubmit;
     });
     await waitFor(() => expect(result.current.isSubmitting).toBe(false));

@@ -23,7 +23,7 @@ flowchart LR
 ```
 
 - **Inyección automática de sesión**: `useAuthorizedHttpClient()` adjunta `Authorization: Bearer <device_token>` leído desde `expo-secure-store`.
-- **Expiración de sesión (`401 Unauthorized`)**: si cualquier endpoint protegido responde `401`, `useAuthorizedHttpClient()` limpia automáticamente el token de `expo-secure-store` y redirige al usuario a `(auth)/login`.
+- **Expiración de sesión (`401 Unauthorized`)**: los endpoints protegidos limpian automáticamente el token de `expo-secure-store` y redirigen al usuario a `(auth)/login` cuando responden `401`. Notificaciones es la excepción: mantiene la sesión y presenta el error para que una respuesta 401 de ese endpoint no expulse al usuario; su contrato se debe verificar con el backend.
 - **Desempaquetado de paginación**: todas las listas del backend devuelven `{ data: T[], meta: PaginationMetaDto }`; los `services/` de cada módulo desempaquetan `response.data` y entregan arreglos tipados a la capa `application/`.
 
 ---

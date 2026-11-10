@@ -38,6 +38,15 @@ describe('session restore', () => {
     expect(service.getProfile).toHaveBeenCalledWith(TEST_TOKEN);
   });
 
+  it('restores whether the saved session is anonymous', async () => {
+    const { result } = await renderAuth(
+      createFakeAuthService(),
+      createMemoryStorage(TEST_TOKEN, true),
+    );
+
+    expect(result.current.isAnonymous).toBe(true);
+  });
+
   it('clears an expired token and signs out', async () => {
     const service = createFakeAuthService({
       getProfile: jest.fn(async () => {
@@ -102,6 +111,15 @@ describe('signOut', () => {
     await act(() => result.current.signOut());
     expect(result.current.status).toBe('signedOut');
     expect(storage.peek()).toBeNull();
+    expect(storage.isAnonymous()).toBe(false);
+  });
+
+  it('persists and exposes an anonymous session', async () => {
+    const { result, storage } = await renderAuth();
+    await act(() => result.current.signInAnonymous?.({ acceptConsent: true }));
+
+    expect(result.current.isAnonymous).toBe(true);
+    expect(storage.isAnonymous()).toBe(true);
   });
 });
 
@@ -138,6 +156,24 @@ describe('authorizedClient', () => {
     );
     expect(result.current.status).toBe('signedOut');
     expect(storage.peek()).toBeNull();
+  });
+
+  it('preserves the session when a feature endpoint opts out of 401 sign-out', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 401 }));
+    const { result, storage } = await renderAuth(
+      createFakeAuthService(),
+      createMemoryStorage(TEST_TOKEN),
+    );
+
+    await act(() =>
+      expect(
+        result.current.authorizedClient.request('/notifications', {
+          signOutOnUnauthorized: false,
+        }),
+      ).rejects.toBeInstanceOf(HttpError),
+    );
+    expect(result.current.status).toBe('signedIn');
+    expect(storage.peek()).toBe(TEST_TOKEN);
   });
 
   it('keeps the session on other errors', async () => {

@@ -23,12 +23,17 @@ describe('notificationsService & groupNotificationsByPeriod', () => {
     const service = createNotificationsService(client);
 
     const items = await service.listNotifications();
-    expect(request).toHaveBeenCalledWith('/notifications?page=1&limit=50');
+    expect(request).toHaveBeenCalledWith('/notifications?page=1&limit=50', {
+      signOutOnUnauthorized: false,
+    });
     expect(items).toHaveLength(1);
     expect(items[0]?.title).toBe('Nuevo comentario');
 
     await service.markAllRead();
-    expect(request).toHaveBeenCalledWith('/notifications/read-all', { method: 'PATCH' });
+    expect(request).toHaveBeenCalledWith('/notifications/read-all', {
+      method: 'PATCH',
+      signOutOnUnauthorized: false,
+    });
   });
 
   it('groups notifications into Hoy, Ayer, Últimos 7 días, Últimos 30 días and discards older items', () => {

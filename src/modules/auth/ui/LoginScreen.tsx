@@ -32,6 +32,7 @@ import {
 import { Button } from '@/shared/ui/atoms/Button';
 import { TextButton } from '@/shared/ui/atoms/TextButton';
 import { TextField } from '@/shared/ui/molecules/TextField';
+import { ResponsiveScreen } from '@/shared/ui/templates/ResponsiveScreen';
 
 const LOGO = require('@/assets/images/logo-asisco-up.png');
 
@@ -90,133 +91,135 @@ export function LoginScreen() {
   }
 
   return (
-    <View style={styles.screen}>
-      <View style={[styles.circle, styles.primaryCircle]} />
-      <View style={[styles.circle, styles.accentCircle]} />
+    <ResponsiveScreen>
+      <View style={styles.screen}>
+        <View style={[styles.circle, styles.primaryCircle]} />
+        <View style={[styles.circle, styles.accentCircle]} />
 
-      <KeyboardAvoidingView
-        style={styles.screen}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={[
-            styles.content,
-            { paddingTop: insets.top, paddingBottom: insets.bottom + SPACING.s34 },
-          ]}
+        <KeyboardAvoidingView
+          style={styles.screen}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          <View style={styles.topSpacer} />
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={[
+              styles.content,
+              { paddingTop: insets.top, paddingBottom: insets.bottom + SPACING.s34 },
+            ]}
+          >
+            <View style={styles.topSpacer} />
 
-          <View style={styles.brand}>
-            <Image
-              source={LOGO}
-              style={styles.logo}
-              contentFit="contain"
-              accessible
-              accessibilityLabel={LOGIN_STRINGS.logoLabel}
-            />
-            <View style={styles.tagline}>
-              <View style={styles.taglineBar} />
-              <Text style={styles.taglineText}>{STRINGS.appName}</Text>
+            <View style={styles.brand}>
+              <Image
+                source={LOGO}
+                style={styles.logo}
+                contentFit="contain"
+                accessible
+                accessibilityLabel={LOGIN_STRINGS.logoLabel}
+              />
+              <View style={styles.tagline}>
+                <View style={styles.taglineBar} />
+                <Text style={styles.taglineText}>{STRINGS.appName}</Text>
+              </View>
             </View>
-          </View>
 
-          <Text accessibilityRole="header" style={styles.title}>
-            {LOGIN_STRINGS.title}
-          </Text>
+            <Text accessibilityRole="header" style={styles.title}>
+              {LOGIN_STRINGS.title}
+            </Text>
 
-          <View style={styles.card}>
-            <TextField
-              label={LOGIN_STRINGS.emailLabel}
-              placeholder={LOGIN_STRINGS.emailPlaceholder}
-              value={email}
-              onChangeText={handleEmailChange}
-              error={emailIssue ?? error?.fieldErrors.email}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="email"
-              textContentType="username"
-              returnKeyType="next"
-              submitBehavior="submit"
-              onSubmitEditing={() => passwordRef.current?.focus()}
-            />
-            <PasswordField
-              ref={passwordRef}
-              label={LOGIN_STRINGS.passwordLabel}
-              value={password}
-              onChangeText={handlePasswordChange}
-              error={passwordIssue ?? error?.fieldErrors.password}
-              autoComplete="current-password"
-              textContentType="password"
-              returnKeyType="go"
-              onSubmitEditing={handleSubmit}
-            />
+            <View style={styles.card}>
+              <TextField
+                label={LOGIN_STRINGS.emailLabel}
+                placeholder={LOGIN_STRINGS.emailPlaceholder}
+                value={email}
+                onChangeText={handleEmailChange}
+                error={emailIssue ?? error?.fieldErrors.email}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                textContentType="username"
+                returnKeyType="next"
+                submitBehavior="submit"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+              />
+              <PasswordField
+                ref={passwordRef}
+                label={LOGIN_STRINGS.passwordLabel}
+                value={password}
+                onChangeText={handlePasswordChange}
+                error={passwordIssue ?? error?.fieldErrors.password}
+                autoComplete="current-password"
+                textContentType="password"
+                returnKeyType="go"
+                onSubmitEditing={handleSubmit}
+              />
 
-            <TextButton
-              label={LOGIN_STRINGS.forgotPassword}
-              size="small"
-              onPress={showComingSoonNotice}
-              style={styles.forgotPassword}
-            />
+              <TextButton
+                label={LOGIN_STRINGS.forgotPassword}
+                size="small"
+                onPress={showComingSoonNotice}
+                style={styles.forgotPassword}
+              />
 
-            <ConsentCheckbox
-              label={LOGIN_STRINGS.consent}
-              isChecked={acceptConsent}
-              onToggle={handleConsentToggle}
-              error={consentIssue ?? error?.fieldErrors.acceptConsent}
-            />
+              <ConsentCheckbox
+                label={LOGIN_STRINGS.consent}
+                isChecked={acceptConsent}
+                onToggle={handleConsentToggle}
+                error={consentIssue ?? error?.fieldErrors.acceptConsent}
+              />
 
-            {formError && (
-              <Text
-                accessibilityRole="alert"
-                accessibilityLiveRegion="polite"
-                style={styles.formError}
-              >
-                {formError}
-              </Text>
-            )}
+              {formError && (
+                <Text
+                  accessibilityRole="alert"
+                  accessibilityLiveRegion="polite"
+                  style={styles.formError}
+                >
+                  {formError}
+                </Text>
+              )}
 
-            <Button
-              label={LOGIN_STRINGS.submit}
-              iconRight="arrow-right"
-              isLoading={isSubmitting}
-              onPress={handleSubmit}
-            />
-            {isSubmitting && <Text style={styles.slowServer}>{LOGIN_STRINGS.slowServer}</Text>}
-          </View>
-
-          <View style={styles.secondaryActions}>
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>{LOGIN_STRINGS.firstTime}</Text>
-              <View style={styles.dividerLine} />
+              <Button
+                label={LOGIN_STRINGS.submit}
+                iconRight="arrow-right"
+                isLoading={isSubmitting}
+                onPress={handleSubmit}
+              />
+              {isSubmitting && <Text style={styles.slowServer}>{LOGIN_STRINGS.slowServer}</Text>}
             </View>
-            <Button
-              label={LOGIN_STRINGS.createAccount}
-              variant="outline"
-              onPress={() => setIsRegisterOpen(true)}
-            />
-            <TextButton
-              label={LOGIN_STRINGS.guest}
-              iconRight="arrow-right"
-              onPress={handleGuestLogin}
-            />
-          </View>
 
-          <View style={styles.bottomSpacer} />
+            <View style={styles.secondaryActions}>
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>{LOGIN_STRINGS.firstTime}</Text>
+                <View style={styles.dividerLine} />
+              </View>
+              <Button
+                label={LOGIN_STRINGS.createAccount}
+                variant="outline"
+                onPress={() => setIsRegisterOpen(true)}
+              />
+              <TextButton
+                label={LOGIN_STRINGS.guest}
+                iconRight="arrow-right"
+                onPress={handleGuestLogin}
+              />
+            </View>
 
-          <Text style={styles.footer}>{LOGIN_STRINGS.footer}</Text>
-        </ScrollView>
-      </KeyboardAvoidingView>
+            <View style={styles.bottomSpacer} />
 
-      <RegisterModal
-        visible={isRegisterOpen}
-        onClose={() => setIsRegisterOpen(false)}
-        onSubmit={submitRegister}
-        isSubmitting={isSubmitting}
-      />
-    </View>
+            <Text style={styles.footer}>{LOGIN_STRINGS.footer}</Text>
+          </ScrollView>
+        </KeyboardAvoidingView>
+
+        <RegisterModal
+          visible={isRegisterOpen}
+          onClose={() => setIsRegisterOpen(false)}
+          onSubmit={submitRegister}
+          isSubmitting={isSubmitting}
+        />
+      </View>
+    </ResponsiveScreen>
   );
 }
 

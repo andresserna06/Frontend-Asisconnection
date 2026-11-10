@@ -23,9 +23,11 @@ import {
   RADIUS,
   SIZE,
   SPACING,
+  TABLET_MIN_WIDTH,
 } from '@/shared/theme';
 import { Icon } from '@/shared/ui/atoms/Icon';
 import { HeaderTeal } from '@/shared/ui/organisms/HeaderTeal';
+import { ResponsiveScreen } from '@/shared/ui/templates/ResponsiveScreen';
 
 import { ForumPostCard } from './components/ForumPostCard';
 import { TopicFilters } from './components/TopicFilters';
@@ -38,32 +40,43 @@ const POST_GAP = SPACING.s12;
 
 export function ForumScreen() {
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   const [selectedFilter, setSelectedFilter] = useState<ForumFilter>('all');
   const feed = useForumFeed(selectedFilter);
   const togglePostLike = useTogglePostLike();
   const expandedHeaderHeight = insets.top + HEADER_ROW_HEIGHT;
   const { headerHeight, onScroll: handleScroll } = useCollapsingHeader(expandedHeaderHeight);
+  const availablePostHeight =
+    (windowHeight - expandedHeaderHeight - FILTER_BAR_HEIGHT - insets.bottom) * 0.82;
   const postHeight = Math.max(
     0,
-    (windowHeight - expandedHeaderHeight - FILTER_BAR_HEIGHT - insets.bottom) * 0.82,
+    windowWidth >= TABLET_MIN_WIDTH ? Math.min(availablePostHeight, 620) : availablePostHeight,
   );
 
   const renderPost = useCallback(
-    ({ item }: { item: ForumPost }) => (
-      <View style={[styles.postFrame, { height: postHeight }]}>
-        <ForumPostCard
-          post={item}
-          onCommentsPress={() => router.push(`/comments/${item.id}`)}
-          onLikePress={() => togglePostLike(item.id)}
-        />
-      </View>
-    ),
+    ({ item }: { item: ForumPost }) => {
+      const profileId = item.author.profileId;
+
+      return (
+        <View style={[styles.postFrame, { height: postHeight }]}>
+          <ForumPostCard
+            post={item}
+            onCommentsPress={() => router.push(`/comments/${item.id}`)}
+            onAuthorPress={
+              profileId
+                ? () => router.push({ pathname: '/users/[userId]', params: { userId: profileId } })
+                : undefined
+            }
+            onLikePress={() => togglePostLike(item.id)}
+          />
+        </View>
+      );
+    },
     [postHeight, togglePostLike],
   );
 
   return (
-    <View style={styles.container}>
+    <ResponsiveScreen>
       <HeaderTeal
         title={FORUM_STRINGS.title}
         headerHeight={headerHeight}
@@ -117,7 +130,7 @@ export function ForumScreen() {
         onRefresh={feed.status === 'success' ? feed.refresh : undefined}
         ListEmptyComponent={<FeedState feed={feed} />}
       />
-    </View>
+    </ResponsiveScreen>
   );
 }
 
@@ -192,10 +205,6 @@ function errorMessage(error: Error): string {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
   headerButton: {
     width: SIZE.touchTarget,
     height: SIZE.touchTarget,

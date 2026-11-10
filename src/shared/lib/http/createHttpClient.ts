@@ -11,6 +11,8 @@ export type HttpRequestOptions = {
   body?: unknown;
   // Session token for protected routes. Never log it.
   token?: string;
+  // Used when a feature endpoint can reject access without invalidating the session.
+  signOutOnUnauthorized?: boolean;
 };
 
 // The only place in the app that calls fetch. Data layers receive an HttpClient and

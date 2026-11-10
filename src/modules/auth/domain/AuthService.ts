@@ -30,6 +30,7 @@ export type AuthService = {
 // Where the session token is persisted (SecureStore in the app, memory in tests).
 export type TokenStorage = {
   getToken(): Promise<string | null>;
-  saveToken(token: string): Promise<void>;
+  getIsAnonymous(): Promise<boolean>;
+  saveToken(token: string, isAnonymous: boolean): Promise<void>;
   clearToken(): Promise<void>;
 };

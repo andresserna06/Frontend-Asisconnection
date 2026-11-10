@@ -32,6 +32,8 @@ Cuando un usuario posee múltiples roles (`local_role`, `rol`, `external_roles`)
 | `GET /actors/me` | `Bearer <device_token>` | Valida la sesión guardada en `expo-secure-store` al abrir la app y restaura `username` y `primary_role`. |
 
 > **Cierre de sesión (`signOut`)**: el `device_token` es un JWT local de sesión de dispositivo; cerrar sesión limpia el token en `expo-secure-store` sin requerir petición HTTP adicional.
+>
+> La app también guarda en `expo-secure-store` un indicador booleano para recordar si la sesión se creó con `POST /sessions/anonymous`. No contiene datos personales y permite aplicar en la interfaz las restricciones propias del modo invitado después de reiniciar la app.
 
 ## 3. Payloads de entrada y salida
 

@@ -9,6 +9,7 @@ export type ForumPost = {
   category: ForumCategory;
   author: {
     id: string;
+    profileId: string | null;
     name: string;
     initials: string;
     roleLabel: string;

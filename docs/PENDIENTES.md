@@ -13,15 +13,20 @@ Cómo se usa:
 
 ## Bloqueadas o por decidir
 
+- [!] **T-23 Directorio de usuarios para ADMIN**. Bloqueado hasta que el backend exponga una lista paginada de cuentas registradas con `userAccountId`, nombre de usuario y roles para poder asignar moderadores.
+- [!] **T-24 Diagnosticar 401 de Notificaciones**. Comparar con el backend el mismo `device_token` en `/actors/me` y `/notifications`, revisar la asociación sesión→actor y la causa del `DeviceSessionGuard`; no retirar la mitigación frontend hasta confirmar la corrección.
 - [!] **T-03b Probar el login y los módulos en Expo Go**. Render responde en categorías, foro, FAQ y directorio; falta probar el flujo autenticado desde Expo Go con una cuenta de prueba válida.
-- [!] **T-11 Perfil de otra persona**. Swagger solo expone `GET /actors/{id}`, `GET /connections` y `POST /connections`; no hay listado público de publicaciones por actor ni endpoint para dejar de seguir. La ruta del pendiente (`/actors/:actorId/connections`) no existe en el contrato desplegado.
+- [!] **T-11 Publicaciones en perfil de otra persona**. Perfil y seguimiento ya usan los endpoints desplegados; falta que el backend exponga una lista paginada de publicaciones aprobadas por actor para mostrar su cuadrícula.
 - [!] **Recuperar contraseña** (enlace visible en el login, sin función). El backend no tiene endpoint.
-- [!] **Qué roles entran a la app móvil.** Los roles están alineados con el backend (`ADMIN`, `MODERATOR`, `ACUDIENTE`, `VOLUNTARIO`, `INVERSOR`, `BENEFICIARIO`). Falta confirmar si `ADMIN` usa la app o solo el backend, y qué ve cada rol en el Foro.
+- [!] **Qué roles participan en el Foro móvil.** Se confirmó que `ADMIN` usa la app para el panel de administración. Falta definir qué ve cada rol en el Foro y si `MODERATOR` moderará desde el flujo móvil.
 - [!] **Respuestas del Asistente.** Algunas respuestas de política son provisionales; confirmar con la fundación.
 
 ## Pendiente del backend
 
 Lo que la app necesita y todavía no existe. Nadie edita el contrato del backend desde este repo.
 
-- [ ] Añadir endpoint paginado de publicaciones aprobadas por actor público (`GET /v1/actors/{id}/posts` o filtro `actorId` en `/v1/posts`) y definir operación para cancelar una conexión (`DELETE /v1/connections/{id}`); requeridos para completar T-11 sin descargar y filtrar todo el feed.
+- [ ] Añadir endpoint paginado de publicaciones aprobadas por actor público (`GET /v1/actors/{id}/posts` o filtro `actorId` en `/v1/posts`); necesario para mostrar la cuadrícula del perfil público sin descargar y filtrar todo el feed.
+- [ ] Añadir operación protegida para cancelar/dejar de seguir una conexión (por ejemplo `DELETE /v1/connections/{id}`) si se requiere que el botón «Siguiendo» sea reversible.
 - [ ] Persistencia en servidor de publicaciones guardadas (`/actors/me/saved`).
+- [ ] Exponer un endpoint paginado y exclusivo para ADMIN (por ejemplo `GET /v1/admin/users?page=1&limit=20&search=...`) con `userAccountId`, username y roles actuales. Excluir sesiones anónimas; no exponer email si no es necesario. El ID debe ser compatible con `PUT /v1/admin/moderators/{userAccountId}`.
+- [ ] Diagnosticar el 401 de `GET /v1/notifications`: verificar el mismo `device_token` en `/actors/me` y `/notifications`, la validación del `DeviceSessionGuard` y la resolución de la sesión a su Actor. Registrar únicamente metadatos de diagnóstico; nunca tokens ni datos personales. Validar también `PATCH /v1/notifications/read-all`.

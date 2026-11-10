@@ -6,6 +6,7 @@ import { useAuth } from '@/modules/auth';
 import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SIZE, SPACING } from '@/shared/theme';
 import { Icon } from '@/shared/ui/atoms/Icon';
 import { ToggleRow } from '@/shared/ui/molecules/ToggleRow';
+import { ResponsiveScreen } from '@/shared/ui/templates/ResponsiveScreen';
 import { usePrivacySettings } from '../application/usePrivacySettings';
 import type { PrivacySettings } from '../domain/models/PrivacySettings';
 import type { SettingsService } from '../domain/SettingsService';
@@ -30,91 +31,95 @@ export function SettingsScreen({ initialSettings, service }: SettingsScreenProps
   if (settings.showCity) visibleItems.push(SETTINGS_STRINGS.cityLabel);
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + SPACING.s8 }]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={SETTINGS_STRINGS.back}
-          onPress={() => router.back()}
-          style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
-        >
-          <Icon name="chevron-left" size={SIZE.icon} color={COLORS.onPrimary} />
-        </Pressable>
-        <Text accessibilityRole="header" style={styles.headerTitle}>
-          {SETTINGS_STRINGS.header}
-        </Text>
+    <ResponsiveScreen>
+      <View style={styles.container}>
+        <View style={[styles.header, { paddingTop: insets.top + SPACING.s8 }]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={SETTINGS_STRINGS.back}
+            onPress={() => router.back()}
+            style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+          >
+            <Icon name="chevron-left" size={SIZE.icon} color={COLORS.onPrimary} />
+          </Pressable>
+          <Text accessibilityRole="header" style={styles.headerTitle}>
+            {SETTINGS_STRINGS.header}
+          </Text>
+        </View>
+
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.card}>
+            <Text accessibilityRole="header" style={styles.sectionTitle}>
+              {SETTINGS_STRINGS.previewTitle}
+            </Text>
+            <Text style={styles.previewText}>
+              {visibleItems.length === 0
+                ? SETTINGS_STRINGS.previewEmpty
+                : `${SETTINGS_STRINGS.visibleToCommunity}: ${visibleItems.join(', ')}`}
+            </Text>
+          </View>
+
+          <View style={styles.card}>
+            <Text accessibilityRole="header" style={styles.sectionTitle}>
+              {SETTINGS_STRINGS.visibilityTitle}
+            </Text>
+            <ToggleRow
+              label={SETTINGS_STRINGS.emailLabel}
+              isEnabled={settings.showEmail}
+              valueLabel={
+                settings.showEmail ? SETTINGS_STRINGS.visibleToCommunity : SETTINGS_STRINGS.onlyMe
+              }
+              onToggle={() => toggleSetting('showEmail')}
+            />
+            <ToggleRow
+              label={SETTINGS_STRINGS.birthDateLabel}
+              isEnabled={settings.showBirthDate}
+              valueLabel={
+                settings.showBirthDate
+                  ? SETTINGS_STRINGS.visibleToCommunity
+                  : SETTINGS_STRINGS.onlyMe
+              }
+              onToggle={() => toggleSetting('showBirthDate')}
+            />
+            <ToggleRow
+              label={SETTINGS_STRINGS.cityLabel}
+              isEnabled={settings.showCity}
+              valueLabel={
+                settings.showCity ? SETTINGS_STRINGS.visibleToCommunity : SETTINGS_STRINGS.onlyMe
+              }
+              onToggle={() => toggleSetting('showCity')}
+            />
+          </View>
+
+          <View style={styles.card}>
+            <Text accessibilityRole="header" style={styles.sectionTitle}>
+              {SETTINGS_STRINGS.followTitle}
+            </Text>
+            <ToggleRow
+              label={SETTINGS_STRINGS.requireApprovalLabel}
+              isEnabled={settings.requireFollowApproval}
+              valueLabel={
+                settings.requireFollowApproval
+                  ? SETTINGS_STRINGS.visibleToCommunity
+                  : SETTINGS_STRINGS.onlyMe
+              }
+              onToggle={() => toggleSetting('requireFollowApproval')}
+            />
+          </View>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={SETTINGS_STRINGS.signOut}
+            onPress={() => {
+              void signOut();
+            }}
+            style={({ pressed }) => [styles.signOutButton, pressed && styles.pressed]}
+          >
+            <Text style={styles.signOutText}>{SETTINGS_STRINGS.signOut}</Text>
+          </Pressable>
+        </ScrollView>
       </View>
-
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.card}>
-          <Text accessibilityRole="header" style={styles.sectionTitle}>
-            {SETTINGS_STRINGS.previewTitle}
-          </Text>
-          <Text style={styles.previewText}>
-            {visibleItems.length === 0
-              ? SETTINGS_STRINGS.previewEmpty
-              : `${SETTINGS_STRINGS.visibleToCommunity}: ${visibleItems.join(', ')}`}
-          </Text>
-        </View>
-
-        <View style={styles.card}>
-          <Text accessibilityRole="header" style={styles.sectionTitle}>
-            {SETTINGS_STRINGS.visibilityTitle}
-          </Text>
-          <ToggleRow
-            label={SETTINGS_STRINGS.emailLabel}
-            isEnabled={settings.showEmail}
-            valueLabel={
-              settings.showEmail ? SETTINGS_STRINGS.visibleToCommunity : SETTINGS_STRINGS.onlyMe
-            }
-            onToggle={() => toggleSetting('showEmail')}
-          />
-          <ToggleRow
-            label={SETTINGS_STRINGS.birthDateLabel}
-            isEnabled={settings.showBirthDate}
-            valueLabel={
-              settings.showBirthDate ? SETTINGS_STRINGS.visibleToCommunity : SETTINGS_STRINGS.onlyMe
-            }
-            onToggle={() => toggleSetting('showBirthDate')}
-          />
-          <ToggleRow
-            label={SETTINGS_STRINGS.cityLabel}
-            isEnabled={settings.showCity}
-            valueLabel={
-              settings.showCity ? SETTINGS_STRINGS.visibleToCommunity : SETTINGS_STRINGS.onlyMe
-            }
-            onToggle={() => toggleSetting('showCity')}
-          />
-        </View>
-
-        <View style={styles.card}>
-          <Text accessibilityRole="header" style={styles.sectionTitle}>
-            {SETTINGS_STRINGS.followTitle}
-          </Text>
-          <ToggleRow
-            label={SETTINGS_STRINGS.requireApprovalLabel}
-            isEnabled={settings.requireFollowApproval}
-            valueLabel={
-              settings.requireFollowApproval
-                ? SETTINGS_STRINGS.visibleToCommunity
-                : SETTINGS_STRINGS.onlyMe
-            }
-            onToggle={() => toggleSetting('requireFollowApproval')}
-          />
-        </View>
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={SETTINGS_STRINGS.signOut}
-          onPress={() => {
-            void signOut();
-          }}
-          style={({ pressed }) => [styles.signOutButton, pressed && styles.pressed]}
-        >
-          <Text style={styles.signOutText}>{SETTINGS_STRINGS.signOut}</Text>
-        </Pressable>
-      </ScrollView>
-    </View>
+    </ResponsiveScreen>
   );
 }
 

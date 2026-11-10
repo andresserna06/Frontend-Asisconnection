@@ -1,12 +1,19 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { useAuth } from '@/modules/auth';
+import { createHttpClient, HttpError } from '@/shared/lib/http';
+
 import { createFakeNotificationsService } from '../testUtils';
 import { useNotificationsService } from '../useNotificationsService';
 import { NotificationsScreen } from './NotificationsScreen';
 
 jest.mock('../useNotificationsService', () => ({
   useNotificationsService: jest.fn(),
+}));
+jest.mock('@/modules/auth', () => ({
+  ...jest.requireActual('@/modules/auth'),
+  useAuth: jest.fn(),
 }));
 
 const SAFE_AREA_METRICS = {
@@ -17,6 +24,7 @@ const SAFE_AREA_METRICS = {
 describe('NotificationsScreen', () => {
   beforeEach(() => {
     jest.mocked(useNotificationsService).mockReturnValue(createFakeNotificationsService());
+    jest.mocked(useAuth).mockReturnValue(createAuthValue(false));
   });
 
   it('shows the date groups without invented notifications', async () => {
@@ -63,4 +71,69 @@ describe('NotificationsScreen', () => {
     });
     expect(await screen.findByText('Leídas')).toBeOnTheScreen();
   });
+
+  it('does not request notifications or clear a guest session', async () => {
+    const listNotifications = jest.fn(async () => []);
+    const service = createFakeNotificationsService({ listNotifications });
+    jest.mocked(useNotificationsService).mockReturnValue(service);
+    jest.mocked(useAuth).mockReturnValue(createAuthValue(true));
+
+    await render(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <NotificationsScreen />
+      </SafeAreaProvider>,
+    );
+
+    expect(
+      await screen.findByText('Inicia sesión con una cuenta para consultar tus notificaciones.'),
+    ).toBeOnTheScreen();
+    expect(listNotifications).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Marcar todo como leído' })).toBeNull();
+  });
+
+  it('shows an unauthorized response without closing a registered session and can retry', async () => {
+    const listNotifications = jest
+      .fn()
+      .mockRejectedValueOnce(new HttpError(401))
+      .mockResolvedValueOnce([]);
+    const signOut = jest.fn(async () => undefined);
+    jest.mocked(useAuth).mockReturnValue(createAuthValue(false, signOut));
+    jest
+      .mocked(useNotificationsService)
+      .mockReturnValue(createFakeNotificationsService({ listNotifications }));
+
+    await render(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <NotificationsScreen />
+      </SafeAreaProvider>,
+    );
+
+    expect(
+      await screen.findByText(
+        'El servicio de notificaciones no aceptó la sesión. Tu sesión sigue activa; intenta de nuevo.',
+      ),
+    ).toBeOnTheScreen();
+    expect(signOut).not.toHaveBeenCalled();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Reintentar' }));
+    await waitFor(() => expect(listNotifications).toHaveBeenCalledTimes(2));
+    expect(screen.getByRole('header', { name: 'Hoy' })).toBeOnTheScreen();
+    expect(signOut).not.toHaveBeenCalled();
+  });
 });
+
+function createAuthValue(
+  isAnonymous: boolean,
+  signOut: () => Promise<void> = async () => undefined,
+): ReturnType<typeof useAuth> {
+  return {
+    status: 'signedIn',
+    user: { username: 'Invitado', roles: ['BENEFICIARIO'] },
+    isAnonymous,
+    signIn: async () => undefined,
+    signInAnonymous: async () => undefined,
+    registerAccount: async () => undefined,
+    signOut,
+    authorizedClient: createHttpClient('https://api.example.test'),
+  };
+}

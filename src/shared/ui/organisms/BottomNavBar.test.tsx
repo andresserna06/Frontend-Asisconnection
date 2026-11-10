@@ -7,6 +7,10 @@ const SAFE_AREA_METRICS = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
   insets: { top: 50, left: 0, right: 0, bottom: 30 },
 };
+const TABLET_SAFE_AREA_METRICS = {
+  frame: { x: 0, y: 0, width: 1024, height: 768 },
+  insets: { top: 24, left: 0, right: 0, bottom: 0 },
+};
 
 describe('BottomNavBar', () => {
   it('renders all routes and navigates to the selected destination', async () => {
@@ -37,5 +41,20 @@ describe('BottomNavBar', () => {
     expect(screen.getByRole('tab', { name: 'Foros' })).toHaveProp('accessibilityState', {
       selected: true,
     });
+  });
+
+  it('keeps the bottom navigation available and centered on tablet widths', async () => {
+    await render(
+      <SafeAreaProvider initialMetrics={TABLET_SAFE_AREA_METRICS}>
+        <BottomNavBar activeRoute="index" profileInitials="AS" onNavigate={jest.fn()} />
+      </SafeAreaProvider>,
+    );
+
+    expect(screen.getByRole('tab', { name: 'Perfil' }).parent).toHaveStyle({
+      width: '100%',
+      maxWidth: 840,
+      alignSelf: 'center',
+    });
+    expect(screen.getByRole('tab', { name: 'Perfil' })).toBeOnTheScreen();
   });
 });

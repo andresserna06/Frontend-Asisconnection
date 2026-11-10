@@ -5,6 +5,7 @@ import { useAssistant } from '@/modules/assistant/application/useAssistant';
 import { useAssistantService } from '@/modules/assistant/useAssistantService';
 import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SIZE, SPACING } from '@/shared/theme';
 import { Icon } from '@/shared/ui/atoms/Icon';
+import { ResponsiveScreen } from '@/shared/ui/templates/ResponsiveScreen';
 import { ASSISTANT_STRINGS } from './strings';
 
 function showAssistantUnavailable() {
@@ -36,87 +37,92 @@ export function AssistantScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + SPACING.s8 }]}>
-        <View style={styles.assistantAvatar}>
-          <Icon name="message-circle" size={SIZE.icon} color={COLORS.onPrimary} />
-        </View>
-        <View style={styles.headerText}>
-          <Text accessibilityRole="header" style={styles.title}>
-            {ASSISTANT_STRINGS.title}
-          </Text>
-          <Text style={styles.subtitle}>{ASSISTANT_STRINGS.subtitle}</Text>
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={ASSISTANT_STRINGS.resetLabel}
-          onPress={reset}
-          style={({ pressed }) => [styles.resetButton, pressed && styles.pressed]}
-        >
-          <Icon name="rotate-ccw" size={SIZE.iconSmall} color={COLORS.textSecondary} />
-          <Text style={styles.resetLabel}>{ASSISTANT_STRINGS.reset}</Text>
-        </Pressable>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.conversation} showsVerticalScrollIndicator={false}>
-        <View style={styles.greeting}>
-          <Text style={styles.greetingText}>{ASSISTANT_STRINGS.greeting}</Text>
-        </View>
-        <Text style={styles.pendingNote}>{disclaimer ?? ASSISTANT_STRINGS.pendingNote}</Text>
-
-        {turns.map((turn) => (
-          <View key={turn.id} style={styles.turnContainer}>
-            <View style={styles.userBubble}>
-              <Text style={styles.userBubbleText}>{turn.question}</Text>
-            </View>
-            <View style={styles.greeting}>
-              <Text style={styles.greetingText}>{turn.answer}</Text>
-            </View>
+    <ResponsiveScreen>
+      <View style={styles.container}>
+        <View style={[styles.header, { paddingTop: insets.top + SPACING.s8 }]}>
+          <View style={styles.assistantAvatar}>
+            <Icon name="message-circle" size={SIZE.icon} color={COLORS.onPrimary} />
           </View>
-        ))}
-      </ScrollView>
+          <View style={styles.headerText}>
+            <Text accessibilityRole="header" style={styles.title}>
+              {ASSISTANT_STRINGS.title}
+            </Text>
+            <Text style={styles.subtitle}>{ASSISTANT_STRINGS.subtitle}</Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={ASSISTANT_STRINGS.resetLabel}
+            onPress={reset}
+            style={({ pressed }) => [styles.resetButton, pressed && styles.pressed]}
+          >
+            <Icon name="rotate-ccw" size={SIZE.iconSmall} color={COLORS.textSecondary} />
+            <Text style={styles.resetLabel}>{ASSISTANT_STRINGS.reset}</Text>
+          </Pressable>
+        </View>
 
-      <View style={styles.optionsPanel}>
-        <Text style={styles.sectionLabel}>{ASSISTANT_STRINGS.chooseOption}</Text>
-        <View style={styles.options}>
-          {optionLabels.map((option, index) => (
-            <Pressable
-              key={option}
-              accessibilityRole="button"
-              onPress={() => handleOptionPress(option)}
-              style={({ pressed }) => [
-                styles.optionButton,
-                index === optionLabels.length - 1 && styles.fullWidthOption,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.optionLabel}>{option}</Text>
-            </Pressable>
+        <ScrollView
+          contentContainerStyle={styles.conversation}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.greeting}>
+            <Text style={styles.greetingText}>{ASSISTANT_STRINGS.greeting}</Text>
+          </View>
+          <Text style={styles.pendingNote}>{disclaimer ?? ASSISTANT_STRINGS.pendingNote}</Text>
+
+          {turns.map((turn) => (
+            <View key={turn.id} style={styles.turnContainer}>
+              <View style={styles.userBubble}>
+                <Text style={styles.userBubbleText}>{turn.question}</Text>
+              </View>
+              <View style={styles.greeting}>
+                <Text style={styles.greetingText}>{turn.answer}</Text>
+              </View>
+            </View>
           ))}
+        </ScrollView>
+
+        <View style={styles.optionsPanel}>
+          <Text style={styles.sectionLabel}>{ASSISTANT_STRINGS.chooseOption}</Text>
+          <View style={styles.options}>
+            {optionLabels.map((option, index) => (
+              <Pressable
+                key={option}
+                accessibilityRole="button"
+                onPress={() => handleOptionPress(option)}
+                style={({ pressed }) => [
+                  styles.optionButton,
+                  index === optionLabels.length - 1 && styles.fullWidthOption,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={styles.optionLabel}>{option}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        <View style={[styles.actions, { paddingBottom: SPACING.s10 }]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={ASSISTANT_STRINGS.menuLabel}
+            onPress={reset}
+            style={({ pressed }) => [styles.menuButton, pressed && styles.pressed]}
+          >
+            <Icon name="menu" size={SIZE.iconSmall} color={COLORS.textTitle} />
+            <Text style={styles.menuLabel}>{ASSISTANT_STRINGS.menu}</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={ASSISTANT_STRINGS.talkToPerson}
+            onPress={handleEscalate}
+            style={({ pressed }) => [styles.humanButton, pressed && styles.pressed]}
+          >
+            <Icon name="user" size={SIZE.iconSmall} color={COLORS.text} />
+            <Text style={styles.humanLabel}>{ASSISTANT_STRINGS.talkToPerson}</Text>
+          </Pressable>
         </View>
       </View>
-
-      <View style={[styles.actions, { paddingBottom: SPACING.s10 }]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={ASSISTANT_STRINGS.menuLabel}
-          onPress={reset}
-          style={({ pressed }) => [styles.menuButton, pressed && styles.pressed]}
-        >
-          <Icon name="menu" size={SIZE.iconSmall} color={COLORS.textTitle} />
-          <Text style={styles.menuLabel}>{ASSISTANT_STRINGS.menu}</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={ASSISTANT_STRINGS.talkToPerson}
-          onPress={handleEscalate}
-          style={({ pressed }) => [styles.humanButton, pressed && styles.pressed]}
-        >
-          <Icon name="user" size={SIZE.iconSmall} color={COLORS.text} />
-          <Text style={styles.humanLabel}>{ASSISTANT_STRINGS.talkToPerson}</Text>
-        </Pressable>
-      </View>
-    </View>
+    </ResponsiveScreen>
   );
 }
 

@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
+import { useAuth } from '@/modules/auth';
 import { useMyProfile } from '@/modules/profile/application/useMyProfile';
 import { toProfileError } from '@/modules/profile/domain/models/ProfileError';
 import type { UpdateProfileInput } from '@/modules/profile/domain/ProfileService';
 import type { Post } from '@/shared/domain/models/Post';
 import { PROFILE_ERROR_MESSAGES, PROFILE_STRINGS } from '@/modules/profile/ui/strings';
 import { useProfileService } from '@/modules/profile/useProfileService';
-import { COLORS, SPACING } from '@/shared/theme';
+import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SIZE, SPACING } from '@/shared/theme';
+import { ResponsiveScreen } from '@/shared/ui/templates/ResponsiveScreen';
 
 import { EditProfileModal } from './components/EditProfileModal';
 import { InfoCard } from './components/InfoCard';
@@ -21,23 +23,32 @@ import { StatusMessage } from './components/StatusMessage';
 
 export function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const { isAnonymous, signOut } = useAuth();
   const service = useProfileService();
   const { profile, posts, activeTab, selectTab } = useMyProfile(service);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
+  async function handleSignIn() {
+    await signOut();
+    router.replace('/login');
+  }
+
   if (profile.status !== 'success') {
     return (
-      <View style={[styles.screen, styles.centered, { paddingTop: insets.top }]}>
-        {profile.status === 'loading' ? (
-          <StatusMessage kind="loading" />
-        ) : (
-          <StatusMessage
-            kind="error"
-            message={PROFILE_ERROR_MESSAGES[toProfileError(profile.error).kind]}
-            onRetry={profile.reload}
-          />
-        )}
-      </View>
+      <ResponsiveScreen>
+        <View style={[styles.screen, styles.centered, { paddingTop: insets.top }]}>
+          {profile.status === 'loading' ? (
+            <StatusMessage kind="loading" />
+          ) : (
+            <StatusMessage
+              kind="error"
+              message={PROFILE_ERROR_MESSAGES[toProfileError(profile.error).kind]}
+              onRetry={profile.reload}
+            />
+          )}
+          {isAnonymous ? <GuestSignInButton onPress={() => void handleSignIn()} /> : null}
+        </View>
+      </ResponsiveScreen>
     );
   }
 
@@ -64,6 +75,17 @@ export function ProfileScreen() {
         followerCount={me.followerCount}
         followingCount={me.followingCount}
       />
+      {me.roles.includes('ADMIN') ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={PROFILE_STRINGS.openAdminPanel}
+          onPress={() => router.push('/admin')}
+          style={({ pressed }) => [styles.adminButton, pressed && styles.pressed]}
+        >
+          <Text style={styles.adminButtonText}>{PROFILE_STRINGS.adminPanel}</Text>
+        </Pressable>
+      ) : null}
+      {isAnonymous ? <GuestSignInButton onPress={() => void handleSignIn()} /> : null}
       <InfoCard
         profile={me}
         onEdit={() => setIsEditOpen(true)}
@@ -96,17 +118,19 @@ export function ProfileScreen() {
 
   return (
     <>
-      <FlatList<Post>
-        style={styles.screen}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + SPACING.s18 }]}
-        data={posts.status === 'success' ? posts.data : []}
-        keyExtractor={(post) => post.id}
-        renderItem={({ item }) => <ProfilePostCard post={item} isAuthorShown={isSavedTab} />}
-        ListHeaderComponent={header}
-        ListEmptyComponent={listStatus}
-        ItemSeparatorComponent={Separator}
-        showsVerticalScrollIndicator={false}
-      />
+      <ResponsiveScreen>
+        <FlatList<Post>
+          style={styles.screen}
+          contentContainerStyle={[styles.content, { paddingTop: insets.top + SPACING.s18 }]}
+          data={posts.status === 'success' ? posts.data : []}
+          keyExtractor={(post) => post.id}
+          renderItem={({ item }) => <ProfilePostCard post={item} isAuthorShown={isSavedTab} />}
+          ListHeaderComponent={header}
+          ListEmptyComponent={listStatus}
+          ItemSeparatorComponent={Separator}
+          showsVerticalScrollIndicator={false}
+        />
+      </ResponsiveScreen>
 
       <EditProfileModal
         visible={isEditOpen}
@@ -115,6 +139,23 @@ export function ProfileScreen() {
         onSave={handleSaveProfile}
       />
     </>
+  );
+}
+
+type GuestSignInButtonProps = {
+  onPress: () => void;
+};
+
+function GuestSignInButton({ onPress }: GuestSignInButtonProps) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={PROFILE_STRINGS.signIn}
+      onPress={onPress}
+      style={({ pressed }) => [styles.adminButton, pressed && styles.pressed]}
+    >
+      <Text style={styles.adminButtonText}>{PROFILE_STRINGS.signIn}</Text>
+    </Pressable>
   );
 }
 
@@ -137,6 +178,22 @@ const styles = StyleSheet.create({
   header: {
     gap: SPACING.s14,
     paddingBottom: SPACING.s14,
+  },
+  adminButton: {
+    minHeight: SIZE.touchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: SPACING.s16,
+    borderRadius: RADIUS.card,
+    backgroundColor: COLORS.primary,
+  },
+  adminButtonText: {
+    color: COLORS.onPrimary,
+    fontFamily: FONT_FAMILY.bodyBold,
+    fontSize: FONT_SIZE.s14,
+  },
+  pressed: {
+    opacity: 0.7,
   },
   separator: {
     height: SPACING.s14,

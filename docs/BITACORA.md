@@ -15,6 +15,84 @@ Formato de cada entrada:
 
 ---
 
+## 2026-11-09 · T-26 Seguir desde perfil público
+
+- Qué se hizo: se integró la consulta paginada de conexiones y `POST /connections` para enviar solicitud de seguimiento. El perfil muestra «Seguir», «Solicitud pendiente» o «Siguiendo» de acuerdo con el estado del backend; para invitados ofrece iniciar sesión.
+- Archivos principales: `src/modules/profile/services/publicProfileService.ts`, `src/modules/profile/application/usePublicProfileConnection.ts`, `src/modules/profile/ui/OtherProfileScreen.tsx`, `docs/api-profile.md`.
+- Decisiones: la API no permite cancelar una conexión; «Siguiendo» queda sin acción de deshacer. No se inventan ni descargan publicaciones de otros actores porque `GET /posts` no tiene filtro por autor.
+- Cómo se probó: `npm run typecheck`, ESLint focalizado, Prettier, `git diff --check` y pruebas focalizadas del servicio/hook/pantalla.
+- Queda pendiente: endpoint de publicaciones aprobadas por actor para construir la cuadrícula, registrado en T-11.
+
+## 2026-11-09 · T-25 Navegación al perfil desde el autor
+
+- Qué se hizo: al tocar el nombre o avatar de un autor con `actor_id`, el Foro abre `/users/[userId]`. La ficha pública carga nombre, rol, avatar, biografía, estadísticas y únicamente los datos personales que el backend marque visibles. El botón de seguimiento consulta `GET /connections` y envía la solicitud con `POST /connections`.
+- Archivos principales: `src/modules/forum/ui/components/ForumPostCard.tsx`, `src/modules/forum/ui/ForumScreen.tsx`, `src/modules/profile/ui/OtherProfileScreen.tsx`, `src/modules/profile/services/publicProfileService.ts`, `src/app/users/[userId].tsx`.
+- Decisiones: se ignora el correo en el perfil público y se exige el indicador `show_city`/`show_birth_date` para mostrar esos datos. El backend no ofrece un filtro público de publicaciones por actor; no se simulan ni se descargan todas para filtrarlas en el cliente.
+- Cómo se probó: typecheck, ESLint focalizado, pruebas focalizadas del servicio/hook/pantalla/Foro, y `git diff --check`. No se pudo probar en Expo Go.
+- Queda pendiente: endpoint para consultar publicaciones públicas por actor y, para permitir dejar de seguir, endpoint para cancelar una conexión; están anotados en `PENDIENTES.md`.
+
+## 2026-11-09 · T-22 Retirar cierre de sesión redundante del Perfil
+
+- Qué se hizo: se retiró el botón de cerrar sesión para cuentas autenticadas del Perfil. El cierre de sesión permanece en Ajustes; los invitados conservan «Iniciar sesión» en Perfil y los ADMIN el acceso al panel.
+- Archivos principales: `src/modules/profile/ui/ProfileScreen.tsx`, `src/modules/profile/ui/ProfileScreen.test.tsx`, `src/modules/profile/ui/strings.ts`, `docs/pantallas.md`.
+- Decisiones: se conserva la navegación existente; no se duplica en Perfil una acción ya disponible en Ajustes.
+- Cómo se probó: typecheck, ESLint focalizado, pruebas del Perfil y `git diff --check`.
+- Queda pendiente: ninguno.
+
+## 2026-11-09 · T-20 Cierre de sesión en perfil administrador
+
+- Qué se hizo: se agregó el botón «Cerrar sesión» al Perfil de usuarios autenticados; invitados conservan «Iniciar sesión». Al usarlo, termina la sesión y vuelve al login.
+- Archivos principales: `src/modules/profile/ui/ProfileScreen.tsx`, `src/modules/profile/ui/ProfileScreen.test.tsx`, `src/modules/profile/ui/strings.ts`, `docs/pantallas.md`.
+- Decisiones: el cierre de sesión aplica a todos los roles autenticados, no solo a ADMIN. El acceso al panel continúa limitado a ADMIN.
+- Cómo se probó: `npm run typecheck`, ESLint focalizado, 8 pruebas del Perfil y `git diff --check` correctos. No se probó en Expo Go.
+- Queda pendiente: validar visualmente en Expo Go.
+
+## 2026-11-09 · T-21 Cierre de sesión para todos los roles
+
+- Qué se hizo: el botón «Cerrar sesión» quedó disponible para todos los usuarios autenticados desde Perfil, incluso cuando no se logra cargar el perfil. Los invitados siguen viendo «Iniciar sesión».
+- Archivos principales: `src/modules/profile/ui/ProfileScreen.tsx`, `src/modules/profile/ui/ProfileScreen.test.tsx`, `src/modules/profile/ui/strings.ts`, `docs/pantallas.md`.
+- Decisiones: la disponibilidad se basa en el estado de autenticación y no en el rol devuelto por el perfil.
+- Cómo se probó: typecheck, ESLint focalizado, pruebas focalizadas del Perfil y `git diff --check`.
+- Queda pendiente: validar en Expo Go.
+
+## 2026-11-09 · T-19 Error 401 en Notificaciones
+
+- Qué se hizo: Notificaciones ya no elimina la sesión cuando el endpoint responde 401; muestra un mensaje indicando que la sesión continúa activa y ofrece reintentar. El servicio aplica esta excepción tanto a la consulta como a «Marcar leídas».
+- Archivos principales: `src/shared/lib/http/createHttpClient.ts`, `src/modules/auth/application/AuthProvider.tsx`, `src/modules/notifications/{application,services,ui}/**`, `docs/integracion-backend.md`.
+- Decisiones: se verificó el Swagger desplegado. `GET /v1/notifications` requiere `DeviceSessionBearer` y acepta `page`/`limit`; el endpoint actual del frontend coincide. Una respuesta 401 ahora queda visible en UI en vez de hacer logout silencioso.
+- Cómo se probó: `npm run typecheck`, ESLint focalizado, `git diff --check` y pruebas dirigidas de autenticación/notificaciones.
+- Queda pendiente: comprobar con una cuenta de prueba si el backend acepta el `device_token` registrado en `/v1/notifications`; se agregó a la sección «Pendiente del backend».
+
+## 2026-11-09 · T-18 Sesión invitada y notificaciones
+
+- Qué se hizo:
+  - Se registra en SecureStore si una sesión corresponde a modo invitado y se restaura ese estado al volver a abrir la app.
+  - En modo invitado, Notificaciones no consulta `/notifications` (evita que un 401 cierre la sesión) y muestra que se necesita una cuenta.
+  - El Perfil invitado presenta «Iniciar sesión»; al pulsarlo termina la sesión y abre el login.
+- Archivos principales: `src/modules/auth/**`, `src/modules/notifications/{application,ui}/**`, `src/modules/profile/ui/{ProfileScreen.tsx,strings.ts}`, `docs/api-auth.md`, `docs/pantallas.md`.
+- Decisiones: se guarda solo un indicador booleano junto al token, ambos en SecureStore; no se usa AsyncStorage ni se persisten datos personales.
+- Cómo se probó: `npm run typecheck` correcto; 6 suites/39 pruebas focalizadas en verde; ESLint focalizado limpio; `git diff --check` limpio. No se pudo validar contra Render ni en Expo Go por las limitaciones CORS/de dispositivo del entorno.
+- Queda pendiente: verificar el flujo en Expo Go con una sesión invitada y con una cuenta autenticada.
+
+## 2026-11-09 · T-17 Diseño adaptable para tabletas
+
+- Qué se hizo: se centró el contenido de las pantallas principales en una columna con ancho máximo de 840 px; se aplicó también a login, ajustes, publicación, comentarios y administración. La barra inferior conserva el ancho de pantalla, centra sus pestañas y no se oculta al abrir el teclado. En el Foro, las tarjetas tienen un máximo de 620 px de alto en tabletas.
+- Archivos principales: `src/shared/ui/templates/ResponsiveScreen.tsx`, `src/shared/theme/layout.ts`, `src/shared/ui/organisms/BottomNavBar.tsx`, pantallas de `src/modules/**/ui/`, `src/app/(tabs)/_layout.tsx`, `docs/pantallas.md`.
+- Decisiones: se mantiene el diseño móvil; el límite de ancho y el tope de altura solo benefician a pantallas amplias, y la barra inferior sigue de borde a borde.
+- Cómo se probó: `npm run typecheck` correcto; 11 suites/31 pruebas focalizadas en verde; ESLint focalizado sin hallazgos; Metro compiló para web y se revisó el footer en viewport de 1024 × 768. No se pudo probar Expo Go en un dispositivo o emulador de tableta. `npx expo lint` global sigue reportando errores preexistentes de CRLF en otros archivos.
+- Queda pendiente: validar visualmente en tableta física o emulada.
+
+## 2026-11-09 · T-16 Panel de administración
+
+- Qué se hizo:
+  - Se agregó el acceso al panel desde el Perfil y se protegió la ruta para cuentas con rol `ADMIN`; usuarios sin ese rol no disparan consultas administrativas.
+  - Se conectó la cola paginada de moderación para filtrar publicaciones/comentarios y aprobar o rechazar contenido pendiente.
+  - Se conectó la lista de moderadores para asignar o revocar ese rol, con confirmación antes de revocar y errores visibles en pantalla.
+- Archivos principales: `src/modules/admin/**`, `src/app/admin/index.tsx`, `src/app/_layout.tsx`, `src/modules/profile/ui/ProfileScreen.tsx`, `docs/api-admin.md`, `docs/pantallas.md`.
+- Decisiones: se implementaron únicamente operaciones publicadas en Swagger. La asignación requiere pegar el `userAccountId`, pues no hay búsqueda de cuentas; se registró el endpoint faltante en `PENDIENTES.md`.
+- Cómo se probó: `npm run typecheck` correcto; ESLint focalizado sin errores ni advertencias; 15 pruebas focalizadas en verde. Metro compiló el bundle web y se abrió la app en navegador. No se pudo probar la sesión administradora desde Expo Go por falta de una cuenta de prueba.
+- Queda pendiente: búsqueda/listado de cuentas para facilitar asignar moderadores; confirmar el flujo móvil de moderación para `MODERATOR`.
+
 ## 2026-11-09 · Integración funcional de endpoints (Auth, Ajustes y Perfil)
 
 - Qué se hizo:

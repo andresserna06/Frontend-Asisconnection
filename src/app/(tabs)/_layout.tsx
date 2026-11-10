@@ -9,7 +9,11 @@ export default function TabsLayout() {
 
   return (
     <Tabs
-      screenOptions={{ headerShown: false, tabBarShowLabel: false }}
+      screenOptions={{
+        headerShown: false,
+        tabBarShowLabel: false,
+        tabBarHideOnKeyboard: false,
+      }}
       tabBar={({ state, navigation }) => (
         <BottomNavBar
           activeRoute={state.routes[state.index]?.name ?? 'index'}

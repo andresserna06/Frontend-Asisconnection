@@ -2,7 +2,15 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { STRINGS } from '@/shared/config/strings';
-import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SIZE, SPACING } from '@/shared/theme';
+import {
+  COLORS,
+  CONTENT_MAX_WIDTH,
+  FONT_FAMILY,
+  FONT_SIZE,
+  RADIUS,
+  SIZE,
+  SPACING,
+} from '@/shared/theme';
 import { Icon, type IconName } from '@/shared/ui/atoms/Icon';
 
 export type BottomNavRoute = 'index' | 'ecosystem' | 'assistant' | 'profile';
@@ -31,50 +39,55 @@ export function BottomNavBar({ activeRoute, profileInitials, onNavigate }: Botto
   const selectedRoute = activeRoute === 'notifications' ? 'index' : activeRoute;
 
   return (
-    <View
-      accessibilityRole="tablist"
-      style={[styles.container, { paddingBottom: Math.max(insets.bottom, SPACING.s10) }]}
-    >
-      {NAVIGATION_ITEMS.map((item) => {
-        const isSelected = selectedRoute === item.route;
+    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, SPACING.s10) }]}>
+      <View accessibilityRole="tablist" style={styles.tabs}>
+        {NAVIGATION_ITEMS.map((item) => {
+          const isSelected = selectedRoute === item.route;
 
-        return (
-          <Pressable
-            key={item.route}
-            accessibilityRole="tab"
-            accessibilityLabel={item.label}
-            accessibilityState={{ selected: isSelected }}
-            onPress={() => onNavigate(item.route)}
-            style={({ pressed }) => [styles.tab, pressed && styles.pressed]}
-          >
-            {item.route === 'profile' ? (
-              <View style={[styles.profileAvatar, isSelected && styles.selectedAvatar]}>
-                <Text style={styles.profileInitials}>{profileInitials}</Text>
-              </View>
-            ) : (
-              <Icon
-                name={item.icon}
-                size={SIZE.icon}
-                color={isSelected ? COLORS.primary : COLORS.textSecondary}
-              />
-            )}
-            <Text style={[styles.label, isSelected && styles.selectedLabel]}>{item.label}</Text>
-          </Pressable>
-        );
-      })}
+          return (
+            <Pressable
+              key={item.route}
+              accessibilityRole="tab"
+              accessibilityLabel={item.label}
+              accessibilityState={{ selected: isSelected }}
+              onPress={() => onNavigate(item.route)}
+              style={({ pressed }) => [styles.tab, pressed && styles.pressed]}
+            >
+              {item.route === 'profile' ? (
+                <View style={[styles.profileAvatar, isSelected && styles.selectedAvatar]}>
+                  <Text style={styles.profileInitials}>{profileInitials}</Text>
+                </View>
+              ) : (
+                <Icon
+                  name={item.icon}
+                  size={SIZE.icon}
+                  color={isSelected ? COLORS.primary : COLORS.textSecondary}
+                />
+              )}
+              <Text style={[styles.label, isSelected && styles.selectedLabel]}>{item.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+    flexShrink: 0,
+  },
+  tabs: {
+    width: '100%',
+    maxWidth: CONTENT_MAX_WIDTH,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: SPACING.s12,
     paddingTop: SPACING.s8,
-    backgroundColor: COLORS.surface,
   },
   tab: {
     flex: 1,

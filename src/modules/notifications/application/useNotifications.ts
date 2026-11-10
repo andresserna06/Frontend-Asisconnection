@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { HttpError } from '@/shared/lib/http';
 import type { NotificationsService } from '../domain/NotificationsService';
 import {
   groupNotificationsByPeriod,
@@ -10,54 +11,74 @@ import {
 export type UseNotificationsResult = {
   items: NotificationItem[];
   grouped: Record<NotificationPeriod, NotificationItem[]>;
-  isLoading: boolean;
   hasMarkedAllRead: boolean;
+  error: 'unauthorized' | 'unavailable' | null;
   markAllRead: () => Promise<void>;
+  reload: () => void;
 };
 
-export function useNotifications(service: NotificationsService): UseNotificationsResult {
+export function useNotifications(
+  service: NotificationsService,
+  enabled = true,
+): UseNotificationsResult {
   const [items, setItems] = useState<NotificationItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [hasMarkedAllRead, setHasMarkedAllRead] = useState(false);
+  const [error, setError] = useState<'unauthorized' | 'unavailable' | null>(null);
+  const [reloadCounter, setReloadCounter] = useState(0);
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     let isMounted = true;
     service
       .listNotifications()
       .then((loaded) => {
         if (!isMounted) return;
         setItems(loaded);
+        setError(null);
       })
-      .catch(() => {
+      .catch((caught: unknown) => {
         if (!isMounted) return;
-        setItems([]);
-      })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
+        setError(
+          caught instanceof HttpError && caught.status === 401 ? 'unauthorized' : 'unavailable',
+        );
       });
 
     return () => {
       isMounted = false;
     };
-  }, [service]);
+  }, [enabled, reloadCounter, service]);
+
+  const reload = useCallback(() => {
+    setReloadCounter((current) => current + 1);
+  }, []);
 
   const markAllRead = useCallback(async () => {
+    if (!enabled) {
+      return;
+    }
     try {
       await service.markAllRead();
       setItems((prev) => prev.map((item) => ({ ...item, isRead: true })));
       setHasMarkedAllRead(true);
-    } catch {
-      // Best-effort UI update
+      setError(null);
+    } catch (caught) {
+      setError(
+        caught instanceof HttpError && caught.status === 401 ? 'unauthorized' : 'unavailable',
+      );
     }
-  }, [service]);
+  }, [enabled, service]);
 
   const grouped = useMemo(() => groupNotificationsByPeriod(items), [items]);
 
   return {
     items,
     grouped,
-    isLoading,
     hasMarkedAllRead,
+    error,
     markAllRead,
+    reload,
   };
 }

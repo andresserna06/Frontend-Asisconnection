@@ -59,6 +59,7 @@ describe('createForumService', () => {
             image_url: 'https://cdn.example.com/pic.jpg',
             media_urls: ['https://cdn.example.com/pic.jpg'],
             author: {
+              actor_id: 'actor-1',
               display_name: 'Claudia Henao',
               role_label: 'ACUDIENTE',
               is_registered: true,
@@ -82,7 +83,8 @@ describe('createForumService', () => {
         id: 'post-1',
         category: 'announcements',
         author: {
-          id: 'Claudia Henao',
+          profileId: 'actor-1',
+          id: 'actor-1',
           name: 'Claudia Henao',
           initials: 'CH',
           roleLabel: 'Acudiente',

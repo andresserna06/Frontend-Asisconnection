@@ -2,7 +2,40 @@ import type { ProfileErrorKind } from '@/modules/profile/domain/models/ProfileEr
 
 // User-facing texts of the profile module (Spanish).
 export const PROFILE_STRINGS = {
+  adminPanel: 'Panel de administración',
+  openAdminPanel: 'Abrir panel de administración',
+  signIn: 'Iniciar sesión',
   changePhoto: 'Cambiar foto de perfil',
+  publicProfile: {
+    header: 'Perfil',
+    back: 'Volver al foro',
+    loading: 'Cargando perfil',
+    retry: 'Reintentar',
+    retryFollow: 'Reintentar consulta de seguimiento',
+    checkingFollow: 'Consultando seguimiento',
+    info: 'Información',
+    follow: 'Seguir',
+    following: 'Siguiendo',
+    requestSent: 'Solicitud pendiente',
+    blocked: 'No disponible',
+    signInToFollow: 'Inicia sesión para seguir',
+    followErrors: {
+      conflict: 'Ya existe una solicitud o conexión con esta persona.',
+      forbidden: 'Inicia sesión con una cuenta para seguir a esta persona.',
+      network: 'No hay conexión. Revisa tu internet e inténtalo de nuevo.',
+      notFound: 'No encontramos este perfil.',
+      unknown: 'No pudimos actualizar el seguimiento. Inténtalo de nuevo.',
+    },
+    posts: (count: number) => `Publicaciones (${count})`,
+    postsUnavailable: 'Las publicaciones de otros perfiles aún no están disponibles.',
+    errors: {
+      conflict: 'Ya existe una solicitud o conexión con esta persona.',
+      forbidden: 'No tienes permiso para consultar este perfil.',
+      network: 'No hay conexión. Revisa tu internet e inténtalo de nuevo.',
+      notFound: 'No encontramos este perfil.',
+      unknown: 'No pudimos cargar este perfil. Inténtalo de nuevo.',
+    },
+  },
   stats: {
     posts: 'Publicaciones',
     followers: 'Seguidores',

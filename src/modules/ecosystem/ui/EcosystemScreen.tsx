@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEcosystemLinks } from '@/modules/ecosystem/application/useEcosystemLinks';
 import { useEcosystemService } from '@/modules/ecosystem/useEcosystemService';
 import { COLORS, FONT_FAMILY, FONT_SIZE, SPACING } from '@/shared/theme';
+import { ResponsiveScreen } from '@/shared/ui/templates/ResponsiveScreen';
 
 import { EcosystemCard } from './components/EcosystemCard';
 import { ECOSYSTEM_STRINGS } from './strings';
@@ -14,31 +15,33 @@ export function EcosystemScreen() {
   const { findLinkForTitle } = useEcosystemLinks(service);
 
   return (
-    <View style={styles.screen}>
-      <View style={[styles.header, { paddingTop: insets.top + SPACING.s2 }]}>
-        <Text accessibilityRole="header" style={styles.title}>
-          {ECOSYSTEM_STRINGS.title}
-        </Text>
-        <Text style={styles.subtitle}>{ECOSYSTEM_STRINGS.subtitle}</Text>
-      </View>
+    <ResponsiveScreen>
+      <View style={styles.screen}>
+        <View style={[styles.header, { paddingTop: insets.top + SPACING.s2 }]}>
+          <Text accessibilityRole="header" style={styles.title}>
+            {ECOSYSTEM_STRINGS.title}
+          </Text>
+          <Text style={styles.subtitle}>{ECOSYSTEM_STRINGS.subtitle}</Text>
+        </View>
 
-      <FlatList
-        contentContainerStyle={styles.list}
-        data={ECOSYSTEM_STRINGS.items}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => {
-          const link = findLinkForTitle(item.title);
-          return (
-            <EcosystemCard
-              item={item}
-              onPress={link !== null ? () => void Linking.openURL(link.url) : undefined}
-            />
-          );
-        }}
-        showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={Separator}
-      />
-    </View>
+        <FlatList
+          contentContainerStyle={styles.list}
+          data={ECOSYSTEM_STRINGS.items}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => {
+            const link = findLinkForTitle(item.title);
+            return (
+              <EcosystemCard
+                item={item}
+                onPress={link !== null ? () => void Linking.openURL(link.url) : undefined}
+              />
+            );
+          }}
+          showsVerticalScrollIndicator={false}
+          ItemSeparatorComponent={Separator}
+        />
+      </View>
+    </ResponsiveScreen>
   );
 }
 

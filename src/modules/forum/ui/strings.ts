@@ -22,6 +22,7 @@ export const FORUM_STRINGS = {
   topicsAccessibilityLabel: 'Temas del foro',
   filterAccessibilityLabel: (label: string) => `Filtrar por ${label}`,
   photoOf: (name: string) => `Foto de ${name}`,
+  openAuthorProfile: (name: string) => `Ver perfil de ${name}`,
   videoDuration: (duration: string) => `Video, duración ${duration}`,
   likeSummary: (likes: number) => `${likes} Me gusta`,
   openComments: (comments: number) => `Ver comentarios (${comments})`,
