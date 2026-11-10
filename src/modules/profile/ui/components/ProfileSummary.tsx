@@ -3,15 +3,15 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { RoleBadge, type RoleCode } from '@/modules/auth';
 import { PROFILE_STRINGS } from '@/modules/profile/ui/strings';
 import {
-    BORDER_WIDTH,
-    COLORS,
-    FONT_FAMILY,
-    FONT_SIZE,
-    LINE_HEIGHT,
-    OPACITY,
-    RADIUS,
-    SIZE,
-    SPACING,
+  BORDER_WIDTH,
+  COLORS,
+  FONT_FAMILY,
+  FONT_SIZE,
+  LINE_HEIGHT,
+  OPACITY,
+  RADIUS,
+  SIZE,
+  SPACING,
 } from '@/shared/theme';
 import { Avatar } from '@/shared/ui/atoms/Avatar';
 import { Icon } from '@/shared/ui/atoms/Icon';

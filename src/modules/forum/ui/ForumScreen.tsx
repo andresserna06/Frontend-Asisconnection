@@ -1,13 +1,13 @@
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
-    useWindowDimensions,
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,13 +16,13 @@ import type { ForumFilter } from '@/modules/forum/domain/models/ForumCategory';
 import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
 import { useCollapsingHeader } from '@/shared/hooks/useCollapsingHeader';
 import {
-    COLORS,
-    FONT_FAMILY,
-    FONT_SIZE,
-    LETTER_SPACING,
-    RADIUS,
-    SIZE,
-    SPACING,
+  COLORS,
+  FONT_FAMILY,
+  FONT_SIZE,
+  LETTER_SPACING,
+  RADIUS,
+  SIZE,
+  SPACING,
 } from '@/shared/theme';
 import { Icon } from '@/shared/ui/atoms/Icon';
 import { HeaderTeal } from '@/shared/ui/organisms/HeaderTeal';

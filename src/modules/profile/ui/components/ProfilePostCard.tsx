@@ -8,15 +8,15 @@ import { PROFILE_STRINGS } from '@/modules/profile/ui/strings';
 import type { Post } from '@/shared/domain/models/Post';
 import { formatRelativeTime } from '@/shared/lib/formatRelativeTime';
 import {
-    BORDER_WIDTH,
-    CATEGORY_COLORS,
-    COLORS,
-    FONT_FAMILY,
-    FONT_SIZE,
-    LINE_HEIGHT,
-    RADIUS,
-    SIZE,
-    SPACING,
+  BORDER_WIDTH,
+  CATEGORY_COLORS,
+  COLORS,
+  FONT_FAMILY,
+  FONT_SIZE,
+  LINE_HEIGHT,
+  RADIUS,
+  SIZE,
+  SPACING,
 } from '@/shared/theme';
 import { Avatar, getAvatarTone } from '@/shared/ui/atoms/Avatar';
 import { CategoryChip } from '@/shared/ui/atoms/CategoryChip';
