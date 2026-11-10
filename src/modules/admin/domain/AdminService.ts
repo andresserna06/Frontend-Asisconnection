@@ -14,6 +14,7 @@ export type AdminService = {
     status: ModerationDecision,
   ): Promise<void>;
   listModerators(): Promise<ModeratorAccount[]>;
+  searchAccounts?(query: string): Promise<ModeratorAccount[]>;
   assignModerator(userAccountId: string): Promise<void>;
   revokeModerator(userAccountId: string): Promise<void>;
 };

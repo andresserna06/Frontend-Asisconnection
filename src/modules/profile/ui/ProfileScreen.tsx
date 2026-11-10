@@ -11,7 +11,10 @@ import type { UpdateProfileInput } from '@/modules/profile/domain/ProfileService
 import type { Post } from '@/shared/domain/models/Post';
 import { PROFILE_ERROR_MESSAGES, PROFILE_STRINGS } from '@/modules/profile/ui/strings';
 import { useProfileService } from '@/modules/profile/useProfileService';
+import { useCollapsingHeader } from '@/shared/hooks/useCollapsingHeader';
 import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SIZE, SPACING } from '@/shared/theme';
+import { Icon } from '@/shared/ui/atoms/Icon';
+import { HeaderTeal } from '@/shared/ui/organisms/HeaderTeal';
 import { ResponsiveScreen } from '@/shared/ui/templates/ResponsiveScreen';
 
 import { EditProfileModal } from './components/EditProfileModal';
@@ -22,6 +25,8 @@ import { ProfileTabs } from './components/ProfileTabs';
 import { StatsCard } from './components/StatsCard';
 import { StatusMessage } from './components/StatusMessage';
 
+const HEADER_ROW_HEIGHT = 66;
+
 export function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { isAnonymous, signOut } = useAuth();
@@ -29,6 +34,8 @@ export function ProfileScreen() {
   const { profile, posts, activeTab, selectTab } = useMyProfile(service);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const expandedHeaderHeight = insets.top + HEADER_ROW_HEIGHT;
+  const { headerHeight, onScroll } = useCollapsingHeader(expandedHeaderHeight);
 
   async function handleSignIn() {
     await signOut();
@@ -93,6 +100,7 @@ export function ProfileScreen() {
 
   const me = profile.data;
   const isSavedTab = activeTab === 'saved';
+  const canOpenModerationPanel = me.roles.includes('ADMIN') || me.roles.includes('MODERATOR');
 
   async function handleSaveProfile(input: UpdateProfileInput) {
     if (service.updateMyProfile) {
@@ -115,7 +123,7 @@ export function ProfileScreen() {
         followerCount={me.followerCount}
         followingCount={me.followingCount}
       />
-      {me.roles.includes('ADMIN') ? (
+      {canOpenModerationPanel ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={PROFILE_STRINGS.openAdminPanel}
@@ -159,17 +167,37 @@ export function ProfileScreen() {
   return (
     <>
       <ResponsiveScreen>
-        <FlatList<Post>
-          style={styles.screen}
-          contentContainerStyle={[styles.content, { paddingTop: insets.top + SPACING.s18 }]}
-          data={posts.status === 'success' ? posts.data : []}
-          keyExtractor={(post) => post.id}
-          renderItem={({ item }) => <ProfilePostCard post={item} isAuthorShown={isSavedTab} />}
-          ListHeaderComponent={header}
-          ListEmptyComponent={listStatus}
-          ItemSeparatorComponent={Separator}
-          showsVerticalScrollIndicator={false}
-        />
+        <View style={styles.screen}>
+          <HeaderTeal
+            title={PROFILE_STRINGS.headerTitle}
+            headerHeight={headerHeight}
+            paddingTop={insets.top + SPACING.s8}
+            leftAccessory={null}
+            rightAccessory={
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={PROFILE_STRINGS.openSettings}
+                onPress={() => router.push('/profile/settings')}
+                style={({ pressed }) => [styles.headerActionButton, pressed && styles.pressed]}
+              >
+                <Icon name="settings" size={SIZE.icon} color={COLORS.onPrimary} />
+              </Pressable>
+            }
+          />
+          <FlatList<Post>
+            style={styles.screen}
+            onScroll={onScroll}
+            scrollEventThrottle={16}
+            contentContainerStyle={[styles.content, { paddingTop: SPACING.s18 }]}
+            data={posts.status === 'success' ? posts.data : []}
+            keyExtractor={(post) => post.id}
+            renderItem={({ item }) => <ProfilePostCard post={item} isAuthorShown={isSavedTab} />}
+            ListHeaderComponent={header}
+            ListEmptyComponent={listStatus}
+            ItemSeparatorComponent={Separator}
+            showsVerticalScrollIndicator={false}
+          />
+        </View>
       </ResponsiveScreen>
 
       <EditProfileModal
@@ -210,6 +238,14 @@ const styles = StyleSheet.create({
   },
   centered: {
     justifyContent: 'center',
+  },
+  headerActionButton: {
+    width: SIZE.touchTarget,
+    height: SIZE.touchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: RADIUS.headerButton,
+    backgroundColor: COLORS.headerButton,
   },
   content: {
     paddingHorizontal: SPACING.s20,

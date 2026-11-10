@@ -13,9 +13,7 @@ import type { Post } from '@/shared/domain/models/Post';
 import { type AsyncData, useAsyncData } from '@/shared/hooks/useAsyncData';
 
 export type PublicProfileState<TData = PublicProfile, TError = PublicProfileError> =
-  | { status: 'loading' }
-  | { status: 'success'; data: TData }
-  | { status: 'error'; error: TError };
+  { status: 'loading' } | { status: 'success'; data: TData } | { status: 'error'; error: TError };
 
 type ProfileRequestState<TData, TError> = {
   actorId: string;

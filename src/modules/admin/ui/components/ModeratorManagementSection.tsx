@@ -22,9 +22,11 @@ import { ADMIN_STRINGS } from '../strings';
 
 type ModeratorManagementSectionProps = {
   moderators: AdminResource<ModeratorAccount[]>;
+  searchResults?: AdminResource<ModeratorAccount[]> | null;
   busyModeratorId: string | null;
   isAssigningModerator: boolean;
   operationError: { kind: AdminErrorKind } | null;
+  onSearch?: (query: string) => Promise<void>;
   onAssign: (userAccountId: string) => Promise<boolean>;
   onRevoke: (userAccountId: string) => Promise<boolean>;
   onRetry: () => void;
@@ -32,14 +34,17 @@ type ModeratorManagementSectionProps = {
 
 export function ModeratorManagementSection({
   moderators,
+  searchResults = null,
   busyModeratorId,
   isAssigningModerator,
   operationError,
+  onSearch,
   onAssign,
   onRevoke,
   onRetry,
 }: ModeratorManagementSectionProps) {
   const [userAccountId, setUserAccountId] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [inputError, setInputError] = useState(false);
 
   async function handleAssign() {
@@ -53,6 +58,13 @@ export function ModeratorManagementSection({
     if (await onAssign(accountId)) {
       setUserAccountId('');
     }
+  }
+
+  async function handleSearch() {
+    if (!onSearch) {
+      return;
+    }
+    await onSearch(searchQuery);
   }
 
   function confirmRevoke(moderator: ModeratorAccount) {
@@ -70,6 +82,79 @@ export function ModeratorManagementSection({
 
   return (
     <View style={styles.container}>
+      {onSearch ? (
+        <View style={styles.card}>
+          <Text accessibilityRole="header" style={styles.sectionTitle}>
+            {ADMIN_STRINGS.searchTitle}
+          </Text>
+          <Input
+            accessibilityLabel={ADMIN_STRINGS.searchLabel}
+            autoCapitalize="none"
+            autoCorrect={false}
+            onChangeText={setSearchQuery}
+            placeholder={ADMIN_STRINGS.searchPlaceholder}
+            value={searchQuery}
+          />
+          <Button
+            label={ADMIN_STRINGS.searchAction}
+            variant="outline"
+            onPress={() => void handleSearch()}
+            isLoading={searchResults?.status === 'loading'}
+            iconRight="search"
+          />
+          {searchResults?.status === 'error' ? (
+            <Text accessibilityRole="alert" style={styles.error}>
+              {ADMIN_STRINGS.errors[searchResults.error.kind] ?? ADMIN_STRINGS.genericError}
+            </Text>
+          ) : null}
+          {searchResults?.status === 'success' && searchResults.data.length === 0 ? (
+            <Text style={styles.empty}>{ADMIN_STRINGS.searchEmpty}</Text>
+          ) : null}
+          {searchResults?.status === 'success'
+            ? searchResults.data.map((account) => {
+                const isAlreadyModerator = account.localRole === 'MODERATOR';
+                return (
+                  <View key={account.id} style={styles.accountCard}>
+                    <View style={styles.accountInfo}>
+                      <Text style={styles.username}>
+                        {account.displayName
+                          ? `${account.displayName} (@${account.username})`
+                          : account.username}
+                      </Text>
+                      <Text style={styles.secondary}>{account.email}</Text>
+                      <Text style={styles.secondary}>
+                        {ADMIN_STRINGS.role}: {account.role}
+                      </Text>
+                    </View>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`${ADMIN_STRINGS.selectAccount} ${account.username}`}
+                      disabled={isAlreadyModerator || isAssigningModerator}
+                      onPress={() => void onAssign(account.id)}
+                      style={({ pressed }) => [
+                        styles.assignChip,
+                        isAlreadyModerator && styles.assignChipDisabled,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.assignChipText,
+                          isAlreadyModerator && styles.assignChipTextDisabled,
+                        ]}
+                      >
+                        {isAlreadyModerator
+                          ? ADMIN_STRINGS.alreadyModerator
+                          : ADMIN_STRINGS.selectAccount}
+                      </Text>
+                    </Pressable>
+                  </View>
+                );
+              })
+            : null}
+        </View>
+      ) : null}
+
       <View style={styles.card}>
         <Text accessibilityRole="header" style={styles.sectionTitle}>
           {ADMIN_STRINGS.assignTitle}
@@ -241,6 +326,25 @@ const styles = StyleSheet.create({
     color: COLORS.textTertiary,
     fontFamily: FONT_FAMILY.body,
     fontSize: FONT_SIZE.s12,
+  },
+  assignChip: {
+    minHeight: SIZE.touchTarget,
+    paddingHorizontal: SPACING.s14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: RADIUS.button,
+    backgroundColor: COLORS.primary,
+  },
+  assignChipDisabled: {
+    backgroundColor: COLORS.surfaceMuted,
+  },
+  assignChipText: {
+    color: COLORS.onPrimary,
+    fontFamily: FONT_FAMILY.bodyBold,
+    fontSize: FONT_SIZE.s13,
+  },
+  assignChipTextDisabled: {
+    color: COLORS.textSecondary,
   },
   revokeButton: {
     width: SIZE.touchTarget,

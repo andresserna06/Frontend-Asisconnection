@@ -10,6 +10,7 @@ export const POST_STRINGS = {
   placeholder: '¿Qué quieres compartir con la comunidad?',
   chooseTopic: 'ELIGE UN TEMA',
   categories: {
+    announcements: 'Noticias',
     questions: 'Salud',
     guides: 'Apoyo Pedagógico',
     achievements: 'Voluntariado',

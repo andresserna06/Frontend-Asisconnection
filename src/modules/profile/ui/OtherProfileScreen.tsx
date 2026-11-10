@@ -23,7 +23,9 @@ import { Icon } from '@/shared/ui/atoms/Icon';
 import { HeaderTeal } from '@/shared/ui/organisms/HeaderTeal';
 import { ResponsiveScreen } from '@/shared/ui/templates/ResponsiveScreen';
 
+import { ProfilePostCard } from './components/ProfilePostCard';
 import { StatsCard } from './components/StatsCard';
+import { StatusMessage } from './components/StatusMessage';
 import { PROFILE_STRINGS } from './strings';
 
 const HEADER_ROW_HEIGHT = 66;
@@ -33,10 +35,11 @@ export function OtherProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const { isAnonymous, signOut } = useAuth();
   const service = usePublicProfileService();
-  const { profile, reload } = usePublicProfile(service, userId);
+  const { profile, reload, posts } = usePublicProfile(service, userId);
   const follow = usePublicProfileConnection(service, userId, isAnonymous);
   const expandedHeaderHeight = insets.top + HEADER_ROW_HEIGHT;
   const { headerHeight, onScroll } = useCollapsingHeader(expandedHeaderHeight);
+  const hasActorPostsSupport = typeof service.getActorPosts === 'function';
 
   function handleRetry() {
     reload();
@@ -144,7 +147,27 @@ export function OtherProfileScreen() {
               <Text accessibilityRole="header" style={styles.sectionTitle}>
                 {PROFILE_STRINGS.publicProfile.posts(profile.data.postCount)}
               </Text>
-              <Text style={styles.stateText}>{PROFILE_STRINGS.publicProfile.postsUnavailable}</Text>
+              {!hasActorPostsSupport ? (
+                <Text style={styles.stateText}>
+                  {PROFILE_STRINGS.publicProfile.postsUnavailable}
+                </Text>
+              ) : posts.status === 'loading' ? (
+                <StatusMessage kind="loading" />
+              ) : posts.status === 'error' ? (
+                <StatusMessage
+                  kind="error"
+                  message={PROFILE_STRINGS.listError}
+                  onRetry={posts.reload}
+                />
+              ) : posts.data.length === 0 ? (
+                <Text style={styles.stateText}>{PROFILE_STRINGS.publicProfile.postsEmpty}</Text>
+              ) : (
+                <View style={styles.postsList}>
+                  {posts.data.map((post) => (
+                    <ProfilePostCard key={post.id} post={post} isAuthorShown={false} />
+                  ))}
+                </View>
+              )}
             </View>
           </ScrollView>
         )}
@@ -424,6 +447,9 @@ const styles = StyleSheet.create({
   publications: {
     gap: SPACING.s8,
     paddingTop: SPACING.s4,
+  },
+  postsList: {
+    gap: SPACING.s14,
   },
   state: {
     flex: 1,

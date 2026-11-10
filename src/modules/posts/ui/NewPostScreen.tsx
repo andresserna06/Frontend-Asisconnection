@@ -22,11 +22,16 @@ import type { CategoryKey } from '@/shared/theme';
 import { ResponsiveScreen } from '@/shared/ui/templates/ResponsiveScreen';
 import { POST_DRAFT_ISSUE_MESSAGES, POST_ERROR_MESSAGES, POST_STRINGS } from './strings';
 
-const POST_CATEGORIES: { key: Exclude<CategoryKey, 'announcements'>; label: string }[] = [
+const COMMUNITY_POST_CATEGORIES: { key: CategoryKey; label: string }[] = [
   { key: 'questions', label: POST_STRINGS.categories.questions },
   { key: 'guides', label: POST_STRINGS.categories.guides },
   { key: 'achievements', label: POST_STRINGS.categories.achievements },
 ];
+
+const ANNOUNCEMENT_CATEGORY: { key: CategoryKey; label: string } = {
+  key: 'announcements',
+  label: POST_STRINGS.categories.announcements,
+};
 
 export function NewPostScreen() {
   const insets = useSafeAreaInsets();
@@ -39,6 +44,11 @@ export function NewPostScreen() {
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const primaryRole = user === null ? null : getPrimaryRole(user.roles);
   const initials = user?.username.slice(0, 2).toUpperCase() ?? 'AS';
+  const canPublishAnnouncements =
+    user?.roles.some((role) => role === 'ADMIN' || role === 'MODERATOR') ?? false;
+  const availableCategories = canPublishAnnouncements
+    ? [ANNOUNCEMENT_CATEGORY, ...COMMUNITY_POST_CATEGORIES]
+    : COMMUNITY_POST_CATEGORIES;
 
   const feedbackMessage = draftIssue
     ? POST_DRAFT_ISSUE_MESSAGES[draftIssue]
@@ -201,7 +211,7 @@ export function NewPostScreen() {
           <View style={styles.categorySection}>
             <Text style={styles.sectionLabel}>{POST_STRINGS.chooseTopic}</Text>
             <View style={styles.categoryRow}>
-              {POST_CATEGORIES.map((category) => {
+              {availableCategories.map((category) => {
                 const isSelected = selectedCategory === category.key;
                 const palette = CATEGORY_COLORS[category.key];
 

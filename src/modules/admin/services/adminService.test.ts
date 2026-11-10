@@ -115,6 +115,34 @@ describe('adminService', () => {
     });
   });
 
+  it('searches registered accounts via GET /admin/accounts?search=', async () => {
+    const client: HttpClient = {
+      request: jest.fn().mockResolvedValueOnce([
+        {
+          id: 'account-2',
+          username: 'maria.acudiente',
+          email: 'maria@prueba.com',
+          rol: 'ACUDIENTE',
+          local_role: null,
+          display_name: 'María Gómez',
+        },
+      ]),
+    };
+    const service = createAdminService(client);
+
+    await expect(service.searchAccounts?.(' maria ')).resolves.toEqual([
+      {
+        id: 'account-2',
+        username: 'maria.acudiente',
+        email: 'maria@prueba.com',
+        role: 'ACUDIENTE',
+        localRole: null,
+        displayName: 'María Gómez',
+      },
+    ]);
+    expect(client.request).toHaveBeenCalledWith('/admin/accounts?search=maria');
+  });
+
   it('translates permission errors to an admin domain error', async () => {
     const client: HttpClient = {
       request: jest.fn().mockRejectedValue(new HttpError(403)),

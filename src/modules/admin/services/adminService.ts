@@ -33,6 +33,8 @@ type ApiModeratorDto = {
   username: string;
   email: string;
   rol: string;
+  local_role?: string | null;
+  display_name?: string | null;
 };
 
 function toAdminError(error: unknown): AdminError {
@@ -66,6 +68,17 @@ async function request<T>(operation: () => Promise<T>): Promise<T> {
   } catch (error) {
     throw toAdminError(error);
   }
+}
+
+function toModeratorAccount(account: ApiModeratorDto) {
+  return {
+    id: account.id,
+    username: account.username,
+    email: account.email,
+    role: account.rol,
+    ...(account.local_role !== undefined ? { localRole: account.local_role } : {}),
+    ...(account.display_name !== undefined ? { displayName: account.display_name } : {}),
+  };
 }
 
 export function createAdminService(client: HttpClient): AdminService {
@@ -110,12 +123,16 @@ export function createAdminService(client: HttpClient): AdminService {
     listModerators() {
       return request(async () => {
         const moderators = await client.request<ApiModeratorDto[]>('/admin/moderators');
-        return moderators.map((moderator) => ({
-          id: moderator.id,
-          username: moderator.username,
-          email: moderator.email,
-          role: moderator.rol,
-        }));
+        return moderators.map(toModeratorAccount);
+      });
+    },
+
+    searchAccounts(query) {
+      return request(async () => {
+        const accounts = await client.request<ApiModeratorDto[]>(
+          `/admin/accounts?search=${encodeURIComponent(query.trim())}`,
+        );
+        return accounts.map(toModeratorAccount);
       });
     },
 

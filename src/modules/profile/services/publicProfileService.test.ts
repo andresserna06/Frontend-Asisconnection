@@ -83,4 +83,52 @@ describe('publicProfileService', () => {
       body: { receiver_actor_id: 'actor-1' },
     });
   });
+
+  it('loads approved posts for a public actor via GET /actors/:id/posts', async () => {
+    const request = jest
+      .fn()
+      .mockResolvedValueOnce({
+        data: [{ id: 'cat-1', name: 'Salud', main_topic: 'Bienestar y Salud' }],
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'post-99',
+            category_id: 'cat-1',
+            content: 'Publicación pública aprobada',
+            image_url: null,
+            author: {
+              actor_id: 'actor-1',
+              display_name: 'Persona Prueba',
+              role_label: 'ACUDIENTE',
+              avatar_url: null,
+            },
+            reactions_summary: { LIKE: 2, SUPPORT: 1, THANKS: 0 },
+            comments_count: 1,
+            created_at: '2026-11-09T10:00:00.000Z',
+          },
+        ],
+      });
+    const service = createPublicProfileService({ request } as HttpClient);
+
+    await expect(service.getActorPosts?.('actor-1')).resolves.toEqual([
+      {
+        id: 'post-99',
+        category: 'questions',
+        text: 'Publicación pública aprobada',
+        imageUrl: null,
+        imageDescription: null,
+        createdAt: '2026-11-09T10:00:00.000Z',
+        likeCount: 3,
+        commentCount: 1,
+        author: {
+          id: 'actor-1',
+          fullName: 'Persona Prueba',
+          roles: ['ACUDIENTE'],
+          photoUrl: null,
+        },
+      },
+    ]);
+    expect(request).toHaveBeenCalledWith('/actors/actor-1/posts?page=1&limit=20');
+  });
 });

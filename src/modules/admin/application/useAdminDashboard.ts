@@ -19,13 +19,20 @@ function toAdminError(error: unknown): AdminError {
   return error instanceof AdminError ? error : new AdminError('unknown');
 }
 
-export function useAdminDashboard(service: AdminService, isEnabled = true) {
+export function useAdminDashboard(
+  service: AdminService,
+  isEnabled = true,
+  canManageModerators = isEnabled,
+) {
   const [section, setSection] = useState<AdminSection>('moderation');
   const [filter, setFilterValue] = useState<ModerationFilter>('ALL');
   const [queue, setQueue] = useState<AdminResource<ModerationQueuePage>>({ status: 'loading' });
   const [moderators, setModerators] = useState<AdminResource<ModeratorAccount[]>>({
     status: 'loading',
   });
+  const [searchResults, setSearchResults] = useState<AdminResource<ModeratorAccount[]> | null>(
+    null,
+  );
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState<AdminError | null>(null);
   const [busyItemId, setBusyItemId] = useState<string | null>(null);
@@ -61,6 +68,22 @@ export function useAdminDashboard(service: AdminService, isEnabled = true) {
     }
   }, [service]);
 
+  const searchAccounts = useCallback(
+    async (query: string) => {
+      if (!service.searchAccounts) {
+        return;
+      }
+      setSearchResults({ status: 'loading' });
+      try {
+        const accounts = await service.searchAccounts(query);
+        setSearchResults({ status: 'success', data: accounts });
+      } catch (error) {
+        setSearchResults({ status: 'error', error: toAdminError(error) });
+      }
+    },
+    [service],
+  );
+
   useEffect(() => {
     if (!isEnabled) {
       return;
@@ -86,7 +109,7 @@ export function useAdminDashboard(service: AdminService, isEnabled = true) {
   }, [filter, isEnabled, service]);
 
   useEffect(() => {
-    if (!isEnabled) {
+    if (!isEnabled || !canManageModerators) {
       return;
     }
 
@@ -107,7 +130,7 @@ export function useAdminDashboard(service: AdminService, isEnabled = true) {
     return () => {
       isActive = false;
     };
-  }, [isEnabled, service]);
+  }, [canManageModerators, isEnabled, service]);
 
   const loadMore = useCallback(async () => {
     if (queue.status !== 'success' || !queue.data.hasNextPage || isLoadingMore) {
@@ -194,6 +217,7 @@ export function useAdminDashboard(service: AdminService, isEnabled = true) {
     setFilter,
     queue,
     moderators,
+    searchResults,
     isLoadingMore,
     loadMoreError,
     busyItemId,
@@ -202,6 +226,7 @@ export function useAdminDashboard(service: AdminService, isEnabled = true) {
     operationError,
     loadQueue,
     loadModerators,
+    searchAccounts,
     loadMore,
     updateModerationStatus,
     assignModerator,

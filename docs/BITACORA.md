@@ -15,6 +15,18 @@ Formato de cada entrada:
 
 ---
 
+## 2026-11-10 · Integración de Ramas del Equipo, Nuevos Endpoints de Swagger (`T-11`, `T-23`), `UI-05`, `UI-07` y Corrección de Registro (`409 Conflict`)
+
+- Qué se hizo:
+  - **Fusión integral (`merge-team-integration`)**: se unificaron todas las ramas activas del equipo (`origin/feat/services-endpoints-integration`, `origin/feat/shared-ui-branding`, `origin/feat/services-backend-integration` y `origin/feat/media-profile-posts`) resolviendo los conflictos en `auth`, `profile`, `posts`, `settings` y documentación.
+  - **Registro (`409 Conflict` y errores RFC 7807 en `RegisterModal`)**: se agregó `AuthErrorKind = 'conflict'` en `AuthError.ts`, se mapeó el estado HTTP `409` y el campo `detail` en `authService.ts`, y se conectó la visualización del error directamente dentro de `RegisterModal.tsx` con ancho adaptable (`CONTENT_MAX_WIDTH`).
+  - **T-11 · Publicaciones de perfil público (`GET /v1/actors/{id}/posts`)**: se implementó `getActorPosts` en `publicProfileService.ts` y se conectó la lista de publicaciones aprobadas en `OtherProfileScreen.tsx` usando `ProfilePostCard`.
+  - **T-23 · Buscador de cuentas para asignar moderadores (`GET /v1/admin/accounts?search=...`)**: se agregó `searchAccounts` en `AdminService.ts`, `adminService.ts`, `useAdminDashboard.ts` y `ModeratorManagementSection.tsx`, además de habilitar el acceso a la cola de moderación en `AdminScreen.tsx` y `ProfileScreen.tsx` tanto para `ADMIN` como para `MODERATOR`.
+  - **UI-05 y UI-07**: se integró `HeaderTeal` colapsable en `ProfileScreen.tsx` con acceso a Ajustes y se habilitó el chip institucional `Noticias` (`announcements`) en `NewPostScreen.tsx` exclusivamente para cuentas con rol `ADMIN` o `MODERATOR`.
+- Archivos principales: `src/modules/auth/**`, `src/modules/admin/**`, `src/modules/profile/**`, `src/modules/posts/ui/NewPostScreen.tsx`, `docs/PENDIENTES.md`, `docs/BITACORA.md`.
+- Cómo se probó: `npx tsc --noEmit` (0 errores), `npx eslint src` (0 errores, 0 advertencias) y suite completa de Jest (38 suites, 155/155 pruebas en verde).
+- Queda pendiente: validar visualmente en Expo Go (T-03b).
+
 ## 2026-11-09 · T-26 Seguir desde perfil público
 
 - Qué se hizo: se integró la consulta paginada de conexiones y `POST /connections` para enviar solicitud de seguimiento. El perfil muestra «Seguir», «Solicitud pendiente» o «Siguiendo» de acuerdo con el estado del backend; para invitados ofrece iniciar sesión.

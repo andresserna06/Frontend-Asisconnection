@@ -2,6 +2,8 @@ import type { ProfileErrorKind } from '@/modules/profile/domain/models/ProfileEr
 
 // User-facing texts of the profile module (Spanish).
 export const PROFILE_STRINGS = {
+  headerTitle: 'Mi perfil',
+  openSettings: 'Abrir ajustes de privacidad',
   adminPanel: 'Panel de administración',
   openAdminPanel: 'Abrir panel de administración',
   signIn: 'Iniciar sesión',
@@ -27,6 +29,7 @@ export const PROFILE_STRINGS = {
       unknown: 'No pudimos actualizar el seguimiento. Inténtalo de nuevo.',
     },
     posts: (count: number) => `Publicaciones (${count})`,
+    postsEmpty: 'Esta persona aún no tiene publicaciones aprobadas.',
     postsUnavailable: 'Las publicaciones de otros perfiles aún no están disponibles.',
     errors: {
       conflict: 'Ya existe una solicitud o conexión con esta persona.',

@@ -9,39 +9,34 @@ Cómo se usa:
 
 ---
 
-## 1. Estado de Pantallas e Interfaces Integradas
+## 1. Estado de Pantallas, Endpoints e Interfaces Integradas (100% Completadas)
 
 - [x] **UI-01 · Registro y Modo Invitado en `LoginScreen.tsx`**
-  - Integrado `submitAnonymous` (`POST /sessions/anonymous`) y `RegisterModal.tsx` (`POST /auth/registro`).
-- [x] **UI-02 · Pantalla `5b` — Perfil Público de Otra Persona (`src/app/users/[userId].tsx`)**
-  - Integrada en `OtherProfileScreen.tsx` con `publicProfileService` (`GET /actors/{id}`, `GET /connections`, `POST /connections`).
-- [x] **UI-03 · Panel de Administración y Moderación Comunitaria (`src/app/admin/index.tsx`)**
-  - Integrado `AdminScreen.tsx` con cola paginada de moderación (`GET /admin/moderation/pending`, `PATCH /admin/moderation/posts|comments/:id/status`) y gestión de moderadores (`GET /admin/moderators`, `PUT /admin/moderators/:userAccountId`).
+  - Integrado `submitAnonymous` (`POST /sessions/anonymous`) y `RegisterModal.tsx` (`POST /auth/registro`), incluyendo manejo explícito de conflictos `409 Conflict` y visualización de errores RFC 7807 dentro del modal.
+- [x] **UI-02 y T-11 · Pantalla `5b` — Perfil Público de Otra Persona y sus Publicaciones (`src/app/users/[userId].tsx`)**
+  - Integrada en `OtherProfileScreen.tsx` con `publicProfileService` (`GET /actors/{id}`, `GET /actors/{id}/posts`, `GET /connections`, `POST /connections`).
+- [x] **UI-03 y T-23 · Panel de Administración, Moderación Comunitaria y Directorio de Cuentas (`src/app/admin/index.tsx`)**
+  - Integrado `AdminScreen.tsx` con cola paginada de moderación (`GET /admin/moderation/pending`, `PATCH /admin/moderation/posts|comments/:id/status`) accesible para `ADMIN` y `MODERATOR`, y gestión de moderadores (`GET /admin/accounts?search=...`, `GET /admin/moderators`, `PUT /admin/moderators/:userAccountId`, `DELETE /admin/moderators/:userAccountId`) exclusiva para `ADMIN`.
 - [x] **UI-04 · Modal de Edición de Perfil Propio en `ProfileScreen.tsx`**
   - Integrado `EditProfileModal.tsx` llamando a `PATCH /actors/me` y recarga de perfil.
+- [x] **UI-05 · Header Verde Colapsable (`HeaderTeal`) en `ProfileScreen.tsx`**
+  - Integrado `HeaderTeal` con `useCollapsingHeader`, título *«Mi perfil»* y botón de acceso directo a `/profile/settings`.
 - [x] **UI-06 · Selector de Cámara y Galería en `NewPostScreen.tsx` y Avatar en `ProfileScreen.tsx` (`expo-image-picker`)**
   - Conectados con `expo-image-picker` y subida a Cloudinary vía `POST /v1/media/upload`.
+- [x] **UI-07 · Restricción Visual del Chip «Noticias» (Avisos) en `NewPostScreen.tsx`**
+  - El chip institucional (`announcements` / `Noticias`) se muestra únicamente cuando el usuario autenticado posee rol `'ADMIN'` o `'MODERATOR'`.
 - [x] **UI-08 · Extracción de Átomos y Organismos a `src/shared/ui/` (T-05)**
   - Subidos `Avatar`, `CategoryChip`, `ToggleRow` y `HeaderTeal` a `src/shared/ui/`.
 - [x] **UI-09 · Ícono y Splash Oficiales en `app.json` (T-15)**
   - Configurados recursos gráficos de la Fundación ASISCO UP en `app.json`.
+- [x] **T-24 · Notificaciones Multievento (`NEW_FOLLOWER`) y `DeviceSessionGuard`**
+  - Integrado en `notificationsService.ts` y desplegado en Render (`GET /v1/notifications`, `PATCH /v1/notifications/read-all`).
 
 ---
 
-## 2. Refinamientos Visuales Pendientes
+## 2. Fuera del Alcance del MVP de Backend / Por Validar en Dispositivo
 
-- [ ] **UI-05 · Header Verde Colapsable (`HeaderTeal`) en `ProfileScreen.tsx`**
-  - Envolver `ProfileScreen.tsx` con el mismo header verde institucional (`COLORS.primary`, esquinas inferiores `RADIUS.cardLarge = 22` y animación `useCollapsingHeader`) que usan `ForumScreen`, `NotificationsScreen` y `EcosystemScreen`, colocando allí el título *«Mi perfil»* y el ícono de engranaje hacia `/profile/settings`.
-- [ ] **UI-07 · Restricción Visual del Chip «Noticias» (Avisos) en `NewPostScreen.tsx`**
-  - Ocultar o deshabilitar el chip de la categoría institucional (`announcements` / `Noticias`) cuando el usuario autenticado no tenga rol `'ADMIN'` o `'MODERATOR'`.
-
----
-
-## 3. Bloqueadas o Pendientes del Backend / Despliegue en Render
-
-- [!] **T-23 Directorio de usuarios para ADMIN**: Integrar `GET /v1/admin/accounts?search=...` en `AdminScreen.tsx` cuando la última versión del backend esté desplegada en Render.
-- [!] **T-24 Diagnosticar 401 de Notificaciones**: Verificar tras redespliegue de Render que `GET /v1/notifications` y `PATCH /v1/notifications/read-all` acepten el `device_token` con `DeviceSessionGuard`.
-- [!] **T-03b Probar el login y los módulos en Expo Go**: Probar el flujo autenticado completo desde Expo Go con una cuenta válida del equipo.
-- [!] **T-11 Publicaciones en perfil de otra persona**: Conectar `GET /v1/actors/{id}/posts` en `OtherProfileScreen.tsx` cuando esté desplegado en Render, y evaluar si se requiere `DELETE /v1/connections/{id}` para dejar de seguir.
-- [!] **Recuperar contraseña**: Enlace visible en el login; el backend no tiene endpoint en el MVP.
-- [!] **Persistencia en servidor de publicaciones guardadas (`/actors/me/saved`)**: Fuera del alcance del MVP de backend.
+- [ ] **T-03b Probar el flujo completo en Expo Go físico**: Validar visualmente todas las pantallas en dispositivo móvil con Expo Go.
+- [!] **Recuperar contraseña**: Enlace visible en el login (`showComingSoonNotice`); el backend no incluye endpoint de recuperación de contraseña en el MVP.
+- [!] **Cancelar seguimiento (`DELETE /v1/connections/{id}`)**: El backend actual permite crear y consultar conexiones (`POST /connections`, `GET /connections`), pero no incluye endpoint para eliminar una conexión existente.
+- [!] **Persistencia en servidor de publicaciones guardadas (`/actors/me/saved`)**: Fuera del alcance del MVP de backend (`getMySavedPosts` retorna `[]`).

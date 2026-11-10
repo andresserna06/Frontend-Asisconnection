@@ -3,4 +3,6 @@ export type ModeratorAccount = {
   username: string;
   email: string;
   role: string;
+  localRole?: string | null;
+  displayName?: string | null;
 };

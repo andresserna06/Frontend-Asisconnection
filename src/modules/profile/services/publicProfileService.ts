@@ -1,10 +1,12 @@
-import { isRoleCode } from '@/modules/auth';
+import { isRoleCode, type RoleCode } from '@/modules/auth';
 import { PublicProfileError } from '@/modules/profile/domain/models/PublicProfileError';
 import type {
   ProfileConnectionStatus,
   PublicProfileService,
 } from '@/modules/profile/domain/PublicProfileService';
 import type { PublicProfile } from '@/modules/profile/domain/models/PublicProfile';
+import { type CategoryCode, toCategoryCode } from '@/shared/domain/models/CategoryCode';
+import type { Post } from '@/shared/domain/models/Post';
 import { HttpError, type HttpClient } from '@/shared/lib/http';
 
 type ActorProfileResponse = {
@@ -39,6 +41,41 @@ type ActorConnectionsPageResponse = {
 };
 
 type CreateConnectionResponse = ActorConnectionResponse;
+
+type CategoryItemResponse = {
+  id: string;
+  name: string;
+  main_topic?: string;
+};
+
+type CategoriesPageResponse = {
+  data: CategoryItemResponse[];
+};
+
+type PublicPostItemResponse = {
+  id: string;
+  category_id: string;
+  content: string;
+  image_url: string | null;
+  media_urls?: string[];
+  author: {
+    actor_id?: string | null;
+    display_name: string;
+    role_label: string;
+    avatar_url?: string | null;
+  };
+  reactions_summary: {
+    LIKE: number;
+    SUPPORT: number;
+    THANKS: number;
+  };
+  comments_count: number;
+  created_at: string;
+};
+
+type PostsPageResponse = {
+  data: PublicPostItemResponse[];
+};
 
 function toPublicProfile(actor: ActorProfileResponse): PublicProfile {
   const fullName =
@@ -90,7 +127,53 @@ function toConnectionStatus(status: ActorConnectionResponse['status']): ProfileC
   }
 }
 
+function toPost(item: PublicPostItemResponse, categoriesById: Record<string, CategoryCode>): Post {
+  const imageUrl = item.media_urls?.[0] ?? item.image_url;
+  const likeCount =
+    (item.reactions_summary?.LIKE ?? 0) +
+    (item.reactions_summary?.SUPPORT ?? 0) +
+    (item.reactions_summary?.THANKS ?? 0);
+  const roles: RoleCode[] = isRoleCode(item.author.role_label)
+    ? [item.author.role_label]
+    : ['ACUDIENTE'];
+
+  return {
+    id: item.id,
+    category: categoriesById[item.category_id] ?? 'guides',
+    text: item.content,
+    imageUrl,
+    imageDescription: imageUrl ? `Imagen de ${item.author.display_name}` : null,
+    createdAt: item.created_at,
+    likeCount,
+    commentCount: item.comments_count,
+    author: {
+      id: item.author.actor_id ?? item.author.display_name,
+      fullName: item.author.display_name,
+      roles,
+      photoUrl: item.author.avatar_url ?? null,
+    },
+  };
+}
+
 export function createPublicProfileService(client: HttpClient): PublicProfileService {
+  let cachedCategories: Record<string, CategoryCode> | null = null;
+
+  async function loadCategoriesById(): Promise<Record<string, CategoryCode>> {
+    if (cachedCategories !== null) {
+      return cachedCategories;
+    }
+    const page = await client.request<CategoriesPageResponse>('/categories?page=1&limit=50');
+    const byId: Record<string, CategoryCode> = {};
+    for (const item of page.data) {
+      const code = toCategoryCode(item.name, item.main_topic);
+      if (code !== null) {
+        byId[item.id] = code;
+      }
+    }
+    cachedCategories = byId;
+    return cachedCategories;
+  }
+
   return {
     async getPublicProfile(actorId) {
       if (actorId.trim().length === 0) {
@@ -150,6 +233,23 @@ export function createPublicProfileService(client: HttpClient): PublicProfileSer
         });
         return toConnectionStatus(response.status);
       } catch (error) {
+        throw toPublicProfileError(error);
+      }
+    },
+
+    async getActorPosts(actorId) {
+      try {
+        const [categoriesById, page] = await Promise.all([
+          loadCategoriesById(),
+          client.request<PostsPageResponse>(
+            `/actors/${encodeURIComponent(actorId)}/posts?page=1&limit=20`,
+          ),
+        ]);
+        return page.data.map((item) => toPost(item, categoriesById));
+      } catch (error) {
+        if (error instanceof HttpError && error.status === 404) {
+          return [];
+        }
         throw toPublicProfileError(error);
       }
     },

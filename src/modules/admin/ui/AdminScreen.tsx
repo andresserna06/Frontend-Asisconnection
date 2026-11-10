@@ -28,14 +28,16 @@ export function AdminScreen({ service: serviceOverride }: AdminScreenProps = {})
   const defaultService = useAdminService();
   const service = serviceOverride ?? defaultService;
   const isAdmin = user?.roles.includes('ADMIN') ?? false;
-  const dashboard = useAdminDashboard(service, isAdmin);
+  const isModerator = user?.roles.includes('MODERATOR') ?? false;
+  const canAccessModeration = isAdmin || isModerator;
+  const dashboard = useAdminDashboard(service, canAccessModeration, isAdmin);
   const [headerHeight] = useState(() => new Animated.Value(insets.top + HEADER_ROW_HEIGHT));
 
   useEffect(() => {
     headerHeight.setValue(insets.top + HEADER_ROW_HEIGHT);
   }, [headerHeight, insets.top]);
 
-  if (!isAdmin) {
+  if (!canAccessModeration) {
     return (
       <ResponsiveScreen>
         <View style={[styles.container, styles.unauthorized, { paddingTop: insets.top }]}>
@@ -71,36 +73,38 @@ export function AdminScreen({ service: serviceOverride }: AdminScreenProps = {})
           <Text style={styles.introText}>{ADMIN_STRINGS.intro}</Text>
         </View>
 
-        <View style={styles.tabs}>
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityLabel={ADMIN_STRINGS.moderationTab}
-            accessibilityState={{ selected: dashboard.section === 'moderation' }}
-            onPress={() => dashboard.setSection('moderation')}
-            style={[styles.tab, dashboard.section === 'moderation' && styles.activeTab]}
-          >
-            <Text
-              style={[styles.tabText, dashboard.section === 'moderation' && styles.activeTabText]}
+        {isAdmin ? (
+          <View style={styles.tabs}>
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityLabel={ADMIN_STRINGS.moderationTab}
+              accessibilityState={{ selected: dashboard.section === 'moderation' }}
+              onPress={() => dashboard.setSection('moderation')}
+              style={[styles.tab, dashboard.section === 'moderation' && styles.activeTab]}
             >
-              {ADMIN_STRINGS.moderationTab}
-            </Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityLabel={ADMIN_STRINGS.moderatorsTab}
-            accessibilityState={{ selected: dashboard.section === 'moderators' }}
-            onPress={() => dashboard.setSection('moderators')}
-            style={[styles.tab, dashboard.section === 'moderators' && styles.activeTab]}
-          >
-            <Text
-              style={[styles.tabText, dashboard.section === 'moderators' && styles.activeTabText]}
+              <Text
+                style={[styles.tabText, dashboard.section === 'moderation' && styles.activeTabText]}
+              >
+                {ADMIN_STRINGS.moderationTab}
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityLabel={ADMIN_STRINGS.moderatorsTab}
+              accessibilityState={{ selected: dashboard.section === 'moderators' }}
+              onPress={() => dashboard.setSection('moderators')}
+              style={[styles.tab, dashboard.section === 'moderators' && styles.activeTab]}
             >
-              {ADMIN_STRINGS.moderatorsTab}
-            </Text>
-          </Pressable>
-        </View>
+              <Text
+                style={[styles.tabText, dashboard.section === 'moderators' && styles.activeTabText]}
+              >
+                {ADMIN_STRINGS.moderatorsTab}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
 
-        {dashboard.section === 'moderation' ? (
+        {dashboard.section === 'moderation' || !isAdmin ? (
           <ModerationSection
             queue={dashboard.queue}
             filter={dashboard.filter}
@@ -120,9 +124,11 @@ export function AdminScreen({ service: serviceOverride }: AdminScreenProps = {})
           >
             <ModeratorManagementSection
               moderators={dashboard.moderators}
+              searchResults={dashboard.searchResults}
               busyModeratorId={dashboard.busyModeratorId}
               isAssigningModerator={dashboard.isAssigningModerator}
               operationError={dashboard.operationError}
+              onSearch={service.searchAccounts ? dashboard.searchAccounts : undefined}
               onAssign={dashboard.assignModerator}
               onRevoke={dashboard.revokeModerator}
               onRetry={() => void dashboard.loadModerators()}
