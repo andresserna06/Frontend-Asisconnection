@@ -32,9 +32,11 @@ Cómo se usa:
   - **Lo que ya está hecho en lógica/servicios**:
     - `forumService.listPendingModeration()` (`GET /admin/moderation/pending`) y `forumService.moderateItem(id, itemType, status)` (`PATCH /admin/moderation/posts|comments/:id/status`) ya están implementados.
     - El hook `useModerationQueue(repository)` ya está exportado desde `@/modules/forum` (`src/modules/forum/application/useModerationQueue.ts`).
+    - **Nuevo en Backend**: `GET /v1/admin/accounts?search=...` para buscar cuentas de usuario (`id`, `username`, `email`, `rol`, `local_role`, `display_name`, `avatar_url`) y `PUT /v1/admin/moderators/:userAccountId` para asignar/revocar `MODERATOR`.
   - **Lo que debe hacer el equipo de UI**:
     1. Mostrar un botón/acceso en el Header del Foro o en Perfil **solo cuando `user.roles` incluya `'ADMIN'` o `'MODERATOR'`**.
     2. Construir la lista visual de tarjetas pendientes (`items` de `useModerationQueue`) con dos botones accesibles (44×44): *«Aprobar»* (`decide(id, itemType, 'APPROVED')`) y *«Rechazar»* (`decide(id, itemType, 'REJECTED')`).
+    3. (Opcional para Admin): Buscador de cuentas con `GET /v1/admin/accounts?search=...` para listar usuarios y asignarles el rol de moderador.
 
 - [ ] **UI-04 · Modal de Edición de Perfil Propio en `ProfileScreen.tsx`**
   - **Lo que ya está hecho en lógica/servicios**:

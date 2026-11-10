@@ -15,6 +15,21 @@ Formato de cada entrada:
 
 ---
 
+## 2026-11-09 · Soporte de Notificaciones Multievento (`NEW_FOLLOWER`), Resolución 401 y Directorio de Cuentas Admin
+- Qué se hizo:
+  - **Frontend (`Frontend-Asisconnection`)**:
+    - Se amplió `NotificationType` en `src/modules/notifications/domain/models/NotificationItem.ts` para soportar `'NEW_FOLLOWER'`, homologando los eventos con el backend.
+    - Se documentó el ADR-003 (`docs/adr/ADR-003-notificaciones-multievento-y-directorio-usuarios.md`) detallando la integración de eventos sociales y el consumo del nuevo directorio administrativo `GET /v1/admin/accounts`.
+    - Se aclaró el alcance de publicaciones guardadas (`getMySavedPosts` retorna `[]` por estar fuera del MVP de backend).
+  - **Backend (`Asisconnection`)**:
+    - Se corrigió el error 401 en notificaciones aplicando `@UseGuards(DeviceSessionGuard)` a `GET /v1/notifications` y `PATCH /v1/notifications/read-all`.
+    - Se implementó agregación multievento (`LIKE_ON_POST`, `COMMENT_ON_POST`, `REPLY_TO_COMMENT`, `NEW_FOLLOWER`, `FOUNDATION_ANNOUNCEMENT`) y seguimiento de fecha de lectura con `last_notifications_read_at` en `Actor`.
+    - Se creó el endpoint `GET /v1/admin/accounts?search=...` para listar y buscar usuarios registrados para la asignación de moderadores.
+- Cómo se probó:
+  - Frontend: `npx tsc --noEmit` (0 errores), `npx expo lint` (0 errores), `npm test` (30 suites, 119/119 pruebas pasando).
+  - Backend: `npm run lint` (0 errores), `npm run test` (3 suites, 22/22 pruebas pasando), `npm run build` (compilación NestJS exitosa).
+- Queda pendiente: Desplegar la actualización en Render y avanzar en las tareas de maquetación de UI restantes en frontend.
+
 ## 2026-11-09 · Integración Multimedia (Cloudinary) en Perfil y Foro, y Auto-aprobación para Administradores
 - Qué se hizo:
   - **Backend (`Asisconnection`)**:
