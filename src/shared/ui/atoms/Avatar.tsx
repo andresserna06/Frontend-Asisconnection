@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { getInitials } from '@/shared/lib/getInitials';
@@ -29,13 +30,16 @@ export function getAvatarTone(id: string): AvatarTone {
 }
 
 // Decorative: the adjacent name is what screen readers read.
+// Falls back to the initials when there is no photo or it cannot be loaded.
 export function Avatar({ name, photoUrl, size, tone = 'accent' }: AvatarProps) {
   const sizeStyle = size === 'large' ? styles.large : styles.small;
-  if (photoUrl !== null) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  if (photoUrl !== null && photoUrl.trim().length > 0 && photoUrl !== failedUrl) {
     return (
       <Image
         source={photoUrl}
         contentFit="cover"
+        onError={() => setFailedUrl(photoUrl)}
         style={[styles.base, sizeStyle]}
         accessibilityElementsHidden
         importantForAccessibility="no"

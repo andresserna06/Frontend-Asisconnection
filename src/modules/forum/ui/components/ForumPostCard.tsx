@@ -13,6 +13,7 @@ import {
   SIZE,
   SPACING,
 } from '@/shared/theme';
+import { useReactionToggle } from '@/shared/hooks/useReactionToggle';
 import { Icon } from '@/shared/ui/atoms/Icon';
 
 import { FORUM_STRINGS } from '../strings';
@@ -21,8 +22,11 @@ type ForumPostCardProps = {
   post: ForumPost;
   onCommentsPress: () => void;
   onAuthorPress?: () => void;
-  onLikePress?: () => void;
+  // Resolves with whether the viewer's like is active after the toggle.
+  onLikePress?: () => Promise<boolean>;
 };
+
+const rejectLike = () => Promise.reject(new Error('Likes are not available.'));
 
 export function ForumPostCard({
   post,
@@ -31,12 +35,14 @@ export function ForumPostCard({
   onLikePress,
 }: ForumPostCardProps) {
   const palette = CATEGORY_COLORS[post.category];
-  const [isLiked, setIsLiked] = useState(false);
-  const likeCount = post.likeCount + (isLiked ? 1 : 0);
+  const like = useReactionToggle(post.likeCount, onLikePress ?? rejectLike, `post:${post.id}`);
+  const isLiked = like.isActive;
+  const likeCount = like.count;
 
   function handleLikePress() {
-    setIsLiked((current) => !current);
-    onLikePress?.();
+    if (onLikePress) {
+      like.toggle();
+    }
   }
 
   return (
@@ -158,13 +164,17 @@ type AuthorAvatarProps = {
 };
 
 function AuthorAvatar({ post, palette }: AuthorAvatarProps) {
-  return post.author.avatarUri === null ? (
+  const [failedUri, setFailedUri] = useState<string | null>(null);
+  const uri = post.author.avatarUri;
+
+  return uri === null || uri.trim().length === 0 || uri === failedUri ? (
     <View style={[styles.avatar, { backgroundColor: palette.soft }]}>
       <Text style={[styles.initials, { color: palette.onSoft }]}>{post.author.initials}</Text>
     </View>
   ) : (
     <Image
-      source={{ uri: post.author.avatarUri }}
+      source={{ uri }}
+      onError={() => setFailedUri(uri)}
       style={styles.avatar}
       contentFit="cover"
       accessibilityLabel={FORUM_STRINGS.photoOf(post.author.name)}

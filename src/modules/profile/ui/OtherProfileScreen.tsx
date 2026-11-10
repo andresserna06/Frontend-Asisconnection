@@ -35,11 +35,17 @@ export function OtherProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const { isAnonymous, signOut } = useAuth();
   const service = usePublicProfileService();
-  const { profile, reload, posts } = usePublicProfile(service, userId);
+  const { profile, reload, refresh, posts } = usePublicProfile(service, userId);
   const follow = usePublicProfileConnection(service, userId, isAnonymous);
   const expandedHeaderHeight = insets.top + HEADER_ROW_HEIGHT;
   const { headerHeight, onScroll } = useCollapsingHeader(expandedHeaderHeight);
   const hasActorPostsSupport = typeof service.getActorPosts === 'function';
+
+  // After following, the follower count changes: fetch it again without a spinner.
+  async function handleFollow() {
+    await follow.requestFollow();
+    await refresh();
+  }
 
   function handleRetry() {
     reload();
@@ -121,7 +127,7 @@ export function OtherProfileScreen() {
               connection={follow.connection}
               isRequesting={follow.isRequesting}
               operationError={follow.operationError?.kind ?? null}
-              onFollow={() => void follow.requestFollow()}
+              onFollow={() => void handleFollow()}
               onRetry={() => void follow.retryConnectionStatus()}
               onSignIn={() => void handleSignIn()}
             />

@@ -1,8 +1,7 @@
-import { useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
+import { router, useFocusEffect } from 'expo-router';
 
 import { useAuth } from '@/modules/auth';
 import { useMyProfile } from '@/modules/profile/application/useMyProfile';
@@ -12,6 +11,7 @@ import type { Post } from '@/shared/domain/models/Post';
 import { PROFILE_ERROR_MESSAGES, PROFILE_STRINGS } from '@/modules/profile/ui/strings';
 import { useProfileService } from '@/modules/profile/useProfileService';
 import { useCollapsingHeader } from '@/shared/hooks/useCollapsingHeader';
+import { pickImageFromLibrary } from '@/shared/lib/imagePicker';
 import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SIZE, SPACING } from '@/shared/theme';
 import { Icon } from '@/shared/ui/atoms/Icon';
 import { HeaderTeal } from '@/shared/ui/organisms/HeaderTeal';
@@ -34,8 +34,25 @@ export function ProfileScreen() {
   const { profile, posts, activeTab, selectTab } = useMyProfile(service);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const expandedHeaderHeight = insets.top + HEADER_ROW_HEIGHT;
   const { headerHeight, onScroll } = useCollapsingHeader(expandedHeaderHeight);
+  const { refresh: refreshProfile } = profile;
+  const { refresh: refreshPosts } = posts;
+  const hasBeenFocused = useRef(false);
+
+  const focusCallback = useCallback(() => {
+    if (!hasBeenFocused.current) {
+      hasBeenFocused.current = true;
+      return;
+    }
+    refreshProfile();
+    refreshPosts();
+  }, [refreshProfile, refreshPosts]);
+
+  // Counters (followers, following, posts) change from other screens: refresh them
+  // in the background every time the tab is shown again (the first load is already running).
+  useFocusEffect?.(focusCallback);
 
   async function handleSignIn() {
     await signOut();
@@ -43,37 +60,24 @@ export function ProfileScreen() {
   }
 
   async function handleChangePhoto() {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission?.granted) {
-      Alert.alert(
-        'Permiso necesario',
-        'Se requiere acceso a la galería para cambiar tu foto de perfil.',
-      );
+    const result = await pickImageFromLibrary({ isSquare: true });
+    if (result.status === 'denied') {
+      setPhotoError(PROFILE_STRINGS.photo.permissionDenied);
+      return;
+    }
+    if (result.status === 'cancelled' || !service.uploadAvatar || !service.updateMyProfile) {
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (result.canceled || !result.assets[0]?.uri) {
-      return;
-    }
-
+    setPhotoError(null);
+    setIsUploadingPhoto(true);
     try {
-      setIsUploadingPhoto(true);
-      const uploadedUrl = service.uploadAvatar
-        ? await service.uploadAvatar(result.assets[0].uri)
-        : result.assets[0].uri;
-      if (service.updateMyProfile) {
-        await service.updateMyProfile({ avatarUrl: uploadedUrl });
-      }
-      profile.reload();
+      const uploadedUrl = await service.uploadAvatar(result.file);
+      await service.updateMyProfile({ avatarUrl: uploadedUrl });
+      profile.refresh();
     } catch {
-      Alert.alert('Error', 'No fue posible subir la foto. Intenta nuevamente.');
+      // Alert.alert does nothing on web, so the error is shown inline.
+      setPhotoError(PROFILE_STRINGS.photo.uploadFailed);
     } finally {
       setIsUploadingPhoto(false);
     }
@@ -105,7 +109,7 @@ export function ProfileScreen() {
   async function handleSaveProfile(input: UpdateProfileInput) {
     if (service.updateMyProfile) {
       await service.updateMyProfile(input);
-      profile.reload();
+      profile.refresh();
     }
   }
 
@@ -118,6 +122,11 @@ export function ProfileScreen() {
         isUploading={isUploadingPhoto}
         onChangePhoto={() => void handleChangePhoto()}
       />
+      {photoError !== null ? (
+        <Text accessibilityRole="alert" style={styles.photoError}>
+          {photoError}
+        </Text>
+      ) : null}
       <StatsCard
         postCount={me.postCount}
         followerCount={me.followerCount}
@@ -201,6 +210,7 @@ export function ProfileScreen() {
       </ResponsiveScreen>
 
       <EditProfileModal
+        key={`${me.fullName}:${me.city ?? ''}:${me.shortBio ?? ''}`}
         visible={isEditOpen}
         profile={me}
         onClose={() => setIsEditOpen(false)}
@@ -270,6 +280,11 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.7,
+  },
+  photoError: {
+    color: COLORS.danger,
+    fontFamily: FONT_FAMILY.body,
+    fontSize: FONT_SIZE.s14,
   },
   separator: {
     height: SPACING.s14,

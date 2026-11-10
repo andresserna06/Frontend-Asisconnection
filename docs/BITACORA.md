@@ -15,6 +15,18 @@ Formato de cada entrada:
 
 ---
 
+## 2026-11-10 · Corrección de Subida Multimedia Web/Móvil, Cámara en Web, Contadores al Seguir, Persistencia de Likes y Perfil Recién Creado
+
+- Qué se hizo:
+  - **Subida de fotos en publicaciones y avatar (`POST /v1/media/upload`)**: se creó el modelo compartido `LocalMediaFile` (`src/shared/domain/models/LocalMediaFile.ts`) y el adaptador `imagePicker.ts` (`src/shared/lib/imagePicker.ts`) para conservar el archivo real del navegador (`asset.file: File/Blob`) en Web y el descriptor `{ uri, name, type }` en nativo dentro de `buildMediaFormData` (`src/shared/lib/uploadMedia.ts`), evitando el `400 Bad Request` en Web cuando `expo-image-picker` entrega URIs `blob:`.
+  - **Botón de cámara en Web (`NewPostScreen`)**: se ocultó el botón de cámara en navegador (`IS_CAMERA_AVAILABLE = Platform.OS !== 'web'`), donde `expo-image-picker` abre el mismo selector de archivos que galería, y se reemplazaron las alertas nativas mudas en Web por mensajes de error en línea.
+  - **Actualización de seguidores al seguir (`OtherProfileScreen` / `ProfileScreen`)**: se agregó `refresh()` silencioso en `usePublicProfile` y `useAsyncData`, invocado tras `requestFollow()` y al volver a enfocar `ProfileScreen` (`useFocusEffect`), para actualizar inmediatamente los contadores de seguidores y siguiendo sin recargar la página.
+  - **Sincronización y persistencia de reacciones (`useReactionToggle`)**: se creó `useReactionToggle` (`src/shared/hooks/useReactionToggle.ts`) con reconciliación contra la respuesta `active` del backend, persistencia por clave (`post:<id>` / `comment:<id>`) en memoria y `localStorage` (Web) e invalidación de caché en `useForumFeed` y `useComments`, evitando que los *likes* se sumen doble al recargar o se desmarquen al cerrar y reabrir Comentarios.
+  - **Iniciales en avatar y limpieza de datos de ejemplo (`María Gómez`)**: se agregó respaldo automático a iniciales (`onError`) en `Avatar.tsx` y `ForumPostCard.tsx`, inicialización del perfil en `authService.register` (`PATCH /actors/me`), normalización en `profileService.ts` y `publicProfileService.ts` para ignorar el nombre/URL de ejemplo de Swagger (`María Gómez` / `cdn.asisco.org/avatars/maria.jpg`) cuando el usuario tiene otro `username`, y precarga de nombres en `EditProfileModal.tsx`.
+- Archivos principales: `src/shared/domain/models/LocalMediaFile.ts`, `src/shared/lib/imagePicker.ts`, `src/shared/lib/uploadMedia.ts`, `src/shared/hooks/useReactionToggle.ts`, `src/shared/ui/atoms/Avatar.tsx`, `src/modules/posts/ui/NewPostScreen.tsx`, `src/modules/profile/**`, `src/modules/forum/**`, `src/modules/comments/**`, `src/modules/auth/services/authService.ts`.
+- Cómo se probó: `npx tsc --noEmit`, `npx eslint src` y pruebas unitarias con Jest (`useReactionToggle.test.ts`, `uploadMedia.test.ts`, `ProfileScreen.test.tsx`).
+- Queda pendiente: validar visualmente en Expo Go (T-03b).
+
 ## 2026-11-10 · Integración de Ramas del Equipo, Nuevos Endpoints de Swagger (`T-11`, `T-23`), `UI-05`, `UI-07` y Corrección de Registro (`409 Conflict`)
 
 - Qué se hizo:

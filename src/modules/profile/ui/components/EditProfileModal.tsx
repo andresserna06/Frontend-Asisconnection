@@ -3,7 +3,7 @@ import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { MyProfile } from '@/modules/profile/domain/models/MyProfile';
 import type { UpdateProfileInput } from '@/modules/profile/domain/ProfileService';
-import { COLORS, FONT_FAMILY, FONT_SIZE, RADIUS, SPACING } from '@/shared/theme';
+import { COLORS, CONTENT_MAX_WIDTH, FONT_FAMILY, FONT_SIZE, RADIUS, SPACING } from '@/shared/theme';
 import { Button } from '@/shared/ui/atoms/Button';
 import { TextField } from '@/shared/ui/molecules/TextField';
 
@@ -14,12 +14,23 @@ type EditProfileModalProps = {
   onSave: (input: UpdateProfileInput) => Promise<void>;
 };
 
+function splitFullName(fullName: string): { firstNames: string; lastNames: string } {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 1) {
+    return { firstNames: parts[0] ?? '', lastNames: '' };
+  }
+  return {
+    firstNames: parts[0] ?? '',
+    lastNames: parts.slice(1).join(' '),
+  };
+}
+
 export function EditProfileModal({ visible, profile, onClose, onSave }: EditProfileModalProps) {
-  const [firstNames, setFirstNames] = useState('');
-  const [lastNames, setLastNames] = useState('');
+  const initialNames = splitFullName(profile.fullName);
+  const [firstNames, setFirstNames] = useState(initialNames.firstNames);
+  const [lastNames, setLastNames] = useState(initialNames.lastNames);
   const [city, setCity] = useState(profile.city ?? '');
   const [shortBio, setShortBio] = useState(profile.shortBio ?? '');
-  const [avatarUrl, setAvatarUrl] = useState(profile.photoUrl ?? '');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,10 +40,9 @@ export function EditProfileModal({ visible, profile, onClose, onSave }: EditProf
     try {
       await onSave({
         ...(firstNames.trim() ? { firstNames: firstNames.trim() } : {}),
-        ...(lastNames.trim() ? { lastNames: lastNames.trim() } : {}),
+        lastNames: lastNames.trim(),
         city: city.trim() || undefined,
         shortBio: shortBio.trim() || undefined,
-        avatarUrl: avatarUrl.trim() || undefined,
       });
       onClose();
     } catch {
@@ -80,14 +90,6 @@ export function EditProfileModal({ visible, profile, onClose, onSave }: EditProf
               multiline
             />
 
-            <TextField
-              label="URL de foto de perfil (HTTPS)"
-              placeholder="https://..."
-              value={avatarUrl}
-              onChangeText={setAvatarUrl}
-              autoCapitalize="none"
-            />
-
             {error && <Text style={styles.errorText}>{error}</Text>}
 
             <View style={styles.actions}>
@@ -108,6 +110,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
+    width: '100%',
+    maxWidth: CONTENT_MAX_WIDTH,
+    alignSelf: 'center',
     backgroundColor: COLORS.surface,
     borderTopLeftRadius: RADIUS.cardLarge,
     borderTopRightRadius: RADIUS.cardLarge,

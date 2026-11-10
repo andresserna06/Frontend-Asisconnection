@@ -3,6 +3,7 @@ import type {
   ActorConnectionResult,
   ProfileService,
 } from '@/modules/profile/domain/ProfileService';
+import type { LocalMediaFile } from '@/shared/domain/models/LocalMediaFile';
 import type { Post } from '@/shared/domain/models/Post';
 
 // Test doubles for the profile module (fictitious data). Only imported from *.test.ts(x).
@@ -57,7 +58,9 @@ export function createFakeProfileService(overrides: Partial<ProfileService> = {}
       id: 'conn-1',
       status: 'ACCEPTED',
     })),
-    uploadAvatar: jest.fn<Promise<string>, [string]>(async () => 'https://example.test/avatar.jpg'),
+    uploadAvatar: jest.fn<Promise<string>, [LocalMediaFile]>(
+      async () => 'https://example.test/avatar.jpg',
+    ),
     ...overrides,
   };
 }

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { ForumFilter } from '@/modules/forum/domain/models/ForumCategory';
 import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
@@ -55,8 +55,15 @@ export function useForumFeed(filter: ForumFilter): ForumFeedState {
 
 export function useTogglePostLike() {
   const repository = useForumRepository();
+  const queryClient = useQueryClient();
 
-  return (postId: string) => {
-    void repository?.toggleLike?.(postId).catch(() => undefined);
+  // Resolves with whether the like is active after the toggle (answer of the server).
+  return async (postId: string): Promise<boolean> => {
+    if (!repository?.toggleLike) {
+      throw new Error('Forum service is not configured.');
+    }
+    const isActive = await repository.toggleLike(postId);
+    void queryClient.invalidateQueries({ queryKey: ['forum', 'feed'] });
+    return isActive;
   };
 }

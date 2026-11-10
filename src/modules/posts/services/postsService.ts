@@ -4,6 +4,7 @@ import {
   type PostSubmissionStatus,
 } from '@/modules/posts/domain/models/PostSubmission';
 import type { PostsService } from '@/modules/posts/domain/PostsService';
+import type { LocalMediaFile } from '@/shared/domain/models/LocalMediaFile';
 import { toCategoryCode } from '@/shared/domain/models/CategoryCode';
 import { type HttpClient, HttpError } from '@/shared/lib/http';
 import { uploadMedia } from '@/shared/lib/uploadMedia';
@@ -98,9 +99,9 @@ export function createPostsService(client: HttpClient): PostsService {
       }
     },
 
-    async uploadMedia(localUri: string) {
+    async uploadMedia(media: LocalMediaFile) {
       try {
-        return await uploadMedia(client, localUri);
+        return await uploadMedia(client, media);
       } catch (error) {
         throw toPostsHttpError(error);
       }

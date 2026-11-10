@@ -166,6 +166,18 @@ export function createAuthService(client: HttpClient): AuthService {
             accept_consent: acceptConsent,
           },
         });
+        // Initialize the actor profile with the chosen username instead of any backend placeholder.
+        await client
+          .request('/actors/me', {
+            method: 'PATCH',
+            token: device_token,
+            body: {
+              first_names: user.username,
+              last_names: '',
+              avatar_url: null,
+            },
+          })
+          .catch(() => undefined);
         return {
           token: device_token,
           isAnonymous: false,

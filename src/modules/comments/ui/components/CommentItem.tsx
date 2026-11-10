@@ -13,6 +13,7 @@ import {
   SIZE,
   SPACING,
 } from '@/shared/theme';
+import { useReactionToggle } from '@/shared/hooks/useReactionToggle';
 import { Icon } from '@/shared/ui/atoms/Icon';
 
 import { COMMENTS_STRINGS } from '../strings';
@@ -22,19 +23,29 @@ type CommentItemProps = {
   // Set for replies: they are indented and answering one stays in the same thread.
   threadId?: string;
   onReply: (threadId: string, authorName: string) => void;
-  onToggleLike?: (commentId: string) => void;
+  // Resolves with whether the viewer's like is active after the toggle.
+  onToggleLike?: (commentId: string) => Promise<boolean>;
 };
 
 export function CommentItem({ comment, threadId, onReply, onToggleLike }: CommentItemProps) {
   const isReply = threadId !== undefined;
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
-  const likeCount = comment.likeCount + (isLiked ? 1 : 0);
+  const like = useReactionToggle(
+    comment.likeCount,
+    () =>
+      onToggleLike
+        ? onToggleLike(comment.id)
+        : Promise.reject(new Error('Likes are not available.')),
+    `comment:${comment.id}`,
+  );
+  const isLiked = like.isActive;
+  const likeCount = like.count;
   const hasReplies = comment.replies.length > 0;
 
   function handleLikePress() {
-    setIsLiked((value) => !value);
-    onToggleLike?.(comment.id);
+    if (onToggleLike) {
+      like.toggle();
+    }
   }
 
   return (

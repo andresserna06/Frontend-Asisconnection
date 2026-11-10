@@ -8,6 +8,11 @@ export const PROFILE_STRINGS = {
   openAdminPanel: 'Abrir panel de administración',
   signIn: 'Iniciar sesión',
   changePhoto: 'Cambiar foto de perfil',
+  photo: {
+    permissionDenied: 'Permite el acceso a tus fotos para cambiar tu foto de perfil.',
+    uploadFailed:
+      'No pudimos cambiar tu foto. Usa una imagen de menos de 5 MB e inténtalo de nuevo.',
+  },
   publicProfile: {
     header: 'Perfil',
     back: 'Volver al foro',

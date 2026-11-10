@@ -30,6 +30,14 @@ export const POST_STRINGS = {
   galleryUnavailableTitle: 'Galería no disponible',
   mediaUnavailableMessage: 'La selección de fotos se habilitará más adelante.',
   cameraUnavailableTitle: 'Cámara no disponible',
+  permissionTitle: 'Permiso necesario',
+  galleryPermission: 'Se requiere acceso a la galería para adjuntar fotos.',
+  cameraPermission: 'Se requiere acceso a la cámara para tomar fotos.',
+  uploadErrorTitle: 'No se pudo subir la foto',
+  uploadErrorMessage: 'Revisa que sea una imagen de menos de 5 MB e inténtalo de nuevo.',
+  uploadingPhoto: 'Subiendo foto…',
+  photoSelected: '1 foto seleccionada lista para publicar',
+  removePhoto: 'Eliminar foto adjunta',
 } as const;
 
 export const POST_DRAFT_ISSUE_MESSAGES: Record<PostDraftIssue, string> = {

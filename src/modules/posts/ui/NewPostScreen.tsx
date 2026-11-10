@@ -1,13 +1,20 @@
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getPrimaryRole, useAuth } from '@/modules/auth';
 import { useCreatePost } from '@/modules/posts/application/useCreatePost';
+import { PostsError } from '@/modules/posts/domain/models/PostSubmission';
 import { usePostsService } from '@/modules/posts/usePostsService';
+import type { LocalMediaFile } from '@/shared/domain/models/LocalMediaFile';
+import {
+  IS_CAMERA_AVAILABLE,
+  pickImageFromLibrary,
+  type PickImageResult,
+  takePhoto,
+} from '@/shared/lib/imagePicker';
 import {
   CATEGORY_COLORS,
   COLORS,
@@ -40,7 +47,8 @@ export function NewPostScreen() {
   const { submit, clearFeedback, isSubmitting, draftIssue, error } = useCreatePost(service);
   const [content, setContent] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey | null>(null);
-  const [selectedPhotoUri, setSelectedPhotoUri] = useState<string | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<LocalMediaFile | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const primaryRole = user === null ? null : getPrimaryRole(user.roles);
   const initials = user?.username.slice(0, 2).toUpperCase() ?? 'AS';
@@ -54,51 +62,36 @@ export function NewPostScreen() {
     ? POST_DRAFT_ISSUE_MESSAGES[draftIssue]
     : error
       ? POST_ERROR_MESSAGES[error.kind]
-      : null;
+      : photoError;
 
-  async function handlePickImage() {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
-      Alert.alert('Permiso necesario', 'Se requiere acceso a la galería para adjuntar fotos.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets[0]?.uri) {
-      setSelectedPhotoUri(result.assets[0].uri);
+  function handlePickResult(result: PickImageResult, deniedMessage: string) {
+    if (result.status === 'denied') {
+      setPhotoError(deniedMessage);
+    } else if (result.status === 'picked') {
+      setPhotoError(null);
+      setSelectedPhoto(result.file);
     }
   }
 
+  async function handlePickImage() {
+    handlePickResult(await pickImageFromLibrary(), POST_STRINGS.galleryPermission);
+  }
+
   async function handleTakePhoto() {
-    const perm = await ImagePicker.requestCameraPermissionsAsync();
-    if (!perm.granted) {
-      Alert.alert('Permiso necesario', 'Se requiere acceso a la cámara para tomar fotos.');
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets[0]?.uri) {
-      setSelectedPhotoUri(result.assets[0].uri);
-    }
+    handlePickResult(await takePhoto(), POST_STRINGS.cameraPermission);
   }
 
   async function handlePublish() {
     let mediaUrls: string[] | undefined;
-    if (selectedPhotoUri) {
+    if (selectedPhoto !== null && service.uploadMedia) {
+      setPhotoError(null);
+      setIsUploadingPhoto(true);
       try {
-        setIsUploadingPhoto(true);
-        const uploadedUrl = service.uploadMedia
-          ? await service.uploadMedia(selectedPhotoUri)
-          : selectedPhotoUri;
-        mediaUrls = [uploadedUrl];
-      } catch {
-        setIsUploadingPhoto(false);
-        Alert.alert('Error', 'No se pudo subir la imagen adjunta. Intenta de nuevo.');
+        mediaUrls = [await service.uploadMedia(selectedPhoto)];
+      } catch (caught) {
+        // Alert.alert does nothing on web, so the reason is shown inline.
+        const hasDetail = caught instanceof PostsError && caught.message !== caught.kind;
+        setPhotoError(hasDetail ? caught.message : POST_STRINGS.uploadErrorMessage);
         return;
       } finally {
         setIsUploadingPhoto(false);
@@ -156,7 +149,7 @@ export function NewPostScreen() {
           >
             <Text style={styles.publishLabel}>
               {isUploadingPhoto
-                ? 'Subiendo foto...'
+                ? POST_STRINGS.uploadingPhoto
                 : isSubmitting
                   ? POST_STRINGS.publishing
                   : POST_STRINGS.publish}
@@ -193,14 +186,14 @@ export function NewPostScreen() {
             textAlignVertical="top"
           />
 
-          {selectedPhotoUri !== null && (
+          {selectedPhoto !== null && (
             <View style={styles.imagePreviewContainer}>
-              <Image source={selectedPhotoUri} style={styles.imagePreview} contentFit="cover" />
+              <Image source={selectedPhoto.uri} style={styles.imagePreview} contentFit="cover" />
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Eliminar foto adjunta"
+                accessibilityLabel={POST_STRINGS.removePhoto}
                 hitSlop={8}
-                onPress={() => setSelectedPhotoUri(null)}
+                onPress={() => setSelectedPhoto(null)}
                 style={({ pressed }) => [styles.removeImageButton, pressed && styles.pressed]}
               >
                 <Icon name="x" size={SIZE.iconSmall} color={COLORS.onPrimary} />
@@ -263,19 +256,19 @@ export function NewPostScreen() {
               <Text style={styles.galleryAction}>{POST_STRINGS.galleryLabel}</Text>
             </Pressable>
           </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={POST_STRINGS.openCamera}
-            onPress={handleTakePhoto}
-            style={({ pressed }) => [styles.cameraButton, pressed && styles.pressed]}
-          >
-            <Icon name="camera" size={SIZE.icon} color={COLORS.primary} />
-            <Text style={styles.cameraLabel}>{POST_STRINGS.cameraLabel}</Text>
-          </Pressable>
+          {IS_CAMERA_AVAILABLE ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={POST_STRINGS.openCamera}
+              onPress={handleTakePhoto}
+              style={({ pressed }) => [styles.cameraButton, pressed && styles.pressed]}
+            >
+              <Icon name="camera" size={SIZE.icon} color={COLORS.primary} />
+              <Text style={styles.cameraLabel}>{POST_STRINGS.cameraLabel}</Text>
+            </Pressable>
+          ) : null}
           <Text style={styles.galleryEmpty}>
-            {selectedPhotoUri !== null
-              ? '1 foto seleccionada lista para publicar'
-              : POST_STRINGS.galleryEmpty}
+            {selectedPhoto !== null ? POST_STRINGS.photoSelected : POST_STRINGS.galleryEmpty}
           </Text>
         </View>
       </View>

@@ -1,3 +1,4 @@
+import type { LocalMediaFile } from '@/shared/domain/models/LocalMediaFile';
 import type { Post } from '@/shared/domain/models/Post';
 import type { MyProfile } from './models/MyProfile';
 
@@ -28,7 +29,7 @@ export type ProfileService = {
   // Newest first.
   getMyPosts(): Promise<Post[]>;
   getActorPosts?(actorId: string): Promise<Post[]>;
-  uploadAvatar?(localUri: string): Promise<string>;
+  uploadAvatar?(media: LocalMediaFile): Promise<string>;
   // Private: never shown to anyone else.
   getMySavedPosts(): Promise<Post[]>;
 };

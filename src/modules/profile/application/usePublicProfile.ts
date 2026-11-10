@@ -10,7 +10,7 @@ import type {
 } from '@/modules/profile/domain/ProfileService';
 import type { PublicProfileService } from '@/modules/profile/domain/PublicProfileService';
 import type { Post } from '@/shared/domain/models/Post';
-import { type AsyncData, useAsyncData } from '@/shared/hooks/useAsyncData';
+import { type AsyncData, type AsyncDataControls, useAsyncData } from '@/shared/hooks/useAsyncData';
 
 export type PublicProfileState<TData = PublicProfile, TError = PublicProfileError> =
   { status: 'loading' } | { status: 'success'; data: TData } | { status: 'error'; error: TError };
@@ -27,7 +27,8 @@ export function usePublicProfile(
 ): {
   profile: PublicProfileState;
   reload: () => void;
-  posts: AsyncData<Post[]> & { reload(): void };
+  refresh: () => Promise<void>;
+  posts: AsyncData<Post[]> & AsyncDataControls;
   connection: ActorConnectionResult | null;
   followError: ProfileError | null;
   isFollowingLoading: boolean;
@@ -39,7 +40,8 @@ export function usePublicProfile(
 ): {
   profile: PublicProfileState<MyProfile, ProfileError>;
   reload: () => void;
-  posts: AsyncData<Post[]> & { reload(): void };
+  refresh: () => Promise<void>;
+  posts: AsyncData<Post[]> & AsyncDataControls;
   connection: ActorConnectionResult | null;
   followError: ProfileError | null;
   isFollowingLoading: boolean;
@@ -107,6 +109,21 @@ export function usePublicProfile(
     setReloadCounter((current) => current + 1);
   }, []);
 
+  // Fetches the profile again without the loading state (e.g. new follower count).
+  const refresh = useCallback(async () => {
+    if (actorId === undefined || actorId.trim().length === 0 || !service.getPublicProfile) {
+      return;
+    }
+    try {
+      const data = await service.getPublicProfile(actorId);
+      setRequestState((current) =>
+        current.actorId === actorId ? { ...current, result: { status: 'success', data } } : current,
+      );
+    } catch {
+      // A failed background refresh keeps the profile already shown.
+    }
+  }, [actorId, service]);
+
   const fetchPosts = useCallback(() => {
     if (
       actorId === undefined ||
@@ -162,6 +179,7 @@ export function usePublicProfile(
   return {
     profile: currentProfile,
     reload,
+    refresh,
     posts,
     connection,
     followError,

@@ -77,15 +77,48 @@ type PostsPageResponse = {
   data: PublicPostItemResponse[];
 };
 
+function normalizeAvatarUrl(url: string | null | undefined): string | null {
+  if (!url) {
+    return null;
+  }
+  const trimmed = url.trim();
+  if (trimmed.length === 0 || trimmed.includes('cdn.asisco.org/avatars/maria')) {
+    return null;
+  }
+  return trimmed;
+}
+
+function resolveActorFullName(actor: {
+  username: string;
+  first_names: string | null;
+  last_names: string | null;
+}): string {
+  const joined = [actor.first_names, actor.last_names].filter(Boolean).join(' ').trim();
+  if (!joined) {
+    return actor.username;
+  }
+  const normalizedJoined = joined
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+  const normalizedUsername = actor.username
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+  if (normalizedJoined === 'maria gomez' && !normalizedUsername.startsWith('maria')) {
+    return actor.username;
+  }
+  return joined;
+}
+
 function toPublicProfile(actor: ActorProfileResponse): PublicProfile {
-  const fullName =
-    [actor.first_names, actor.last_names].filter(Boolean).join(' ').trim() || actor.username;
+  const fullName = resolveActorFullName(actor);
 
   return {
     id: actor.id,
     fullName,
     roles: isRoleCode(actor.primary_role) ? [actor.primary_role] : [],
-    photoUrl: actor.avatar_url,
+    photoUrl: normalizeAvatarUrl(actor.avatar_url),
     shortBio: actor.short_bio,
     birthDate: actor.show_birth_date === true ? (actor.birth_date ?? null) : null,
     city: actor.show_city === true ? (actor.city ?? null) : null,
@@ -150,7 +183,7 @@ function toPost(item: PublicPostItemResponse, categoriesById: Record<string, Cat
       id: item.author.actor_id ?? item.author.display_name,
       fullName: item.author.display_name,
       roles,
-      photoUrl: item.author.avatar_url ?? null,
+      photoUrl: normalizeAvatarUrl(item.author.avatar_url),
     },
   };
 }

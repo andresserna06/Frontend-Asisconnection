@@ -61,8 +61,15 @@ export function useAddComment(postId: string) {
 
 export function useToggleCommentLike() {
   const repository = useCommentsRepository();
+  const queryClient = useQueryClient();
 
-  return (commentId: string) => {
-    void repository?.toggleLike?.(commentId).catch(() => undefined);
+  // Resolves with whether the like is active after the toggle (answer of the server).
+  return async (commentId: string): Promise<boolean> => {
+    if (!repository?.toggleLike) {
+      throw new Error('Comments service is not configured.');
+    }
+    const isActive = await repository.toggleLike(commentId);
+    void queryClient.invalidateQueries({ queryKey: ['comments'] });
+    return isActive;
   };
 }
