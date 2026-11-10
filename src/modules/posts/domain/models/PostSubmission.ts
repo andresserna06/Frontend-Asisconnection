@@ -3,6 +3,7 @@ import type { CategoryCode } from './Category';
 export type NewPostInput = {
   category: CategoryCode;
   content: string;
+  mediaUrls?: string[];
 };
 
 export type PostSubmissionStatus = 'PENDING' | 'REJECTED';

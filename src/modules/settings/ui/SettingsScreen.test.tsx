@@ -4,20 +4,30 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SettingsScreen } from './SettingsScreen';
 
 const mockSignOut = jest.fn().mockResolvedValue(undefined);
-const mockHttpClient = {
-  request: jest.fn().mockResolvedValue({
-    show_email: false,
-    show_birth_date: false,
-    show_city: false,
-    require_follow_approval: false,
+const mockUpdatePrivacySettings = jest.fn().mockResolvedValue({
+  showEmail: true,
+  showBirthDate: false,
+  showCity: false,
+  requireFollowApproval: false,
+});
+const mockSettingsService = {
+  getPrivacySettings: jest.fn().mockResolvedValue({
+    showEmail: false,
+    showBirthDate: false,
+    showCity: false,
+    requireFollowApproval: false,
   }),
+  updatePrivacySettings: mockUpdatePrivacySettings,
 };
 
 jest.mock('@/modules/auth', () => ({
   useAuth: () => ({
     signOut: mockSignOut,
   }),
-  useAuthorizedHttpClient: () => mockHttpClient,
+}));
+
+jest.mock('../useSettingsService', () => ({
+  useSettingsService: () => mockSettingsService,
 }));
 
 const SAFE_AREA_METRICS = {
@@ -28,6 +38,7 @@ const SAFE_AREA_METRICS = {
 describe('SettingsScreen', () => {
   beforeEach(() => {
     mockSignOut.mockClear();
+    mockUpdatePrivacySettings.mockClear();
   });
 
   it('starts with all personal data switches off by default (Ley 1581) and updates preview on toggle', async () => {
@@ -45,6 +56,7 @@ describe('SettingsScreen', () => {
     await fireEvent.press(emailSwitch);
 
     expect(screen.getByText('Visible en la comunidad: Correo electrónico')).toBeOnTheScreen();
+    expect(mockUpdatePrivacySettings).toHaveBeenCalledWith({ showEmail: true });
   });
 
   it('signs out when pressing Cerrar sesión', async () => {

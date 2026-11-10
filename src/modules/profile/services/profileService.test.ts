@@ -163,4 +163,44 @@ describe('createProfileService', () => {
     expect(fetchMock.mock.calls[0][0]).toBe(`${BASE_URL}/actors/me`);
     expect(fetchMock.mock.calls[0][1]?.method).toBe('PATCH');
   });
+
+  it('loads a public profile via GET /actors/:id and sends follow requests via POST /connections', async () => {
+    const service = createProfileService(createHttpClient(BASE_URL));
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse(200, {
+          id: 'actor-2',
+          user_account_id: 'u-2',
+          username: 'carlos.voluntario',
+          primary_role: 'VOLUNTARIO',
+          first_names: 'Carlos',
+          last_names: 'Ruiz',
+          avatar_url: null,
+          short_bio: 'Voluntario',
+          city: 'Manizales',
+          posts_count: 4,
+          followers_count: 10,
+          following_count: 6,
+          created_at: '2026-03-01T00:00:00.000Z',
+          updated_at: '2026-03-01T00:00:00.000Z',
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(201, {
+          id: 'conn-1',
+          status: 'PENDING',
+        }),
+      );
+
+    const publicProfile = await service.getPublicProfile?.('actor-2');
+    expect(publicProfile?.fullName).toBe('Carlos Ruiz');
+    expect(publicProfile?.email).toBe('Sin agregar');
+    expect(publicProfile?.city).toBe('Manizales');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${BASE_URL}/actors/actor-2`);
+
+    const connection = await service.followActor?.('actor-2');
+    expect(connection).toEqual({ id: 'conn-1', status: 'PENDING' });
+    expect(fetchMock.mock.calls[1][0]).toBe(`${BASE_URL}/connections`);
+    expect(fetchMock.mock.calls[1][1]?.method).toBe('POST');
+  });
 });

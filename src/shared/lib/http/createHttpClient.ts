@@ -20,6 +20,8 @@ export type HttpRequestOptions = {
 export type HttpClient = {
   // Resolves with the parsed JSON body (null when empty); rejects with HttpError.
   request<T>(path: string, options?: HttpRequestOptions): Promise<T>;
+  // Sends multipart form data (e.g. file uploads); sets boundaries automatically.
+  uploadFile?<T>(path: string, formData: FormData, token?: string): Promise<T>;
 };
 
 export function createHttpClient(baseUrl: string): HttpClient {
@@ -41,6 +43,35 @@ export function createHttpClient(baseUrl: string): HttpClient {
           method: options.method ?? 'GET',
           headers,
           body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+          signal: controller.signal,
+        });
+      } catch {
+        throw new HttpError(null);
+      } finally {
+        clearTimeout(timeout);
+      }
+
+      const json: unknown = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new HttpError(response.status, json);
+      }
+      return json as T;
+    },
+
+    async uploadFile<T>(path: string, formData: FormData, token?: string): Promise<T> {
+      const headers: Record<string, string> = { Accept: 'application/json' };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      let response: Response;
+      try {
+        response = await fetch(`${baseUrl}${path}`, {
+          method: 'POST',
+          headers,
+          body: formData,
           signal: controller.signal,
         });
       } catch {

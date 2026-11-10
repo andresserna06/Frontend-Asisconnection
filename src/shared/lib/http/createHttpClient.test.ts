@@ -60,6 +60,25 @@ describe('createHttpClient', () => {
     await expect(promise).rejects.toMatchObject({ status: 400, body: { errores: { email: 'x' } } });
   });
 
+  it('sends multipart form data via uploadFile with the bearer token', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(201, { url: 'https://cdn.example.test/img.jpg' }));
+
+    const formData = new FormData();
+    formData.append('key', 'value');
+
+    const result = await client.uploadFile!('/media/upload', formData, 'tok');
+
+    expect(result).toEqual({ url: 'https://cdn.example.test/img.jpg' });
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init?.method).toBe('POST');
+    expect(init?.body).toBe(formData);
+    expect(init?.headers).toMatchObject({
+      Accept: 'application/json',
+      Authorization: 'Bearer tok',
+    });
+    expect(init?.headers).not.toHaveProperty('Content-Type');
+  });
+
   it('rejects with a null status when there is no response', async () => {
     fetchMock.mockRejectedValue(new TypeError('Network request failed'));
     await expect(client.request('/items')).rejects.toMatchObject({ status: null });

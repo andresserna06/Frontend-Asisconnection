@@ -10,6 +10,7 @@ export const TEST_SUBMISSION_RESULT: PostSubmissionResult = {
 export function createFakePostsService(overrides: Partial<PostsService> = {}): PostsService {
   return {
     createPost: jest.fn(async () => TEST_SUBMISSION_RESULT),
+    uploadMedia: jest.fn(async () => 'https://example.test/photo.jpg'),
     ...overrides,
   };
 }

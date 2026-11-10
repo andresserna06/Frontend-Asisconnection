@@ -14,7 +14,7 @@ import type {
   RegisterCredentials,
   TokenStorage,
 } from '@/modules/auth/domain/AuthService';
-import { toAuthError } from '@/modules/auth/domain/models/AuthError';
+import { AuthError, toAuthError } from '@/modules/auth/domain/models/AuthError';
 import type { LoginCredentials } from '@/modules/auth/domain/models/LoginCredentials';
 import type { Session } from '@/modules/auth/domain/models/Session';
 import type { User } from '@/modules/auth/domain/models/User';
@@ -32,6 +32,7 @@ type AuthContextValue = {
   signIn(credentials: LoginCredentials): Promise<void>;
   signInAnonymous?(credentials?: Partial<AnonymousCredentials>): Promise<void>;
   registerAccount?(credentials: RegisterCredentials): Promise<void>;
+  register?(credentials: RegisterCredentials): Promise<void>;
   // Always ends signed out, even if the backend call fails.
   signOut(): Promise<void>;
   // HTTP client for the other modules' services: sends the session token and signs out
@@ -65,7 +66,7 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
         }
         const [user, isAnonymous] = await Promise.all([
           service.getProfile(savedToken),
-          storage.getIsAnonymous(),
+          storage.getIsAnonymous ? storage.getIsAnonymous() : Promise.resolve(false),
         ]);
         return {
           status: 'signedIn',
@@ -90,33 +91,45 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
     };
   }, [service, storage]);
 
-  async function signIn(credentials: LoginCredentials) {
-    const session = await service.login(credentials);
-    await storage.saveToken(session.token, session.isAnonymous);
-    setState({ status: 'signedIn', session });
-  }
+  const signIn = useCallback(
+    async (credentials: LoginCredentials) => {
+      const session = await service.login(credentials);
+      await storage.saveToken(session.token, session.isAnonymous);
+      setState({ status: 'signedIn', session });
+    },
+    [service, storage],
+  );
 
-  async function signInAnonymous(credentials?: Partial<AnonymousCredentials>) {
-    if (!service.loginAnonymous) {
-      throw new Error('Anonymous login is not supported by service');
-    }
-    const session = await service.loginAnonymous({
-      acceptConsent: credentials?.acceptConsent ?? true,
-      nickname: credentials?.nickname,
-      roleTag: credentials?.roleTag,
-    });
-    await storage.saveToken(session.token, session.isAnonymous);
-    setState({ status: 'signedIn', session });
-  }
+  const signInAnonymous = useCallback(
+    async (credentials?: Partial<AnonymousCredentials>) => {
+      if (!service.loginAnonymous) {
+        throw new AuthError('unknown');
+      }
+      const session = await service.loginAnonymous({
+        acceptConsent: credentials?.acceptConsent ?? true,
+        nickname: credentials?.nickname,
+        roleTag: credentials?.roleTag,
+      });
+      await storage.saveToken(session.token, session.isAnonymous ?? true);
+      setState({
+        status: 'signedIn',
+        session: { ...session, isAnonymous: session.isAnonymous ?? true },
+      });
+    },
+    [service, storage],
+  );
 
-  async function registerAccount(credentials: RegisterCredentials) {
-    if (!service.register) {
-      throw new Error('Registration is not supported by service');
-    }
-    const session = await service.register(credentials);
-    await storage.saveToken(session.token, session.isAnonymous);
-    setState({ status: 'signedIn', session });
-  }
+  const registerAccount = useCallback(
+    async (credentials: RegisterCredentials) => {
+      if (!service.register) {
+        throw new AuthError('unknown');
+      }
+      const session = await service.register(credentials);
+      await storage.saveToken(session.token, session.isAnonymous ?? false);
+      setState({ status: 'signedIn', session });
+    },
+    [service, storage],
+  );
 
   // The device token is local (no logout endpoint): signing out only forgets it.
   const signOut = useCallback(async () => {
@@ -142,6 +155,19 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
           throw error;
         }
       },
+      async uploadFile<T>(path: string, formData: FormData) {
+        if (!httpClient.uploadFile) {
+          throw new HttpError(null);
+        }
+        try {
+          return await httpClient.uploadFile<T>(path, formData, token ?? undefined);
+        } catch (error) {
+          if (error instanceof HttpError && error.status === 401 && token !== null) {
+            await signOut();
+          }
+          throw error;
+        }
+      },
     }),
     [httpClient, token, signOut],
   );
@@ -149,10 +175,11 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
   const value: AuthContextValue = {
     status: state.status,
     user: state.status === 'signedIn' ? state.session.user : null,
-    isAnonymous: state.status === 'signedIn' && state.session.isAnonymous,
+    isAnonymous: state.status === 'signedIn' && Boolean(state.session.isAnonymous),
     signIn,
     signInAnonymous,
     registerAccount,
+    register: registerAccount,
     signOut,
     authorizedClient,
   };

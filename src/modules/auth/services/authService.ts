@@ -30,6 +30,14 @@ type ActorProfileResponse = {
   id: string;
   username: string;
   primary_role: string;
+  local_role?: string | null;
+};
+type CurrentSessionResponse = {
+  is_anonymous: boolean;
+  display_name: string;
+  rol: string;
+  external_roles?: string[];
+  local_role?: string | null;
 };
 // RFC 7807 body of every error response.
 type ProblemDetailsResponse = { errors?: { field: string; message: string }[] } | null;
@@ -104,8 +112,28 @@ export function createAuthService(client: HttpClient): AuthService {
     async getProfile(token) {
       try {
         const actor = await client.request<ActorProfileResponse>('/actors/me', { token });
-        return { username: actor.username, roles: toRoles([actor.primary_role]) };
+        return {
+          username: actor.username,
+          roles: toRoles([actor.local_role, actor.primary_role]),
+        };
       } catch (error) {
+        if (error instanceof HttpError && error.status === 403) {
+          try {
+            const session = await client.request<CurrentSessionResponse>('/sessions/me', { token });
+            if (session?.is_anonymous) {
+              return {
+                username: session.display_name,
+                roles: toRoles([
+                  session.local_role,
+                  session.rol,
+                  ...(session.external_roles ?? []),
+                ]),
+              };
+            }
+          } catch {
+            // Fall through to standard 403 forbidden error
+          }
+        }
         throw toAuthError(error, 'sessionExpired');
       }
     },

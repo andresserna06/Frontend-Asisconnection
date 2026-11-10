@@ -38,21 +38,22 @@ export function useLogin() {
     }
   }
 
-  async function submitAnonymous(acceptConsent: boolean) {
-    if (isSubmittingRef.current) {
+  async function submitAnonymous(acceptConsent: boolean, nickname?: string) {
+    if (isSubmittingRef.current || !signInAnonymous) {
       return;
     }
     if (!acceptConsent) {
       setFormIssues({ acceptConsent: 'consentRequired' });
+      setError(null);
       return;
     }
 
+    setFormIssues({});
+    setError(null);
     isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
-      if (signInAnonymous) {
-        await signInAnonymous({ acceptConsent });
-      }
+      await signInAnonymous({ acceptConsent, nickname });
     } catch (caught) {
       setError(toAuthError(caught));
     } finally {

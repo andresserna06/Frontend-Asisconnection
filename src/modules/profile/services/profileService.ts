@@ -6,6 +6,7 @@ import { type CategoryCode, toCategoryCode } from '@/shared/domain/models/Catego
 import type { Post } from '@/shared/domain/models/Post';
 import type { RoleCode } from '@/shared/domain/models/RoleCode';
 import { type HttpClient, HttpError } from '@/shared/lib/http';
+import { uploadMedia } from '@/shared/lib/uploadMedia';
 
 type ActorProfileResponse = {
   id: string;
@@ -27,6 +28,11 @@ type ActorProfileResponse = {
   followers_count?: number;
   following_count?: number;
   created_at: string;
+};
+
+type ActorConnectionResponse = {
+  id: string;
+  status: 'PENDING' | 'ACCEPTED' | 'BLOCKED';
 };
 
 type CategoryItemResponse = {
@@ -184,6 +190,26 @@ export function createProfileService(client: HttpClient): ProfileService {
       }
     },
 
+    async getPublicProfile(actorId: string) {
+      try {
+        const actor = await client.request<ActorProfileResponse>(`/actors/${actorId}`);
+        return toMyProfile(actor);
+      } catch (error) {
+        throw toProfileError(error);
+      }
+    },
+
+    async followActor(actorId: string) {
+      try {
+        return await client.request<ActorConnectionResponse>('/connections', {
+          method: 'POST',
+          body: { receiver_actor_id: actorId },
+        });
+      } catch (error) {
+        throw toProfileError(error);
+      }
+    },
+
     async getMyPosts() {
       try {
         const [categoriesById, page] = await Promise.all([
@@ -199,8 +225,31 @@ export function createProfileService(client: HttpClient): ProfileService {
       }
     },
 
+    async getActorPosts(actorId: string) {
+      try {
+        const [categoriesById, page] = await Promise.all([
+          loadCategoriesById(),
+          client.request<PostsPageResponse>(`/actors/${actorId}/posts?page=1&limit=20`),
+        ]);
+        return page.data.map((item) => toPost(item, categoriesById));
+      } catch (error) {
+        if (error instanceof HttpError && error.status === 404) {
+          return [];
+        }
+        throw toProfileError(error);
+      }
+    },
+
     async getMySavedPosts() {
       return [];
+    },
+
+    async uploadAvatar(localUri: string) {
+      try {
+        return await uploadMedia(client, localUri);
+      } catch (error) {
+        throw toProfileError(error);
+      }
     },
   };
 }

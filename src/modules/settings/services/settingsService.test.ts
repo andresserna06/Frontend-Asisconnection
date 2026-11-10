@@ -1,50 +1,74 @@
-import { createSettingsService } from './settingsService';
-import type { HttpClient } from '@/shared/lib/http';
+import { createHttpClient } from '@/shared/lib/http';
 
-describe('settingsService', () => {
-  it('loads privacy settings from GET /actors/me', async () => {
-    const mockClient: HttpClient = {
-      request: jest.fn().mockResolvedValue({
+import { createSettingsService } from './settingsService';
+
+const BASE_URL = 'https://api.example.test/v1';
+const fetchMock = jest.spyOn(globalThis, 'fetch');
+
+function jsonResponse(status: number, body: unknown): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+describe('createSettingsService', () => {
+  beforeEach(() => {
+    fetchMock.mockReset();
+  });
+
+  afterAll(() => {
+    fetchMock.mockRestore();
+  });
+
+  it('loads privacy settings from GET /actors/me and defaults missing flags to false (Ley 1581)', async () => {
+    const service = createSettingsService(createHttpClient(BASE_URL));
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(200, {
+        show_email: false,
+        show_birth_date: false,
+        show_city: true,
+        require_follow_approval: false,
+      }),
+    );
+
+    await expect(service.getPrivacySettings()).resolves.toEqual({
+      showEmail: false,
+      showBirthDate: false,
+      showCity: true,
+      requireFollowApproval: false,
+    });
+    expect(fetchMock.mock.calls[0][0]).toBe(`${BASE_URL}/actors/me`);
+  });
+
+  it('updates privacy settings via PATCH /actors/me and maps snake_case response', async () => {
+    const service = createSettingsService(createHttpClient(BASE_URL));
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(200, {
         show_email: true,
         show_birth_date: false,
         show_city: true,
         require_follow_approval: true,
       }),
-    };
+    );
 
-    const service = createSettingsService(mockClient);
-    const settings = await service.getPrivacySettings();
+    const updated = await service.updatePrivacySettings({
+      showEmail: true,
+      requireFollowApproval: true,
+    });
 
-    expect(mockClient.request).toHaveBeenCalledWith('/actors/me');
-    expect(settings).toEqual({
+    expect(updated).toEqual({
       showEmail: true,
       showBirthDate: false,
       showCity: true,
       requireFollowApproval: true,
     });
-  });
-
-  it('updates privacy settings through PATCH /actors/me', async () => {
-    const mockClient: HttpClient = {
-      request: jest.fn().mockResolvedValue({
-        show_email: false,
-        show_birth_date: true,
-        show_city: false,
-        require_follow_approval: false,
-      }),
-    };
-
-    const service = createSettingsService(mockClient);
-    const updated = await service.updatePrivacySettings({
-      showBirthDate: true,
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(`${BASE_URL}/actors/me`);
+    expect(init?.method).toBe('PATCH');
+    expect(JSON.parse(String(init?.body))).toEqual({
+      show_email: true,
+      require_follow_approval: true,
     });
-
-    expect(mockClient.request).toHaveBeenCalledWith('/actors/me', {
-      method: 'PATCH',
-      body: {
-        show_birth_date: true,
-      },
-    });
-    expect(updated.showBirthDate).toBe(true);
   });
 });

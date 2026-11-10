@@ -44,15 +44,21 @@ Al conectar los 9 módulos del frontend (`auth`, `forum`, `posts`, `comments`, `
 ### Decisión 6: Privacidad por Defecto y Consentimiento Explícito (Ley 1581 de 2012)
 - **Qué se decidió**:
   1. Se añadió `ConsentCheckbox` obligatorio en `LoginScreen` enviando `accept_consent: true` en `POST /auth/login`, `POST /auth/registro` y `POST /sessions/anonymous`.
-  2. En `SettingsScreen` (`PrivacySettings.ts`), todos los interruptores de exposición de datos personales (`showEmail`, `showBirthDate`, `showCity`, `requireFollowApproval`) están apagados (`false`) por defecto.
+  2. En `SettingsScreen` (`PrivacySettings.ts` + `settingsService.ts`), todos los interruptores de exposición de datos personales (`showEmail`, `showBirthDate`, `showCity`, `requireFollowApproval`) están apagados (`false`) por defecto y se sincronizan de forma optimista con `GET /actors/me` y `PATCH /actors/me`.
   3. No se registra ningún dato sensible ni token en `console.log`.
+
+### Decisión 7: Hooks de Aplicación Listos para Consumo por el Equipo de UI
+- **Qué se decidió**: Dejar implementada y probada toda la estructura funcional (`domain` + `services` + `application`) de los flujos restantes para que el equipo de diseño/interfaz únicamente conecte los componentes visuales:
+  1. **Modo Invitado y Registro**: `AuthProvider.tsx` (`signInAnonymous`, `register`) y `useLogin.ts` (`submitAnonymous`).
+  2. **Perfil Público y Conexiones**: `usePublicProfile(actorId, service)` (`GET /actors/:id` y `POST /connections`).
+  3. **Cola de Moderación Humana**: `useModerationQueue(repository, isEnabled)` (`GET /admin/moderation/pending` y `PATCH /admin/moderation/(posts|comments)/:id/status` con invalidación automática de caché de TanStack Query).
 
 ---
 
 ## 3. Consecuencias
 
 - **Positivas**:
-  - Cobertura completa de pruebas automatizadas: **27 suites y 109 tests pasando** en `domain/`, `application/`, `services/` y `ui/`.
+  - Cobertura completa de pruebas automatizadas: **27 suites y 111 tests pasando** en `domain/`, `application/`, `services/` y `ui/`.
   - Cumplimiento estricto de `tsc --noEmit` (0 errores) y `eslint src --max-warnings=0` (0 errores, 0 advertencias).
   - Desacoplamiento total entre vistas y red: cambiar de entorno (local, staging o producción en Render) solo requiere actualizar `EXPO_PUBLIC_API_URL`.
 - **Compromisos**:

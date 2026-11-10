@@ -93,6 +93,40 @@ Formato de cada entrada:
 - Cómo se probó: `npm run typecheck` correcto; ESLint focalizado sin errores ni advertencias; 15 pruebas focalizadas en verde. Metro compiló el bundle web y se abrió la app en navegador. No se pudo probar la sesión administradora desde Expo Go por falta de una cuenta de prueba.
 - Queda pendiente: búsqueda/listado de cuentas para facilitar asignar moderadores; confirmar el flujo móvil de moderación para `MODERATOR`.
 
+## 2026-11-09 · Soporte de Notificaciones Multievento (`NEW_FOLLOWER`), Resolución 401 y Directorio de Cuentas Admin
+
+- Qué se hizo:
+  - **Frontend (`Frontend-Asisconnection`)**:
+    - Se amplió `NotificationType` en `src/modules/notifications/domain/models/NotificationItem.ts` para soportar `'NEW_FOLLOWER'`, homologando los eventos con el backend.
+    - Se documentó el ADR-003 (`docs/adr/ADR-003-notificaciones-multievento-y-directorio-usuarios.md`) detallando la integración de eventos sociales y el consumo del nuevo directorio administrativo `GET /v1/admin/accounts`.
+    - Se aclaró el alcance de publicaciones guardadas (`getMySavedPosts` retorna `[]` por estar fuera del MVP de backend).
+  - **Backend (`Asisconnection`)**:
+    - Se corrigió el error 401 en notificaciones aplicando `@UseGuards(DeviceSessionGuard)` a `GET /v1/notifications` y `PATCH /v1/notifications/read-all`.
+    - Se implementó agregación multievento (`LIKE_ON_POST`, `COMMENT_ON_POST`, `REPLY_TO_COMMENT`, `NEW_FOLLOWER`, `FOUNDATION_ANNOUNCEMENT`) y seguimiento de fecha de lectura con `last_notifications_read_at` en `Actor`.
+    - Se creó el endpoint `GET /v1/admin/accounts?search=...` para listar y buscar usuarios registrados para la asignación de moderadores.
+- Cómo se probó:
+  - Frontend: `npx tsc --noEmit` (0 errores), `npx expo lint` (0 errores), `npm test` (30 suites, 119/119 pruebas pasando).
+  - Backend: `npm run lint` (0 errores), `npm run test` (3 suites, 22/22 pruebas pasando), `npm run build` (compilación NestJS exitosa).
+- Queda pendiente: Desplegar la actualización en Render y avanzar en las tareas de maquetación de UI restantes en frontend.
+
+## 2026-11-09 · Integración Multimedia (Cloudinary) en Perfil y Foro, y Auto-aprobación para Administradores
+
+- Qué se hizo:
+  - **Backend (`Asisconnection`)**:
+    - Se creó el módulo `MediaModule` (`src/modules/media/`) con `POST /v1/media/upload` integrado con Cloudinary mediante streaming en memoria RAM (`upload_stream`), validación de 5 MB y tipos MIME de imagen.
+    - Se implementó `GET /v1/actors/:id/posts` para consultar el muro de publicaciones aprobadas de un perfil de tercero con validación RFC 7807 (404 si no existe).
+    - **Rectificación de Moderación Privilegiada**: En `posts.service.ts`, si el autor posee rol `ADMIN` o `MODERATOR` (y el filtro automático no rechaza el contenido), la publicación o comentario se aprueba automáticamente (`status = 'APPROVED'`), evitando que las publicaciones administrativas queden estancadas en `PENDING`.
+  - **Frontend (`Frontend-Asisconnection`)**:
+    - Se instaló y configuró `expo-image-picker` compatible con Expo SDK 57.
+    - Se añadió `uploadFile<T>` en `createHttpClient.ts` para enviar peticiones `multipart/form-data` con `Authorization: Bearer <token>` sin forzar el header `Content-Type` manual (permitiendo que el runtime nativo genere el boundary).
+    - `ProfileScreen.tsx`: Se conectó el botón de cámara del avatar para seleccionar imagen de la galería con recorte 1:1, subirla al backend y persistirla con `PATCH /v1/actors/me`. Se añadió indicador de carga visual (`ActivityIndicator`) en `ProfileSummary.tsx`.
+    - `NewPostScreen.tsx`: Se conectaron los botones de cámara y galería para adjuntar fotos a nuevas publicaciones, con caja de previsualización (180 px de altura, `RADIUS.card = 18`) y botón flotante de descarte con icono `x`.
+    - Contratos de servicio ampliados con `uploadAvatar` y `getActorPosts` en `ProfileService`, y `uploadMedia` en `PostsService`, manteniendo la separación estricta de capas (`ui → application → domain`).
+- Cómo se probó:
+  - Backend: `npm run lint` (0 errores, 0 warnings), `npm run test` (15/15 tests pasando).
+  - Frontend: `npx tsc --noEmit` (0 errores), `npx eslint` (0 errores, 0 warnings), `npm test` (30 suites pasando, 119/119 tests en verde).
+- Queda pendiente: Configurar en el Dashboard de Render las variables `CLOUDINARY_*`, y avanzar con las tareas visuales de UI restantes (`UI-01` a `UI-04`).
+
 ## 2026-11-09 · Integración funcional de endpoints (Auth, Ajustes y Perfil)
 
 - Qué se hizo:

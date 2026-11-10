@@ -1,5 +1,9 @@
 export type NotificationType =
-  'COMMENT_ON_POST' | 'REPLY_TO_COMMENT' | 'LIKE_ON_POST' | 'FOUNDATION_ANNOUNCEMENT';
+  | 'COMMENT_ON_POST'
+  | 'REPLY_TO_COMMENT'
+  | 'LIKE_ON_POST'
+  | 'FOUNDATION_ANNOUNCEMENT'
+  | 'NEW_FOLLOWER';
 
 export type NotificationPeriod = 'Hoy' | 'Ayer' | 'Últimos 7 días' | 'Últimos 30 días';
 

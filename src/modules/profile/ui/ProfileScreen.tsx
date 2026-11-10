@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 
 import { useAuth } from '@/modules/auth';
 import { useMyProfile } from '@/modules/profile/application/useMyProfile';
@@ -27,10 +28,48 @@ export function ProfileScreen() {
   const service = useProfileService();
   const { profile, posts, activeTab, selectTab } = useMyProfile(service);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   async function handleSignIn() {
     await signOut();
     router.replace('/login');
+  }
+
+  async function handleChangePhoto() {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission?.granted) {
+      Alert.alert(
+        'Permiso necesario',
+        'Se requiere acceso a la galería para cambiar tu foto de perfil.',
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (result.canceled || !result.assets[0]?.uri) {
+      return;
+    }
+
+    try {
+      setIsUploadingPhoto(true);
+      const uploadedUrl = service.uploadAvatar
+        ? await service.uploadAvatar(result.assets[0].uri)
+        : result.assets[0].uri;
+      if (service.updateMyProfile) {
+        await service.updateMyProfile({ avatarUrl: uploadedUrl });
+      }
+      profile.reload();
+    } catch {
+      Alert.alert('Error', 'No fue posible subir la foto. Intenta nuevamente.');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
   }
 
   if (profile.status !== 'success') {
@@ -68,7 +107,8 @@ export function ProfileScreen() {
         fullName={me.fullName}
         roles={me.roles}
         photoUrl={me.photoUrl}
-        onChangePhoto={() => setIsEditOpen(true)}
+        isUploading={isUploadingPhoto}
+        onChangePhoto={() => void handleChangePhoto()}
       />
       <StatsCard
         postCount={me.postCount}
