@@ -15,6 +15,7 @@ import {
 } from '@/shared/theme';
 import { Button } from '@/shared/ui/atoms/Button';
 import { Icon, type IconName } from '@/shared/ui/atoms/Icon';
+import { NavAvatar } from '@/shared/ui/atoms/NavAvatar';
 
 const LOGO = require('@/assets/images/logo-asisco-up.png');
 
@@ -61,6 +62,7 @@ export function toDesktopNavRoute(pathname: string): DesktopNavRoute | null {
 type DesktopSidebarProps = {
   activeRoute: DesktopNavRoute | null;
   profileInitials: string;
+  profilePhotoUrl?: string | null;
   onNavigate: (route: DesktopNavRoute) => void;
   onCreatePost: () => void;
 };
@@ -68,6 +70,7 @@ type DesktopSidebarProps = {
 export function DesktopSidebar({
   activeRoute,
   profileInitials,
+  profilePhotoUrl = null,
   onNavigate,
   onCreatePost,
 }: DesktopSidebarProps) {
@@ -89,9 +92,7 @@ export function DesktopSidebar({
             onPress={() => onNavigate(item.route)}
             icon={
               item.route === 'profile' ? (
-                <View style={styles.profileAvatar}>
-                  <Text style={styles.profileInitials}>{profileInitials}</Text>
-                </View>
+                <NavAvatar initials={profileInitials} photoUrl={profilePhotoUrl} />
               ) : (
                 <Icon
                   name={item.icon}
@@ -175,18 +176,5 @@ const styles = StyleSheet.create({
   itemLabelSelected: {
     color: COLORS.onSecondarySoft,
     fontFamily: FONT_FAMILY.bodyBold,
-  },
-  profileAvatar: {
-    width: SIZE.avatarSmall,
-    height: SIZE.avatarSmall,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: RADIUS.pill,
-    backgroundColor: COLORS.accent,
-  },
-  profileInitials: {
-    color: COLORS.text,
-    fontFamily: FONT_FAMILY.heading,
-    fontSize: FONT_SIZE.s10,
   },
 });

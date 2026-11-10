@@ -14,7 +14,7 @@ export function ToggleRow({ label, valueLabel, isEnabled, onToggle }: ToggleRowP
     <Pressable
       accessibilityRole="switch"
       accessibilityLabel={label}
-      accessibilityState={{ checked: isEnabled }}
+      aria-checked={isEnabled}
       onPress={onToggle}
       style={styles.row}
     >
@@ -22,11 +22,14 @@ export function ToggleRow({ label, valueLabel, isEnabled, onToggle }: ToggleRowP
         <Text style={styles.label}>{label}</Text>
         <Text style={styles.value}>{valueLabel}</Text>
       </View>
-      <Switch
-        value={isEnabled}
-        onValueChange={onToggle}
-        trackColor={{ false: COLORS.border, true: COLORS.primary }}
-      />
+      {/* The row is the only control: a press on an active Switch would also reach the row and toggle twice. */}
+      <View
+        pointerEvents="none"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <Switch value={isEnabled} trackColor={{ false: COLORS.border, true: COLORS.primary }} />
+      </View>
     </Pressable>
   );
 }

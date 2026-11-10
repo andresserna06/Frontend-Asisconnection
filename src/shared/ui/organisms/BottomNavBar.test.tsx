@@ -31,6 +31,28 @@ describe('BottomNavBar', () => {
     expect(onNavigate).toHaveBeenCalledWith('assistant');
   });
 
+  it('shows the initials until there is a profile photo', async () => {
+    const { rerender } = await render(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <BottomNavBar activeRoute="index" profileInitials="AS" onNavigate={jest.fn()} />
+      </SafeAreaProvider>,
+    );
+    expect(screen.getByText('AS')).toBeOnTheScreen();
+
+    await rerender(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <BottomNavBar
+          activeRoute="index"
+          profileInitials="AS"
+          profilePhotoUrl="https://example.test/foto.jpg"
+          onNavigate={jest.fn()}
+        />
+      </SafeAreaProvider>,
+    );
+
+    expect(screen.queryByText('AS')).toBeNull();
+  });
+
   it('keeps Foros selected while notifications is open', async () => {
     await render(
       <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>

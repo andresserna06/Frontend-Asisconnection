@@ -9,11 +9,12 @@ import { usePublicProfile } from './usePublicProfile';
 const TEST_PUBLIC_PROFILE: PublicProfile = {
   id: 'actor-1',
   username: 'persona.publica',
+  email: null,
+  birthDate: null,
   fullName: 'Persona Prueba',
   roles: ['ACUDIENTE'],
   photoUrl: null,
   shortBio: null,
-  birthDate: null,
   city: null,
   postCount: 0,
   followerCount: 0,

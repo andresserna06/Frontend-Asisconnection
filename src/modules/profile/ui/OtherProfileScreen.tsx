@@ -150,11 +150,16 @@ export function OtherProfileScreen() {
               onSignIn={() => void handleSignIn()}
             />
 
-            {profile.data.city !== null || profile.data.birthDate !== null ? (
+            {profile.data.email !== null ||
+            profile.data.city !== null ||
+            profile.data.birthDate !== null ? (
               <View style={styles.infoCard}>
                 <Text accessibilityRole="header" style={styles.sectionTitle}>
                   {PROFILE_STRINGS.publicProfile.info}
                 </Text>
+                {profile.data.email !== null ? (
+                  <ProfileDataRow label={PROFILE_STRINGS.info.email} value={profile.data.email} />
+                ) : null}
                 {profile.data.city !== null ? (
                   <ProfileDataRow label={PROFILE_STRINGS.info.city} value={profile.data.city} />
                 ) : null}

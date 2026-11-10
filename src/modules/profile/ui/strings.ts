@@ -12,6 +12,13 @@ export const PROFILE_STRINGS = {
     title: 'Estás como invitado',
     message: 'Inicia sesión con tu cuenta para ver tu perfil y tus publicaciones.',
   },
+  editProfile: {
+    birthDatePlaceholder: 'Elige tu fecha',
+    chooseYear: 'Elegir año',
+    previousMonth: 'Mes anterior',
+    nextMonth: 'Mes siguiente',
+    weekdays: ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
+  },
   followers: {
     header: 'Seguidores',
     back: 'Volver al perfil',

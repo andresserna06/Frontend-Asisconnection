@@ -12,6 +12,7 @@ import {
   SPACING,
 } from '@/shared/theme';
 import { Icon, type IconName } from '@/shared/ui/atoms/Icon';
+import { NavAvatar } from '@/shared/ui/atoms/NavAvatar';
 
 export type BottomNavRoute = 'index' | 'ecosystem' | 'assistant' | 'profile';
 
@@ -31,10 +32,16 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
 type BottomNavBarProps = {
   activeRoute: string;
   profileInitials: string;
+  profilePhotoUrl?: string | null;
   onNavigate: (route: BottomNavRoute) => void;
 };
 
-export function BottomNavBar({ activeRoute, profileInitials, onNavigate }: BottomNavBarProps) {
+export function BottomNavBar({
+  activeRoute,
+  profileInitials,
+  profilePhotoUrl = null,
+  onNavigate,
+}: BottomNavBarProps) {
   const insets = useSafeAreaInsets();
   const selectedRoute = activeRoute === 'notifications' ? 'index' : activeRoute;
 
@@ -54,9 +61,11 @@ export function BottomNavBar({ activeRoute, profileInitials, onNavigate }: Botto
               style={({ pressed }) => [styles.tab, pressed && styles.pressed]}
             >
               {item.route === 'profile' ? (
-                <View style={[styles.profileAvatar, isSelected && styles.selectedAvatar]}>
-                  <Text style={styles.profileInitials}>{profileInitials}</Text>
-                </View>
+                <NavAvatar
+                  initials={profileInitials}
+                  photoUrl={profilePhotoUrl}
+                  isSelected={isSelected}
+                />
               ) : (
                 <Icon
                   name={item.icon}
@@ -108,22 +117,5 @@ const styles = StyleSheet.create({
   selectedLabel: {
     color: COLORS.primary,
     fontFamily: FONT_FAMILY.bodySemiBold,
-  },
-  profileAvatar: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: RADIUS.pill,
-    backgroundColor: COLORS.accent,
-  },
-  selectedAvatar: {
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-  },
-  profileInitials: {
-    color: COLORS.text,
-    fontFamily: FONT_FAMILY.heading,
-    fontSize: FONT_SIZE.s9_5,
   },
 });

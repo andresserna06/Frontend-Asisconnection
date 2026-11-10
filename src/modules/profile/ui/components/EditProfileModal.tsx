@@ -16,6 +16,8 @@ import {
 import { Button } from '@/shared/ui/atoms/Button';
 import { TextField } from '@/shared/ui/molecules/TextField';
 
+import { BirthDateField } from './BirthDateField';
+
 type EditProfileModalProps = {
   visible: boolean;
   profile: MyProfile;
@@ -40,6 +42,7 @@ export function EditProfileModal({ visible, profile, onClose, onSave }: EditProf
   const [firstNames, setFirstNames] = useState(initialNames.firstNames);
   const [lastNames, setLastNames] = useState(initialNames.lastNames);
   const [city, setCity] = useState(profile.city ?? '');
+  const [birthDate, setBirthDate] = useState(profile.birthDate?.slice(0, 10) ?? '');
   const [shortBio, setShortBio] = useState(profile.shortBio ?? '');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +55,7 @@ export function EditProfileModal({ visible, profile, onClose, onSave }: EditProf
         ...(firstNames.trim() ? { firstNames: firstNames.trim() } : {}),
         lastNames: lastNames.trim(),
         city: city.trim() || undefined,
+        birthDate: birthDate || undefined,
         shortBio: shortBio.trim() || undefined,
       });
       onClose();
@@ -96,6 +100,8 @@ export function EditProfileModal({ visible, profile, onClose, onSave }: EditProf
               value={city}
               onChangeText={setCity}
             />
+
+            <BirthDateField value={birthDate} onChange={setBirthDate} />
 
             <TextField
               label="Biografía corta"

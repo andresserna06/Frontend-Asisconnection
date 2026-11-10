@@ -7,6 +7,7 @@ export type PublicProfile = {
   roles: RoleCode[];
   photoUrl: string | null;
   shortBio: string | null;
+  email: string | null;
   birthDate: string | null;
   city: string | null;
   postCount: number;

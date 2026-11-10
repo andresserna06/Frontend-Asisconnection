@@ -53,6 +53,7 @@ describe('publicProfileService', () => {
       email: 'private@example.test',
       birth_date: '1988-05-14',
       city: 'Manizales',
+      show_email: false,
       show_birth_date: false,
       show_city: true,
       posts_count: 3,
@@ -68,6 +69,7 @@ describe('publicProfileService', () => {
       roles: ['ACUDIENTE'],
       photoUrl: null,
       shortBio: 'Acudiente',
+      email: null,
       birthDate: null,
       city: 'Manizales',
       postCount: 3,
@@ -75,6 +77,27 @@ describe('publicProfileService', () => {
       followingCount: 4,
     });
     expect(request).toHaveBeenCalledWith('/actors/actor-1');
+  });
+
+  it('shows the personal data the public endpoint sends without visibility flags', async () => {
+    const request = jest.fn(async () => ({
+      id: 'actor-1',
+      username: 'persona',
+      primary_role: 'ACUDIENTE',
+      first_names: null,
+      last_names: null,
+      avatar_url: null,
+      short_bio: null,
+      email: 'visible@example.test',
+      city: 'Manizales',
+    }));
+    const service = createPublicProfileService({ request } as HttpClient);
+
+    await expect(service.getPublicProfile('actor-1')).resolves.toMatchObject({
+      email: 'visible@example.test',
+      birthDate: null,
+      city: 'Manizales',
+    });
   });
 
   it('encodes the actor ID and maps a missing profile to notFound', async () => {

@@ -29,11 +29,12 @@ const SAFE_AREA_METRICS = {
 const TEST_PUBLIC_PROFILE: PublicProfile = {
   id: 'actor-1',
   username: 'persona.publica',
+  email: null,
+  birthDate: null,
   fullName: 'Persona Pública',
   roles: ['ACUDIENTE'],
   photoUrl: null,
   shortBio: 'Descripción pública',
-  birthDate: null,
   city: 'Manizales',
   postCount: 2,
   followerCount: 7,
@@ -92,6 +93,12 @@ describe('OtherProfileScreen', () => {
 
     await waitFor(() => expect(router.dismissTo).toHaveBeenCalledWith('/profile'));
     expect(screen.queryByRole('button', { name: 'Seguir' })).toBeNull();
+  });
+
+  it('shows the email when the profile makes it visible', async () => {
+    await renderScreen({ ...TEST_PUBLIC_PROFILE, email: 'visible@prueba.com' });
+
+    expect(await screen.findByText('visible@prueba.com')).toBeOnTheScreen();
   });
 
   it('returns to the previous screen from the header', async () => {

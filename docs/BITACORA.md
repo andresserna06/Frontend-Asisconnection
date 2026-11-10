@@ -15,6 +15,38 @@ Formato de cada entrada:
 
 ---
 
+## 2026-11-10 · T-37 Interruptores de Ajustes
+
+- Qué se hizo: un clic sobre el interruptor cambia el ajuste una sola vez; antes reaccionaban la fila y el interruptor, y el cambio se anulaba enviando dos peticiones.
+- Archivos principales: `src/shared/ui/molecules/ToggleRow.tsx`.
+- Decisiones: la fila es el único control y el `Switch` queda como indicador visual.
+- Cómo se probó: `npx tsc --noEmit`, `npx expo lint`, `npm test`, `npx expo export` para web y Android, y clics y teclado con Edge sin interfaz con la API simulada, antes y después del cambio. No se probó en Expo Go o en un dispositivo.
+- Queda pendiente: T-03b.
+
+## 2026-11-10 · T-36 Fecha de nacimiento en Editar perfil
+
+- Qué se hizo: «Editar perfil» permite elegir la fecha de nacimiento en un calendario que no admite días futuros. Antes se mostraba en Perfil y Ajustes sin forma de llenarla. También se centró el texto de los campos de varias líneas.
+- Archivos principales: `src/modules/profile/domain/birthDate.ts`, `src/modules/profile/ui/components/{BirthDateField,EditProfileModal}.tsx`, `src/modules/profile/ui/ProfileScreen.tsx`, `src/shared/ui/atoms/Input.tsx`.
+- Decisiones: calendario propio con vistas de React Native, sin dependencias nuevas, para que funcione igual en web, Expo Go y el APK. Se envía como `birth_date` en `PATCH /actors/me`, según el contrato; sigue apagada por defecto para la comunidad. Como en ciudad y biografía, dejar el campo vacío no borra el valor guardado.
+- Cómo se probó: `npx tsc --noEmit`, `npx expo lint`, `npm test`, `npx expo export` para web y Android, y recorrido con Edge sin interfaz con la API simulada. No se probó contra el backend real ni en Expo Go o en un dispositivo.
+- Queda pendiente: confirmar con una cuenta real que el backend guarda y devuelve la fecha.
+
+## 2026-11-10 · T-35 Datos visibles en el perfil público
+
+- Qué se hizo: el perfil de otra persona muestra correo, ciudad y fecha de nacimiento cuando su dueño los activó en Ajustes.
+- Archivos principales: `src/modules/profile/services/publicProfileService.ts`, `src/modules/profile/domain/models/PublicProfile.ts`, `src/modules/profile/ui/OtherProfileScreen.tsx`, `docs/pantallas.md`.
+- Decisiones: `GET /actors/{id}` ya filtra los datos ocultos y no envía las banderas `show_*`, así que exigir `true` los descartaba siempre. Un dato que llega se muestra, salvo que venga marcado explícitamente como oculto. Esto reemplaza la decisión de T-25 de no mostrar nunca el correo, porque Ajustes ofrece activarlo y `AGENTS.md` lo contempla.
+- Cómo se probó: `npx tsc --noEmit`, `npx expo lint`, `npm test`, `npx expo export` para web y Android, y recorrido con Edge sin interfaz con la API simulada. La forma de la respuesta se confirmó con dos perfiles reales del backend; falta probar con una cuenta real activando y apagando cada interruptor.
+- Queda pendiente: validar con una cuenta real activando y apagando cada interruptor.
+
+## 2026-11-10 · T-34 Foto de perfil en la navegación
+
+- Qué se hizo: la foto de perfil aparece en la barra inferior y en la barra lateral, y se actualiza al cambiarla.
+- Archivos principales: `src/shared/ui/atoms/NavAvatar.tsx`, `src/shared/ui/organisms/{BottomNavBar,DesktopSidebar}.tsx`, `src/modules/profile/application/useMyPhotoUrl.ts`, `src/modules/profile/ui/ProfileScreen.tsx`, `src/app/{_layout,(tabs)/_layout}.tsx`.
+- Decisiones: la foto se consulta con TanStack Query, sin ampliar el estado global de sesión, y los invitados siguen con iniciales.
+- Cómo se probó: `npx tsc --noEmit`, `npx expo lint`, `npm test`, `npx expo export` para web y Android, y cambio de foto con Edge sin interfaz en 1440 y 390 px con la API simulada. No se probó contra el backend real ni en Expo Go o en un dispositivo.
+- Queda pendiente: T-03b.
+
 ## 2026-11-10 · T-33 Imágenes completas y perfil propio
 
 - Qué se hizo: las imágenes de publicaciones, su vista previa y la cola de moderación se muestran completas, sin recortarse. Abrir el perfil propio desde cualquier enlace lleva a la pestaña Perfil, con ajustes y panel de administración.

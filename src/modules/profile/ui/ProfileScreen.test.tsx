@@ -14,6 +14,9 @@ import { ProfileScreen } from './ProfileScreen';
 
 // The screen gets its service from the composition root; tests swap it for a fake.
 jest.mock('@/modules/profile/useProfileService', () => ({ useProfileService: jest.fn() }));
+jest.mock('@/modules/profile/application/useMyPhotoUrl', () => ({
+  useRefreshMyPhotoUrl: () => jest.fn(),
+}));
 jest.mock('@/modules/auth', () => ({
   ...jest.requireActual('@/modules/auth'),
   useAuth: jest.fn(),

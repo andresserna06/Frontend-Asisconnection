@@ -8,6 +8,7 @@ import { Platform } from 'react-native';
 import { AppAuthProvider, useAuth } from '@/modules/auth';
 import { AppCommentsProvider } from '@/modules/comments';
 import { AppForumProvider } from '@/modules/forum';
+import { useMyPhotoUrl } from '@/modules/profile';
 import { STRINGS } from '@/shared/config/strings';
 import { useAppFonts } from '@/shared/hooks/useAppFonts';
 import { useHideSplashScreen } from '@/shared/hooks/useHideSplashScreen';
@@ -54,6 +55,7 @@ function RootNavigator() {
   const areFontsReady = useAppFonts();
   const pathname = usePathname();
   const { isDesktop } = useResponsiveLayout();
+  const myPhotoUrl = useMyPhotoUrl();
   const isReady = areFontsReady && status !== 'loading';
   useHideSplashScreen(isReady);
 
@@ -70,6 +72,7 @@ function RootNavigator() {
           <DesktopSidebar
             activeRoute={toDesktopNavRoute(pathname)}
             profileInitials={user?.username.slice(0, 2).toUpperCase() ?? 'AS'}
+            profilePhotoUrl={myPhotoUrl}
             onNavigate={(route) => router.navigate(DESKTOP_ROUTE_HREFS[route])}
             onCreatePost={() => router.push('/posts/new')}
           />

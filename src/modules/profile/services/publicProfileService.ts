@@ -21,8 +21,10 @@ type ActorProfileResponse = {
   last_names: string | null;
   avatar_url: string | null;
   short_bio: string | null;
+  email?: string | null;
   birth_date?: string | null;
   city?: string | null;
+  show_email?: boolean;
   show_birth_date?: boolean;
   show_city?: boolean;
   posts_count?: number;
@@ -115,6 +117,12 @@ function resolveActorFullName(actor: {
   return joined;
 }
 
+// The public endpoint already removes hidden data and does not send the show_* flags,
+// so a value that arrives is visible unless it is explicitly marked as hidden.
+function toVisibleValue(value: string | null | undefined, isShown: boolean | undefined) {
+  return isShown === false ? null : (value ?? null);
+}
+
 function toPublicProfile(actor: ActorProfileResponse): PublicProfile {
   const fullName = resolveActorFullName(actor);
   const rawFollowers = actor.followers_count ?? 0;
@@ -127,8 +135,9 @@ function toPublicProfile(actor: ActorProfileResponse): PublicProfile {
     roles: isRoleCode(actor.primary_role) ? [actor.primary_role] : [],
     photoUrl: normalizeAvatarUrl(actor.avatar_url),
     shortBio: actor.short_bio,
-    birthDate: actor.show_birth_date === true ? (actor.birth_date ?? null) : null,
-    city: actor.show_city === true ? (actor.city ?? null) : null,
+    email: toVisibleValue(actor.email, actor.show_email),
+    birthDate: toVisibleValue(actor.birth_date, actor.show_birth_date),
+    city: toVisibleValue(actor.city, actor.show_city),
     postCount: actor.posts_count ?? 0,
     followerCount,
     followingCount: actor.following_count ?? 0,

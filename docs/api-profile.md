@@ -54,10 +54,9 @@ Todas las rutas requieren `Authorization: Bearer <device_token>` inyectado autom
 
 ### Perfil público de otra persona (`GET /actors/{id}`)
 
-La app muestra nombre, rol, avatar, biografía y contadores. Ciudad y fecha de
-nacimiento solo se muestran cuando el DTO indica explícitamente
-`show_city: true` o `show_birth_date: true`; valores sin su indicador activo se
-descartan. El correo nunca se muestra en el perfil público.
+La app muestra nombre, rol, avatar, biografía y contadores. El backend omite los
+datos ocultos y no envía las banderas `show_*`: el correo, la ciudad y la fecha de
+nacimiento que lleguen se muestran, salvo que vengan marcados explícitamente como ocultos.
 
 ## 3. Cuerpo de petición de `PATCH /actors/me`
 

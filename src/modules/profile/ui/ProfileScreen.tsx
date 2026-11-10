@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 
 import { useAuth } from '@/modules/auth';
+import { useRefreshMyPhotoUrl } from '@/modules/profile/application/useMyPhotoUrl';
 import { useMyProfile } from '@/modules/profile/application/useMyProfile';
 import { toProfileError } from '@/modules/profile/domain/models/ProfileError';
 import type { UpdateProfileInput } from '@/modules/profile/domain/ProfileService';
@@ -40,6 +41,7 @@ export function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { isAnonymous, signOut } = useAuth();
   const service = useProfileService();
+  const refreshMyPhotoUrl = useRefreshMyPhotoUrl();
   const { profile, posts, activeTab, selectTab } = useMyProfile(service);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -84,6 +86,7 @@ export function ProfileScreen() {
       const uploadedUrl = await service.uploadAvatar(result.file);
       await service.updateMyProfile({ avatarUrl: uploadedUrl });
       profile.refresh();
+      refreshMyPhotoUrl();
     } catch {
       // Alert.alert does nothing on web, so the error is shown inline.
       setPhotoError(PROFILE_STRINGS.photo.uploadFailed);
@@ -263,7 +266,7 @@ export function ProfileScreen() {
       </ResponsiveScreen>
 
       <EditProfileModal
-        key={`${me.fullName}:${me.city ?? ''}:${me.shortBio ?? ''}`}
+        key={`${me.fullName}:${me.city ?? ''}:${me.shortBio ?? ''}:${me.birthDate ?? ''}`}
         visible={isEditOpen}
         profile={me}
         onClose={() => setIsEditOpen(false)}

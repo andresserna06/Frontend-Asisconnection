@@ -1,12 +1,14 @@
 import { Tabs } from 'expo-router';
 
 import { useAuth } from '@/modules/auth';
+import { useMyPhotoUrl } from '@/modules/profile';
 import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
 import { BottomNavBar } from '@/shared/ui/organisms/BottomNavBar';
 
 export default function TabsLayout() {
   const { user } = useAuth();
   const { isDesktop } = useResponsiveLayout();
+  const myPhotoUrl = useMyPhotoUrl();
   const profileInitials = user?.username.slice(0, 2).toUpperCase() ?? 'AS';
 
   return (
@@ -21,6 +23,7 @@ export default function TabsLayout() {
           <BottomNavBar
             activeRoute={state.routes[state.index]?.name ?? 'index'}
             profileInitials={profileInitials}
+            profilePhotoUrl={myPhotoUrl}
             onNavigate={(route) => navigation.navigate(route)}
           />
         )
