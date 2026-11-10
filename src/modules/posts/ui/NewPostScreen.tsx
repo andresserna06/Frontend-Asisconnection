@@ -190,7 +190,7 @@ export function NewPostScreen() {
 
         {selectedPhoto !== null && (
           <View style={styles.imagePreviewContainer}>
-            <Image source={selectedPhoto.uri} style={styles.imagePreview} contentFit="cover" />
+            <Image source={selectedPhoto.uri} style={styles.imagePreview} contentFit="contain" />
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={POST_STRINGS.removePhoto}

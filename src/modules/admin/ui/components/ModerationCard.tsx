@@ -53,7 +53,7 @@ export function ModerationCard({ item, isBusy, onDecide }: ModerationCardProps) 
         <Image
           accessibilityLabel={`${ADMIN_STRINGS.post}: imagen adjunta`}
           source={{ uri: item.imageUrl }}
-          contentFit="cover"
+          contentFit="contain"
           style={styles.image}
         />
       ) : null}

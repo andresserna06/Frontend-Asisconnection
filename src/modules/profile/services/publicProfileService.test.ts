@@ -63,6 +63,7 @@ describe('publicProfileService', () => {
 
     await expect(service.getPublicProfile('actor-1')).resolves.toEqual({
       id: 'actor-1',
+      username: 'persona',
       fullName: 'Persona Prueba',
       roles: ['ACUDIENTE'],
       photoUrl: null,

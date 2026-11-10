@@ -123,7 +123,7 @@ export function ForumPostCard({
                 uri: post.media.kind === 'image' ? post.media.uri : post.media.thumbnailUri,
               }}
               style={StyleSheet.absoluteFill}
-              contentFit="cover"
+              contentFit="contain"
               accessibilityLabel={post.media.accessibilityLabel}
             />
             {post.media.kind === 'video' && (

@@ -66,7 +66,7 @@ export function ActorPostCard({ post, onCommentsPress, onLikePress }: ActorPostC
       {post.imageUrl !== null && (
         <Image
           source={post.imageUrl}
-          contentFit="cover"
+          contentFit="contain"
           accessibilityLabel={post.imageDescription ?? undefined}
           style={styles.image}
         />

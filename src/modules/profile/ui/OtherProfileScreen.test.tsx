@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -17,7 +17,7 @@ jest.mock('@/modules/auth', () => ({
   useAuth: jest.fn(),
 }));
 jest.mock('expo-router', () => ({
-  router: { back: jest.fn(), replace: jest.fn() },
+  router: { back: jest.fn(), dismissTo: jest.fn(), replace: jest.fn() },
   useLocalSearchParams: jest.fn(),
 }));
 
@@ -28,6 +28,7 @@ const SAFE_AREA_METRICS = {
 
 const TEST_PUBLIC_PROFILE: PublicProfile = {
   id: 'actor-1',
+  username: 'persona.publica',
   fullName: 'Persona Pública',
   roles: ['ACUDIENTE'],
   photoUrl: null,
@@ -67,6 +68,8 @@ async function renderScreen(profile = TEST_PUBLIC_PROFILE) {
 describe('OtherProfileScreen', () => {
   beforeEach(() => {
     jest.mocked(router.back).mockClear();
+    jest.mocked(router.replace).mockClear();
+    jest.mocked(router.dismissTo).mockClear();
   });
 
   it('shows public profile details without private fields and explains unavailable posts', async () => {
@@ -82,6 +85,13 @@ describe('OtherProfileScreen', () => {
     ).toBeOnTheScreen();
     expect(screen.queryByText('Correo')).toBeNull();
     expect(screen.queryByText('Fecha de nacimiento')).toBeNull();
+  });
+
+  it('sends the viewer to the Perfil tab when the profile is their own', async () => {
+    await renderScreen({ ...TEST_PUBLIC_PROFILE, username: 'persona' });
+
+    await waitFor(() => expect(router.dismissTo).toHaveBeenCalledWith('/profile'));
+    expect(screen.queryByRole('button', { name: 'Seguir' })).toBeNull();
   });
 
   it('returns to the previous screen from the header', async () => {

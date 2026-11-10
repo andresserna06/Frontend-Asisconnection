@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -33,13 +34,22 @@ const HEADER_ROW_HEIGHT = 66;
 export function OtherProfileScreen() {
   const insets = useSafeAreaInsets();
   const { userId } = useLocalSearchParams<{ userId: string }>();
-  const { isAnonymous, signOut } = useAuth();
+  const { isAnonymous, signOut, user } = useAuth();
   const service = usePublicProfileService();
   const { profile, reload, adjustFollowerCount, posts } = usePublicProfile(service, userId);
   const follow = usePublicProfileConnection(service, userId, isAnonymous);
   const expandedHeaderHeight = insets.top + HEADER_ROW_HEIGHT;
   const { headerHeight, onScroll } = useCollapsingHeader(expandedHeaderHeight);
   const hasActorPostsSupport = typeof service.getActorPosts === 'function';
+  const isOwnProfile =
+    !isAnonymous && profile.status === 'success' && profile.data.username === user?.username;
+
+  // Whatever link led here, the viewer's own profile is the Perfil tab, with its settings.
+  useEffect(() => {
+    if (isOwnProfile) {
+      router.dismissTo('/profile');
+    }
+  }, [isOwnProfile]);
 
   // A pending request does not count as a follower until it is accepted.
   async function handleFollow() {
@@ -82,7 +92,7 @@ export function OtherProfileScreen() {
           }
           rightAccessory={null}
         />
-        {profile.status === 'loading' ? (
+        {profile.status === 'loading' || isOwnProfile ? (
           <View style={styles.state}>
             <ActivityIndicator
               accessibilityLabel={PROFILE_STRINGS.publicProfile.loading}

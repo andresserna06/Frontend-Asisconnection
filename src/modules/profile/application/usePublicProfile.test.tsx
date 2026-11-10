@@ -8,6 +8,7 @@ import { usePublicProfile } from './usePublicProfile';
 
 const TEST_PUBLIC_PROFILE: PublicProfile = {
   id: 'actor-1',
+  username: 'persona.publica',
   fullName: 'Persona Prueba',
   roles: ['ACUDIENTE'],
   photoUrl: null,

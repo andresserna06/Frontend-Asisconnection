@@ -122,6 +122,7 @@ function toPublicProfile(actor: ActorProfileResponse): PublicProfile {
 
   return {
     id: actor.id,
+    username: actor.username,
     fullName,
     roles: isRoleCode(actor.primary_role) ? [actor.primary_role] : [],
     photoUrl: normalizeAvatarUrl(actor.avatar_url),

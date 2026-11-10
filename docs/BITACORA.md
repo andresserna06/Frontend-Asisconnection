@@ -15,6 +15,14 @@ Formato de cada entrada:
 
 ---
 
+## 2026-11-10 · T-33 Imágenes completas y perfil propio
+
+- Qué se hizo: las imágenes de publicaciones, su vista previa y la cola de moderación se muestran completas, sin recortarse. Abrir el perfil propio desde cualquier enlace lleva a la pestaña Perfil, con ajustes y panel de administración.
+- Archivos principales: `src/modules/forum/ui/components/ForumPostCard.tsx`, `src/modules/profile/ui/components/ActorPostCard.tsx`, `src/modules/posts/ui/NewPostScreen.tsx`, `src/modules/admin/ui/components/ModerationCard.tsx`, `src/modules/profile/ui/OtherProfileScreen.tsx`, `src/modules/profile/services/publicProfileService.ts`.
+- Decisiones: la comprobación vive en `OtherProfileScreen` para cubrir todos los enlaces, comparando `username` porque la sesión no guarda el id de actor. Se usa `router.dismissTo` porque `replace` dejaba una segunda copia de las pestañas debajo.
+- Cómo se probó: `npx tsc --noEmit`, `npx expo lint`, `npm test`, `npx expo export` para web y Android, y recorrido con Edge sin interfaz en 1440 y 390 px con la API simulada. No se probó contra el backend real ni en Expo Go o en un dispositivo.
+- Queda pendiente: T-03b.
+
 ## 2026-11-10 · T-32 Ecosistema renovado, publicaciones propias, contador al seguir y lista de seguidores
 
 - Qué se hizo: nuevo texto de marca en el login; Ecosistema con banner y tarjetas más grandes y de colores; las publicaciones propias abren la pantalla de publicación; el contador de seguidores cambia en cuanto el servidor confirma seguir o dejar de seguir; «Seguidores» en Perfil abre la lista de quienes te siguen.
