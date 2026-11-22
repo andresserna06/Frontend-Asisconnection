@@ -34,13 +34,47 @@ Cómo se usa:
 
 ---
 
-## 2. Fuera del Alcance del MVP de Backend / Por Validar en Dispositivo
+## 2. Pendiente del Frontend / Por Validar en Dispositivo
 
 - [ ] **T-03b Probar el flujo completo en Expo Go físico**: Validar visualmente todas las pantallas en dispositivo móvil con Expo Go.
 - [ ] **T-28 Avisos en web**: `Alert.alert` no hace nada en navegador, así que los avisos de publicación y comentario enviados no se muestran.
 - [ ] **T-29 Sesión en web**: decidir si la sesión debe sobrevivir a recargar la pestaña. `secureTokenStorage.web.ts` la guarda solo en memoria y `expo-secure-store` no existe en web; persistirla cambia la regla de la sección 7 de `AGENTS.md`.
-- [ ] **T-30 Despliegue web**: agregar el dominio del Static Site a `CORS_ORIGINS` del backend (hoy un origen desconocido no recibe `access-control-allow-origin`) y validar el flujo contra el backend real.
-- [!] **Recuperar contraseña**: Enlace visible en el login (`showComingSoonNotice`); el backend no incluye endpoint de recuperación de contraseña en el MVP.
-- [!] **Cancelar seguimiento (`DELETE /v1/connections/{id}`)**: El backend actual permite crear y consultar conexiones (`POST /connections`, `GET /connections`), pero no incluye endpoint para eliminar una conexión existente (confirmado: responde `Cannot DELETE`). Hasta tenerlo, dejar de seguir solo se recuerda en el dispositivo de quien lo hace: la otra persona conserva a ese seguidor en su contador y en su lista.
-- [!] **Eliminar publicaciones y comentarios (`DELETE /v1/posts/{postId}`)**: El backend no tiene esta ruta (confirmado: responde `Cannot DELETE`). Solución temporal en el módulo `removal`: moderadores rechazan el contenido; el dueño registrado lo marca en el fragmento de su `avatar_url` (`shared/lib/authorRemovalMarks.ts`, unas 40 marcas como máximo) y todas las apps lo ocultan; los invitados envían una solicitud como comentario pendiente. Regla pedida: `ADMIN` y `MODERATOR` eliminan cualquier publicación; las demás cuentas, solo las propias. El backend debe validar el permiso (`403` si no corresponde) y responder `204` o `404`. Conviene que `GET /posts` y las listas por actor incluyan `can_delete` para no deducir el permiso en la app.
-- [!] **Persistencia en servidor de publicaciones guardadas (`/actors/me/saved`)**: Fuera del alcance del MVP de backend; la función se retiró de la app hasta que exista.
+- [ ] **T-30 Despliegue web**: publicar el Static Site en Render y validar el flujo contra el backend real. Requiere B-01.
+
+---
+
+## 3. Pendiente del backend
+
+Lo que la app necesita del backend (`proyecto-integrador-backend`, equipo SAGA UP). Revisado contra el Swagger desplegado (`/api/docs`) el 2026-11-10. Cada punto dice qué falta, qué hace la app mientras tanto y, cuando aplica, qué se retira del frontend al tenerlo.
+
+### 3.1 Configuración en Render (sin código)
+
+- [ ] **B-01 CORS para la web**: agregar el dominio del Static Site a `CORS_ORIGINS`. Hoy un origen que no está en la lista no recibe `access-control-allow-origin` y el navegador bloquea todas las peticiones. Bloquea T-30.
+- [x] **B-02 Subida de imágenes**: resuelto por el equipo de backend; la subida de foto de perfil e imágenes de publicaciones funciona (confirmado por el equipo el 2026-11-22).
+- [ ] **B-03 Directorio del Ecosistema**: registrar en `GET /directory/links` las direcciones de SUMA 21 (`https://suma21-frontend.onrender.com`), AULA UP (`https://aulaup-bxss.onrender.com/`), SAGA-UP (`https://saga-up-frontend.onrender.com/login`), SON UP y LUPE. Mientras: las tres primeras están fijas en `PUBLISHED_PROJECT_URLS` (`src/modules/ecosystem/domain/models/EcosystemLink.ts`); SON UP y LUPE no abren si el directorio no las trae. Se retira: `PUBLISHED_PROJECT_URLS`.
+
+### 3.2 Por confirmar con una cuenta real
+
+Las soluciones temporales dependen de estos comportamientos y solo se probaron con la API simulada.
+
+- [ ] **B-04 Foto de perfil con marcas**: `PATCH /actors/me` acepta en `avatar_url` una dirección con el fragmento `#removed=…`, y `https://avatar.invalid/none` cuando la persona no tiene foto (hasta 500 caracteres). De esto depende que el dueño elimine su contenido; si falla, la app muestra «No pudimos eliminarlo».
+- [ ] **B-05 Rechazar contenido ya aprobado**: `PATCH /admin/moderation/posts|comments/{id}/status` con `REJECTED` sobre una publicación o un comentario `APPROVED` lo saca del Foro. De esto depende que admins y moderadores eliminen.
+- [ ] **B-06 Fecha de nacimiento**: `PATCH /actors/me` guarda `birth_date` y `GET /actors/me` la devuelve.
+- [x] **B-07 Privacidad del perfil público**: probado a mano por el equipo con dos cuentas el 2026-11-22: al apagar o encender correo, ciudad y fecha de nacimiento en Ajustes, el perfil visto desde otra cuenta los oculta o los muestra como corresponde. El filtro es del backend (la app muestra todo dato que llega). No hay prueba automatizada; si el backend cambia, repetir la prueba.
+
+### 3.3 Endpoints que faltan
+
+- [ ] **B-08 Eliminar publicaciones y comentarios** (`DELETE /posts/{postId}` y `DELETE /comments/{id}`; hoy responden `Cannot DELETE`). Reglas: `ADMIN` y `MODERATOR` eliminan cualquiera; las demás cuentas, solo lo propio; un invitado, lo que publicó desde su sesión de dispositivo. Responder `204`, `403` o `404`, y descontarlo de `posts_count`. Conviene que las listas traigan `can_delete` para no deducir el permiso en la app. Mientras: módulo `removal`; los moderadores rechazan el contenido, el dueño lo marca en su `avatar_url` (unas 40 eliminaciones por cuenta; el contenido sigue en la base de datos) y el invitado envía un comentario `#SOLICITUD-ELIMINAR` que llega a la cola de moderación. Se retira: `src/shared/lib/authorRemovalMarks.ts`, la solicitud por comentario y `RemovalRequestCard`.
+- [ ] **B-09 Dejar de seguir** (`DELETE /connections/{id}`; hoy responde `Cannot DELETE`, y `PATCH /connections/{id}` solo acepta `ACCEPTED` o `BLOCKED`). Mientras: se recuerda solo en el dispositivo de quien deja de seguir; la otra persona lo sigue contando en sus seguidores.
+- [ ] **B-10 Una publicación por id** (`GET /posts/{postId}`). Mientras: se busca entre las 20 más recientes de `GET /actors/{id}/posts`, así que una publicación más antigua muestra «No encontramos esta publicación» (`src/modules/profile/application/useActorPost.ts`).
+- [ ] **B-11 Saber si ya reaccioné**: publicaciones y comentarios traen el total de reacciones, pero no si quien mira ya reaccionó. Pedido: un campo para quien mira en `PublicPostItemDto` y en `ApprovedCommentItemDto` (por ejemplo `viewer_reactions` y `liked_by_viewer`). Mientras: la app lo recuerda en el navegador (`src/shared/hooks/useReactionToggle.ts`); en el teléfono se pierde al cerrar la app y en otro equipo el «me gusta» aparece apagado aunque cuente.
+- [ ] **B-12 Seguidores y seguidos** (`GET /actors/{id}/followers` y `GET /actors/{id}/following`, paginados, con nombre, rol y foto). `GET /connections` solo trae ids y solo del perfil propio. Mientras: la app pide cada perfil por separado, hasta 50 seguidores, y no puede mostrar los seguidores de otra persona.
+- [ ] **B-13 Publicaciones guardadas** (`GET`, `POST` y `DELETE /actors/me/saved`). Son privadas: nunca se muestran a otras personas. La función se retiró de la app hasta que exista.
+- [ ] **B-14 Recuperar contraseña**: no hay endpoint; el enlace del login muestra «Disponible pronto».
+- [ ] **B-15 Notificaciones**: marcar una sola como leída (hoy solo existe `PATCH /notifications/read-all`) y el tipo «me gusta a tu comentario», que pide el diseño y no está entre los tipos de `NotificationItemDto`.
+
+### 3.4 Ajustes al contrato actual
+
+- [ ] **B-16 `actor_id` en la cola de moderación**: `GET /admin/moderation/pending` no siempre trae `author.actor_id`. Mientras: para saber si una solicitud de eliminación la hizo el autor, la app también compara el nombre de usuario.
+- [ ] **B-17 Banderas `show_*` del perfil público**: según el Swagger, `GET /actors/{id}` devuelve `show_email`, `show_birth_date` y `show_city`, pero no las envía. Enviarlas o corregir el Swagger. Prioridad baja: la app funciona sin ellas porque el backend ya oculta los datos (ver B-07).
+- [ ] **B-18 Iniciar sesión con documento**: el campo del login dice «Correo o documento», pero `POST /auth/login` solo acepta correo. Decidir si el backend acepta el documento o si el texto pasa a «Correo».

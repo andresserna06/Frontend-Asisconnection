@@ -15,6 +15,29 @@ Formato de cada entrada:
 
 ---
 
+## 2026-11-22 · B-02 Subida de imágenes confirmada
+
+- Qué se hizo: se marcó B-02 como resuelto en `PENDIENTES.md`. El equipo confirmó que `POST /media/upload` ya sube imágenes (antes respondía `503`).
+- Archivos principales: `docs/PENDIENTES.md`.
+- Cómo se probó: confirmación del equipo subiendo imágenes; no se volvió a probar desde código.
+- Queda pendiente: B-01 y B-03 a B-18 siguen abiertos.
+
+## 2026-11-22 · B-07 Privacidad del perfil público confirmada
+
+- Qué se hizo: se marcó B-07 como resuelto en `PENDIENTES.md` y se bajó la prioridad de B-17. El equipo probó con dos cuentas que los interruptores de correo, ciudad y fecha de nacimiento de Ajustes ocultan o muestran esos datos en el perfil visto desde otra cuenta.
+- Archivos principales: `docs/PENDIENTES.md`.
+- Decisiones: el filtro lo hace el backend; el front solo muestra lo que llega (`toVisibleValue` en `publicProfileService.ts`).
+- Cómo se probó: prueba manual del equipo; sin prueba automatizada.
+- Queda pendiente: B-17 (que el backend envíe `show_*` o se corrija el Swagger), prioridad baja.
+
+## 2026-11-10 · T-40 Lista de pendientes del backend
+
+- Qué se hizo: `PENDIENTES.md` reúne en la sección «Pendiente del backend» todo lo que la app necesita del backend (B-01 a B-18): configuración en Render, comportamientos por confirmar, endpoints que faltan y ajustes al contrato.
+- Archivos principales: `docs/PENDIENTES.md`.
+- Decisiones: los puntos de backend que estaban mezclados con los del frontend pasaron a esa sección; cada uno dice qué hace la app mientras tanto y qué se retira al tenerlo.
+- Cómo se probó: cada punto se contrastó con el Swagger desplegado (`/api/docs-json`) y con el código. Solo documentación.
+- Queda pendiente: B-01 a B-18, a cargo del equipo de backend.
+
 ## 2026-11-10 · T-39 Enlaces del Ecosistema
 
 - Qué se hizo: SUMA 21, AULA UP y SAGA-UP abren su sitio publicado.
