@@ -174,4 +174,65 @@ describe('adminService', () => {
 
     await expect(service.listModerators()).rejects.toEqual(new AdminError('forbidden'));
   });
+
+  it('lists and resolves community content reports via /admin/moderation/reports', async () => {
+    const client: HttpClient = {
+      request: jest
+        .fn()
+        .mockResolvedValueOnce({
+          data: [
+            {
+              id: 'rep-1',
+              target_type: 'POST',
+              target_id: 'post-1',
+              target_content_preview: 'Vista previa de la publicación reportada',
+              reason: 'INAPPROPRIATE_CONTENT',
+              details: 'Lenguaje inapropiado',
+              status: 'OPEN',
+              created_at: '2026-11-23T05:00:00.000Z',
+              resolved_at: null,
+            },
+          ],
+          meta: {
+            page: 1,
+            limit: 20,
+            total_items: 1,
+            total_pages: 1,
+            has_next_page: false,
+          },
+        })
+        .mockResolvedValueOnce(null),
+    };
+    const service = createAdminService(client);
+
+    await expect(service.listReports?.(1, 'OPEN')).resolves.toEqual({
+      items: [
+        {
+          id: 'rep-1',
+          targetType: 'POST',
+          targetId: 'post-1',
+          targetContentPreview: 'Vista previa de la publicación reportada',
+          reason: 'INAPPROPRIATE_CONTENT',
+          details: 'Lenguaje inapropiado',
+          status: 'OPEN',
+          createdAt: '2026-11-23T05:00:00.000Z',
+          resolvedAt: null,
+        },
+      ],
+      page: 1,
+      totalItems: 1,
+      totalPages: 1,
+      hasNextPage: false,
+    });
+    expect(client.request).toHaveBeenNthCalledWith(
+      1,
+      '/admin/moderation/reports?page=1&limit=20&status=OPEN',
+    );
+
+    await service.resolveReport?.('rep-1', { status: 'RESOLVED', rejectTarget: true });
+    expect(client.request).toHaveBeenNthCalledWith(2, '/admin/moderation/reports/rep-1/resolve', {
+      method: 'PATCH',
+      body: { status: 'RESOLVED', reject_target: true },
+    });
+  });
 });

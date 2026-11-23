@@ -110,6 +110,27 @@ export function usePublicProfileConnection(
     }
   }, [actorId, isAnonymous, service]);
 
+  const acceptFollowRequest = useCallback(async (): Promise<ProfileConnectionStatus | null> => {
+    if (actorId === undefined || isAnonymous || !service.acceptFollowRequest) {
+      return null;
+    }
+
+    setIsRequesting(true);
+    setOperationError(null);
+    try {
+      const relationship = await service.acceptFollowRequest(actorId);
+      setConnection({ status: 'ready', actorId, relationship });
+      return relationship;
+    } catch (error) {
+      setOperationError(
+        error instanceof PublicProfileError ? error : new PublicProfileError('unknown'),
+      );
+      return null;
+    } finally {
+      setIsRequesting(false);
+    }
+  }, [actorId, isAnonymous, service]);
+
   const retryConnectionStatus = useCallback(async () => {
     if (actorId === undefined || isAnonymous) {
       return;
@@ -141,8 +162,10 @@ export function usePublicProfileConnection(
     connection: connectionDisplayState,
     isRequesting,
     operationError,
+    canCancelPending: typeof service.requestUnfollow === 'function',
     requestFollow,
     requestUnfollow,
+    acceptFollowRequest,
     retryConnectionStatus,
   };
 }

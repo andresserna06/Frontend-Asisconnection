@@ -4,6 +4,7 @@ import { useAuth } from '@/modules/auth';
 import type { RemovalTarget } from '@/modules/removal/domain/models/RemovalTarget';
 import { useRemovalService } from '@/modules/removal/useRemovalService';
 import { readDeviceValue, writeDeviceValue } from '@/shared/lib/deviceStorage';
+import { HttpError } from '@/shared/lib/http';
 
 const GUEST_VIEWER = 'guest';
 const GUEST_CONTENT_KEY = 'asisconnection.guest-content.v1';
@@ -42,6 +43,13 @@ export function useContentRemoval() {
   const isModerator =
     !isAnonymous && (user?.roles.some((role) => role === 'ADMIN' || role === 'MODERATOR') ?? false);
 
+  function isOwnContent(target: { authorName: string; authorProfileId: string | null }): boolean {
+    if (status !== 'signedIn' || isAnonymous) {
+      return false;
+    }
+    return target.authorProfileId !== null && target.authorName === user?.username;
+  }
+
   function canRemove(target: RemovalTarget): boolean {
     if (status !== 'signedIn') {
       return false;
@@ -52,16 +60,31 @@ export function useContentRemoval() {
     if (isAnonymous) {
       return guestIds.includes(target.id);
     }
-    return target.authorProfileId !== null && target.authorName === user?.username;
+    return isOwnContent(target);
   }
 
-  async function remove(target: RemovalTarget): Promise<void> {
+  async function removeWithFallback(target: RemovalTarget): Promise<void> {
     if (isModerator) {
       await service.hideForEveryone(target);
     } else if (isAnonymous) {
       await service.requestRemoval(target);
     } else {
       await service.removeOwnContent(target);
+    }
+  }
+
+  async function remove(target: RemovalTarget): Promise<void> {
+    if (service.deleteContent) {
+      try {
+        await service.deleteContent(target);
+      } catch (error) {
+        if (!(error instanceof HttpError && (error.status === 404 || error.status === 405))) {
+          throw error;
+        }
+        await removeWithFallback(target);
+      }
+    } else {
+      await removeWithFallback(target);
     }
 
     if (viewer !== undefined) {
@@ -76,6 +99,7 @@ export function useContentRemoval() {
 
   return {
     removesForEveryone: !isAnonymous,
+    isOwnContent,
     canRemove,
     remove,
     isHidden: (id: string) => hiddenIds.includes(id),

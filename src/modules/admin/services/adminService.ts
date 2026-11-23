@@ -1,6 +1,11 @@
 import { AdminError } from '@/modules/admin/domain/models/AdminError';
+import type { ContentReportStatus } from '@/modules/admin/domain/models/ContentReportItem';
 import type { AdminService } from '@/modules/admin/domain/AdminService';
 import { parseRemovalRequest } from '@/modules/removal';
+import type {
+  ContentReportReason,
+  ContentReportTargetType,
+} from '@/shared/domain/models/ContentReport';
 import type { HttpClient } from '@/shared/lib/http';
 import { HttpError } from '@/shared/lib/http';
 
@@ -23,6 +28,28 @@ type ApiPendingItemDto = {
 
 type ApiPendingPageDto = {
   data: ApiPendingItemDto[];
+  meta: {
+    page: number;
+    total_items: number;
+    total_pages: number;
+    has_next_page: boolean;
+  };
+};
+
+type ApiContentReportItemDto = {
+  id: string;
+  target_type: ContentReportTargetType;
+  target_id: string;
+  target_content_preview?: string | null;
+  reason: ContentReportReason;
+  details?: string | null;
+  status: ContentReportStatus;
+  resolved_at?: string | null;
+  created_at: string;
+};
+
+type ApiContentReportsPageDto = {
+  data: ApiContentReportItemDto[];
   meta: {
     page: number;
     total_items: number;
@@ -126,6 +153,46 @@ export function createAdminService(client: HttpClient): AdminService {
         await client.request(`/admin/moderation/${pathType}/${encodeURIComponent(id)}/status`, {
           method: 'PATCH',
           body: { status },
+        });
+      });
+    },
+
+    listReports(page, status) {
+      const statusQuery = status ? `&status=${encodeURIComponent(status)}` : '';
+      return request(async () => {
+        const response = await client.request<ApiContentReportsPageDto>(
+          `/admin/moderation/reports?page=${page}&limit=20${statusQuery}`,
+        );
+        return {
+          items: response.data.map((item) => ({
+            id: item.id,
+            targetType: item.target_type,
+            targetId: item.target_id,
+            targetContentPreview: item.target_content_preview ?? null,
+            reason: item.reason,
+            details: item.details ?? null,
+            status: item.status,
+            createdAt: item.created_at,
+            resolvedAt: item.resolved_at ?? null,
+          })),
+          page: response.meta.page,
+          totalItems: response.meta.total_items,
+          totalPages: response.meta.total_pages,
+          hasNextPage: response.meta.has_next_page,
+        };
+      });
+    },
+
+    resolveReport(id, decision) {
+      return request(async () => {
+        await client.request(`/admin/moderation/reports/${encodeURIComponent(id)}/resolve`, {
+          method: 'PATCH',
+          body: {
+            status: decision.status,
+            ...(decision.rejectTarget !== undefined
+              ? { reject_target: decision.rejectTarget }
+              : {}),
+          },
         });
       });
     },

@@ -22,6 +22,20 @@ function toRemovalError(error: unknown): RemovalError {
 
 export function createRemovalService(client: HttpClient): RemovalService {
   return {
+    async deleteContent(target) {
+      const resource = target.kind === 'post' ? 'posts' : 'comments';
+      try {
+        await client.request(`/${resource}/${encodeURIComponent(target.id)}`, {
+          method: 'DELETE',
+        });
+      } catch (error) {
+        if (error instanceof HttpError && (error.status === 404 || error.status === 405)) {
+          throw error;
+        }
+        throw toRemovalError(error);
+      }
+    },
+
     async hideForEveryone(target) {
       const resource = target.kind === 'post' ? 'posts' : 'comments';
       try {

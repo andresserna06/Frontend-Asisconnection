@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { RoleBadge } from '@/modules/auth';
@@ -31,17 +32,47 @@ type ActorPostCardProps = {
   onCommentsPress: () => void;
   // Resolves with whether the viewer's like is active after the toggle.
   onLikePress: () => Promise<boolean>;
+  onBookmarkPress?: () => Promise<boolean>;
+  onEditPress?: () => void;
+  onReportPress?: () => void;
   onRemoved: () => void;
 };
 
-// A post shown in full: complete text, large image, like and comments.
+// A post shown in full: complete text, large image, like, comments, bookmark, edit and report.
 export function ActorPostCard({
   post,
   onCommentsPress,
   onLikePress,
+  onBookmarkPress,
+  onEditPress,
+  onReportPress,
   onRemoved,
 }: ActorPostCardProps) {
   const like = useReactionToggle(post.likeCount, onLikePress, `post:${post.id}`);
+  const [bookmarkOverride, setBookmarkOverride] = useState<{
+    postId: string;
+    value: boolean;
+  } | null>(null);
+  const [isBookmarkPending, setIsBookmarkPending] = useState(false);
+  const isBookmarked =
+    bookmarkOverride?.postId === post.id ? bookmarkOverride.value : Boolean(post.isBookmarked);
+
+  async function handleBookmarkPress() {
+    if (!onBookmarkPress || isBookmarkPending) {
+      return;
+    }
+    const previous = isBookmarked;
+    setBookmarkOverride({ postId: post.id, value: !previous });
+    setIsBookmarkPending(true);
+    try {
+      const next = await onBookmarkPress();
+      setBookmarkOverride({ postId: post.id, value: next });
+    } catch {
+      setBookmarkOverride({ postId: post.id, value: previous });
+    } finally {
+      setIsBookmarkPending(false);
+    }
+  }
 
   return (
     <View style={[styles.card, { borderTopColor: CATEGORY_COLORS[post.category].main }]}>
@@ -103,7 +134,46 @@ export function ActorPostCard({
           <Icon name="message-circle" size={SIZE.icon} color={COLORS.textSecondary} />
           <Text style={styles.count}>{post.commentCount}</Text>
         </Pressable>
+        {onBookmarkPress ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              isBookmarked
+                ? PROFILE_STRINGS.postDetail.removeBookmark
+                : PROFILE_STRINGS.postDetail.bookmarkPost
+            }
+            accessibilityState={{ selected: isBookmarked }}
+            onPress={() => void handleBookmarkPress()}
+            style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}
+          >
+            <Icon
+              name="bookmark"
+              size={SIZE.icon}
+              color={isBookmarked ? COLORS.primary : COLORS.textSecondary}
+            />
+          </Pressable>
+        ) : null}
         <View style={styles.actionsSpacer} />
+        {onEditPress ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={PROFILE_STRINGS.postDetail.editPost}
+            onPress={onEditPress}
+            style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}
+          >
+            <Icon name="edit-2" size={SIZE.iconSmall} color={COLORS.primary} />
+          </Pressable>
+        ) : null}
+        {onReportPress ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={PROFILE_STRINGS.postDetail.reportPost}
+            onPress={onReportPress}
+            style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}
+          >
+            <Icon name="flag" size={SIZE.iconSmall} color={COLORS.textSecondary} />
+          </Pressable>
+        ) : null}
         <RemoveContentButton
           target={{
             kind: 'post',
@@ -169,7 +239,7 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.s20,
+    gap: SPACING.s14,
   },
   actionsSpacer: {
     flex: 1,
@@ -179,6 +249,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.s6,
+  },
+  iconAction: {
+    width: SIZE.touchTarget,
+    height: SIZE.touchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   pressed: {
     opacity: OPACITY.pressed,

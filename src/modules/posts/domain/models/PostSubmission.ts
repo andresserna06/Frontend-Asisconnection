@@ -6,7 +6,12 @@ export type NewPostInput = {
   mediaUrls?: string[];
 };
 
-export type PostSubmissionStatus = 'PENDING' | 'REJECTED';
+export type UpdatePostInput = {
+  content: string;
+  mediaUrls?: string[];
+};
+
+export type PostSubmissionStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export type PostSubmissionResult = {
   id: string;

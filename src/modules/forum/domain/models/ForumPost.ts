@@ -1,5 +1,7 @@
 import type { ForumCategory } from './ForumCategory';
 
+export type ForumReactionType = 'LIKE' | 'SUPPORT' | 'THANKS';
+
 export type ForumPostMedia =
   | { kind: 'image'; uri: string; accessibilityLabel: string }
   | { kind: 'video'; thumbnailUri: string; accessibilityLabel: string; durationLabel: string };
@@ -20,4 +22,6 @@ export type ForumPost = {
   media: ForumPostMedia | null;
   likeCount: number;
   commentCount: number;
+  viewerReactions?: ForumReactionType[];
+  isBookmarked?: boolean;
 };

@@ -1,6 +1,8 @@
 import type { CategoryCode } from './CategoryCode';
 import type { RoleCode } from './RoleCode';
 
+export type PostReactionType = 'LIKE' | 'SUPPORT' | 'THANKS';
+
 export type PostAuthor = {
   id: string;
   fullName: string;
@@ -18,4 +20,6 @@ export type Post = {
   likeCount: number;
   commentCount: number;
   author: PostAuthor;
+  viewerReactions?: PostReactionType[];
+  isBookmarked?: boolean;
 };

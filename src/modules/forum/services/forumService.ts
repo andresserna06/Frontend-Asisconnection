@@ -3,8 +3,9 @@ import type {
   ModerationPendingItem,
 } from '@/modules/forum/domain/ForumRepository';
 import type { ForumCategory } from '@/modules/forum/domain/models/ForumCategory';
-import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
+import type { ForumPost, ForumReactionType } from '@/modules/forum/domain/models/ForumPost';
 import { toCategoryCode } from '@/shared/domain/models/CategoryCode';
+import { rememberReaction } from '@/shared/hooks/useReactionToggle';
 import { getAvatarPhotoUrl, isRemovedByAuthor } from '@/shared/lib/authorRemovalMarks';
 import { type HttpClient, HttpError } from '@/shared/lib/http';
 
@@ -40,6 +41,8 @@ type PublicPostItemResponse = {
     THANKS: number;
   };
   comments_count: number;
+  viewer_reactions?: ForumReactionType[];
+  is_bookmarked?: boolean;
   created_at: string;
 };
 
@@ -51,6 +54,16 @@ type ToggleReactionResponse = {
   post_id: string;
   type: string;
   active: boolean;
+};
+
+type ToggleBookmarkResponse = {
+  post_id: string;
+  bookmarked: boolean;
+};
+
+type DeletedResourceResponse = {
+  id: string;
+  deleted: boolean;
 };
 
 type ModerationPendingItemResponse = {
@@ -120,6 +133,12 @@ function toForumError(error: unknown): Error {
     if (error.status === 403) {
       return new Error('forbidden');
     }
+    if (error.status === 404) {
+      return new Error('notFound');
+    }
+    if (error.status === 409) {
+      return new Error('reportConflict');
+    }
   }
   return new Error('network');
 }
@@ -131,6 +150,10 @@ function toForumPost(item: PublicPostItemResponse, lookup: CategoryLookup): Foru
     (item.reactions_summary?.LIKE ?? 0) +
     (item.reactions_summary?.SUPPORT ?? 0) +
     (item.reactions_summary?.THANKS ?? 0);
+
+  if (Array.isArray(item.viewer_reactions)) {
+    rememberReaction(`post:${item.id}`, item.viewer_reactions.includes('LIKE'));
+  }
 
   return {
     id: item.id,
@@ -154,6 +177,8 @@ function toForumPost(item: PublicPostItemResponse, lookup: CategoryLookup): Foru
       : null,
     likeCount,
     commentCount: item.comments_count,
+    ...(item.viewer_reactions !== undefined ? { viewerReactions: item.viewer_reactions } : {}),
+    ...(item.is_bookmarked !== undefined ? { isBookmarked: item.is_bookmarked } : {}),
   };
 }
 
@@ -181,10 +206,17 @@ export function createForumService(client: HttpClient): ForumRepository {
   }
 
   return {
-    async listPosts({ filter }) {
+    async listPosts({ filter, feed, search }) {
       try {
         const lookup = await loadCategories();
         let query = '/posts?page=1&limit=20';
+        if (feed === 'following') {
+          query += '&feed=following';
+        }
+        const trimmedSearch = search?.trim() ?? '';
+        if (trimmedSearch.length > 0) {
+          query += `&search=${encodeURIComponent(trimmedSearch)}`;
+        }
         if (filter !== 'all') {
           const categoryId = lookup.byCode[filter];
           if (categoryId === undefined) {
@@ -202,6 +234,18 @@ export function createForumService(client: HttpClient): ForumRepository {
       }
     },
 
+    async getPostById(postId) {
+      try {
+        const [lookup, item] = await Promise.all([
+          loadCategories(),
+          client.request<PublicPostItemResponse>(`/posts/${encodeURIComponent(postId)}`),
+        ]);
+        return toForumPost(item, lookup);
+      } catch (error) {
+        throw toForumError(error);
+      }
+    },
+
     async toggleLike(postId) {
       try {
         const result = await client.request<ToggleReactionResponse>(`/posts/${postId}/reactions`, {
@@ -209,6 +253,50 @@ export function createForumService(client: HttpClient): ForumRepository {
           body: { type: 'LIKE' },
         });
         return result.active;
+      } catch (error) {
+        throw toForumError(error);
+      }
+    },
+
+    async toggleBookmark(postId) {
+      try {
+        const result = await client.request<ToggleBookmarkResponse>(
+          `/posts/${encodeURIComponent(postId)}/bookmarks`,
+          {
+            method: 'POST',
+          },
+        );
+        return result.bookmarked;
+      } catch (error) {
+        throw toForumError(error);
+      }
+    },
+
+    async deletePost(postId) {
+      try {
+        const result = await client.request<DeletedResourceResponse>(
+          `/posts/${encodeURIComponent(postId)}`,
+          {
+            method: 'DELETE',
+          },
+        );
+        return result.deleted;
+      } catch (error) {
+        throw toForumError(error);
+      }
+    },
+
+    async reportPost(input) {
+      try {
+        await client.request('/reports', {
+          method: 'POST',
+          body: {
+            target_type: input.targetType,
+            target_id: input.targetId,
+            reason: input.reason,
+            ...(input.details ? { details: input.details } : {}),
+          },
+        });
       } catch (error) {
         throw toForumError(error);
       }

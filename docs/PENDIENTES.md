@@ -9,8 +9,20 @@ Cómo se usa:
 
 ---
 
-## 1. Estado de Pantallas, Endpoints e Interfaces Integradas (100% Completadas)
+## 1. Tareas en Curso
 
+*(Sin tareas en curso)*
+
+---
+
+## 2. Estado de Pantallas, Endpoints e Interfaces Integradas (100% Completadas)
+
+- [x] **T-40 · Integración de Casos de Uso CU-01 a CU-05 (Descubrimiento y Conexiones, Feed «Siguiendo» y Búsqueda, Edición/Eliminación y Mis Envíos en Moderación, Guardados/Bookmarks y Reportes Comunitarios)**
+  - **CU-01**: Directorio y buscador de perfiles (`GET /actors`), relación del lector (`viewer_connection` en `GET /actors/:id` con estados *Seguir*, *Solicitado / Cancelar*, *Aceptar solicitud* y *Dejar de seguir*), listas de seguidores/seguidos (`GET /actors/:id/followers` y `GET /actors/:id/following`), solicitudes pendientes enriquecidas con `peer_actor` (`GET /connections?status=PENDING&direction=incoming`) y eliminación de conexión (`DELETE /connections/:id`).
+  - **CU-02**: Selector de feed (*Explorar* / *Siguiendo*) y búsqueda por texto o `#hashtags` en `GET /posts`, lectura de `viewer_reactions` e `is_bookmarked`, y consulta individual `GET /posts/:id`.
+  - **CU-03**: Edición de publicación propia (`PATCH /posts/:id`) con aviso de re-moderación (`PENDING`), eliminación nativa (`DELETE /posts/:id`, `DELETE /comments/:id`) integrada con `useContentRemoval`, e historial propio de envíos a moderación (`GET /actors/me/submissions`).
+  - **CU-04**: Guardado/quitado de publicaciones (`POST /posts/:postId/bookmarks`) y colección personal en perfil (`GET /bookmarks`).
+  - **CU-05**: Reporte de publicaciones y comentarios (`POST /reports`, con manejo de `409 Conflict`) y bandeja de reportes en el panel de moderación (`GET /admin/moderation/reports`, `PATCH /admin/moderation/reports/:id/resolve`) para `ADMIN` y `MODERATOR`.
 - [x] **UI-01 · Registro y Modo Invitado en `LoginScreen.tsx`**
   - Integrado `submitAnonymous` (`POST /sessions/anonymous`) y `RegisterModal.tsx` (`POST /auth/registro`), incluyendo manejo explícito de conflictos `409 Conflict` y visualización de errores RFC 7807 dentro del modal.
 - [x] **UI-02 y T-11 · Pantalla `5b` — Perfil Público de Otra Persona y sus Publicaciones (`src/app/users/[userId].tsx`)**
@@ -41,6 +53,3 @@ Cómo se usa:
 - [ ] **T-29 Sesión en web**: decidir si la sesión debe sobrevivir a recargar la pestaña. `secureTokenStorage.web.ts` la guarda solo en memoria y `expo-secure-store` no existe en web; persistirla cambia la regla de la sección 7 de `AGENTS.md`.
 - [ ] **T-30 Despliegue web**: agregar el dominio del Static Site a `CORS_ORIGINS` del backend (hoy un origen desconocido no recibe `access-control-allow-origin`) y validar el flujo contra el backend real.
 - [!] **Recuperar contraseña**: Enlace visible en el login (`showComingSoonNotice`); el backend no incluye endpoint de recuperación de contraseña en el MVP.
-- [!] **Cancelar seguimiento (`DELETE /v1/connections/{id}`)**: El backend actual permite crear y consultar conexiones (`POST /connections`, `GET /connections`), pero no incluye endpoint para eliminar una conexión existente (confirmado: responde `Cannot DELETE`). Hasta tenerlo, dejar de seguir solo se recuerda en el dispositivo de quien lo hace: la otra persona conserva a ese seguidor en su contador y en su lista.
-- [!] **Eliminar publicaciones y comentarios (`DELETE /v1/posts/{postId}`)**: El backend no tiene esta ruta (confirmado: responde `Cannot DELETE`). Solución temporal en el módulo `removal`: moderadores rechazan el contenido; el dueño registrado lo marca en el fragmento de su `avatar_url` (`shared/lib/authorRemovalMarks.ts`, unas 40 marcas como máximo) y todas las apps lo ocultan; los invitados envían una solicitud como comentario pendiente. Regla pedida: `ADMIN` y `MODERATOR` eliminan cualquier publicación; las demás cuentas, solo las propias. El backend debe validar el permiso (`403` si no corresponde) y responder `204` o `404`. Conviene que `GET /posts` y las listas por actor incluyan `can_delete` para no deducir el permiso en la app.
-- [!] **Persistencia en servidor de publicaciones guardadas (`/actors/me/saved`)**: Fuera del alcance del MVP de backend; la función se retiró de la app hasta que exista.

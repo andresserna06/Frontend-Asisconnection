@@ -1,9 +1,13 @@
+import type { CreateContentReportInput } from '@/shared/domain/models/ContentReport';
+
 import type { Comment, CommentSubmissionResult, NewComment } from './models/Comment';
 
 export type CommentsRepository = {
   listComments(postId: string): Promise<Comment[]>;
   addComment(comment: NewComment): Promise<CommentSubmissionResult>;
   toggleLike?(commentId: string): Promise<boolean>;
+  deleteComment?(commentId: string): Promise<boolean>;
+  reportComment?(input: CreateContentReportInput): Promise<void>;
 };
 
 // Total shown in the sheet: top-level comments plus their replies.

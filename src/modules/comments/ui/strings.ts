@@ -5,6 +5,8 @@ export const COMMENTS_STRINGS = {
   count: (total: number) => (total === 1 ? '1 comentario' : `${total} comentarios`),
   foundationBadge: 'Fundación',
   reply: 'Responder',
+  reportComment: 'Reportar',
+  reportCommentLabel: 'Reportar comentario',
   showReplies: (count: number) => (count === 1 ? 'Ver 1 respuesta' : `Ver ${count} respuestas`),
   hideReplies: 'Ocultar respuestas',
   like: 'Me gusta',

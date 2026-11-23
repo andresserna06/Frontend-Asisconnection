@@ -202,4 +202,77 @@ describe('createProfileService', () => {
     expect(fetchMock.mock.calls[1][0]).toBe(`${BASE_URL}/connections`);
     expect(fetchMock.mock.calls[1][1]?.method).toBe('POST');
   });
+
+  it('loads saved bookmarks via GET /bookmarks and moderation submissions via GET /actors/me/submissions', async () => {
+    const service = createProfileService(createHttpClient(BASE_URL));
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse(200, {
+          data: [{ id: 'cat-guides', name: 'Apoyo Pedagógico', main_topic: 'Educación' }],
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(200, {
+          data: [
+            {
+              id: 'post-saved-1',
+              category_id: 'cat-guides',
+              content: 'Publicación guardada',
+              image_url: null,
+              media_urls: [],
+              author: {
+                actor_id: 'actor-2',
+                display_name: 'Carlos Ruiz',
+                role_label: 'VOLUNTARIO',
+                avatar_url: null,
+              },
+              reactions_summary: { LIKE: 2, SUPPORT: 0, THANKS: 0 },
+              comments_count: 1,
+              is_bookmarked: true,
+              created_at: '2026-11-23T05:00:00.000Z',
+            },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(200, {
+          data: [
+            {
+              id: 'sub-1',
+              category_id: 'cat-guides',
+              content: 'Mi envío rechazado',
+              image_url: null,
+              media_urls: [],
+              status: 'REJECTED',
+              rejection_reason: 'AUTO_FILTER',
+              created_at: '2026-11-23T05:00:00.000Z',
+              updated_at: '2026-11-23T05:00:00.000Z',
+            },
+          ],
+        }),
+      );
+
+    const saved = await service.getMySavedPosts?.();
+    expect(saved?.[0]?.id).toBe('post-saved-1');
+    expect(saved?.[0]?.isBookmarked).toBe(true);
+    expect(fetchMock.mock.calls[1][0]).toBe(`${BASE_URL}/bookmarks?page=1&limit=20`);
+
+    const submissions = await service.getMySubmissions?.('REJECTED');
+    expect(submissions).toEqual([
+      {
+        id: 'sub-1',
+        category: 'guides',
+        content: 'Mi envío rechazado',
+        imageUrl: null,
+        mediaUrls: [],
+        status: 'REJECTED',
+        rejectionReason: 'AUTO_FILTER',
+        createdAt: '2026-11-23T05:00:00.000Z',
+        updatedAt: '2026-11-23T05:00:00.000Z',
+      },
+    ]);
+    expect(fetchMock.mock.calls[2][0]).toBe(
+      `${BASE_URL}/actors/me/submissions?page=1&limit=20&status=REJECTED`,
+    );
+  });
 });

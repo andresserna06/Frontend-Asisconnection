@@ -215,4 +215,120 @@ describe('publicProfileService', () => {
     ]);
     expect(request).toHaveBeenCalledWith('/actors/actor-1/posts?page=1&limit=20');
   });
+
+  it('uses viewer_connection from GET /actors/:id, searches actors, lists followers/following, accepts/deletes connections and fetches post detail', async () => {
+    const request = jest.fn(async (path: string, options?: { method?: string }) => {
+      if (path === '/actors/actor-10') {
+        return {
+          id: 'actor-10',
+          username: 'andres.voluntario',
+          primary_role: 'VOLUNTARIO',
+          first_names: 'Andrés',
+          last_names: 'Voluntario',
+          avatar_url: null,
+          short_bio: null,
+          posts_count: 5,
+          followers_count: 12,
+          following_count: 8,
+          viewer_connection: {
+            connection_id: 'conn-10',
+            status: 'PENDING',
+            direction: 'INCOMING',
+          },
+        };
+      }
+      if (path === '/connections/conn-10' && options?.method === 'PATCH') {
+        return {
+          id: 'conn-10',
+          requester_actor_id: 'actor-10',
+          receiver_actor_id: 'me',
+          status: 'ACCEPTED',
+        };
+      }
+      if (path.startsWith('/actors?')) {
+        return {
+          data: [
+            {
+              id: 'actor-10',
+              username: 'andres.voluntario',
+              primary_role: 'VOLUNTARIO',
+              first_names: 'Andrés',
+              last_names: 'Voluntario',
+              avatar_url: null,
+              short_bio: 'Tallerista',
+            },
+          ],
+        };
+      }
+      if (path.startsWith('/connections?') && path.includes('status=PENDING')) {
+        return {
+          data: [
+            {
+              id: 'conn-10',
+              requester_actor_id: 'actor-10',
+              receiver_actor_id: 'me',
+              status: 'PENDING',
+              peer_actor: {
+                actor_id: 'actor-10',
+                username: 'camila.acudiente',
+                display_name: 'Camila Pineda',
+                primary_role: 'ACUDIENTE',
+                avatar_url: null,
+              },
+              requested_at: '2026-11-23T05:00:00.000Z',
+              accepted_at: null,
+            },
+          ],
+          meta: { has_next_page: false },
+        };
+      }
+      if (path.startsWith('/categories')) {
+        return { data: [{ id: 'cat-1', name: 'Salud', main_topic: 'Salud' }] };
+      }
+      if (path === '/posts/post-10') {
+        return {
+          id: 'post-10',
+          category_id: 'cat-1',
+          content: 'Detalle de post individual',
+          image_url: null,
+          author: {
+            actor_id: 'actor-10',
+            display_name: 'Andrés Voluntario',
+            role_label: 'VOLUNTARIO',
+            avatar_url: null,
+          },
+          reactions_summary: { LIKE: 1, SUPPORT: 0, THANKS: 0 },
+          comments_count: 0,
+          viewer_reactions: ['LIKE'],
+          is_bookmarked: true,
+          created_at: '2026-11-23T05:00:00.000Z',
+        };
+      }
+      return { data: [] };
+    });
+    const service = createPublicProfileService({ request } as unknown as HttpClient);
+
+    const profile = await service.getPublicProfile('actor-10');
+    expect(profile.viewerConnection).toEqual({
+      connectionId: 'conn-10',
+      status: 'PENDING',
+      direction: 'INCOMING',
+    });
+    await expect(service.getConnectionStatus('actor-10')).resolves.toBe('pendingIncoming');
+    await expect(service.acceptFollowRequest?.('actor-10')).resolves.toBe('following');
+
+    const directory = await service.searchActors?.({ search: 'andres', role: 'VOLUNTARIO' });
+    expect(directory).toHaveLength(1);
+    expect(request).toHaveBeenCalledWith('/actors?page=1&limit=20&search=andres&role=VOLUNTARIO');
+
+    const connections = await service.getMyConnections?.({
+      status: 'PENDING',
+      direction: 'incoming',
+    });
+    expect(connections?.[0]?.peerActor?.displayName).toBe('Camila Pineda');
+
+    const detail = await service.getPostById?.('post-10');
+    expect(detail?.isBookmarked).toBe(true);
+    expect(detail?.viewerReactions).toEqual(['LIKE']);
+  });
 });

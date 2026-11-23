@@ -61,4 +61,14 @@ describe('removalService', () => {
       createRemovalService({ request } as HttpClient).requestRemoval(COMMENT),
     ).rejects.toMatchObject({ kind: 'rateLimited' });
   });
+
+  it('deletes a comment or post directly via DELETE /comments/:id or DELETE /posts/:id', async () => {
+    const request = jest.fn(async () => ({ id: 'c-1', deleted: true }));
+
+    await createRemovalService({ request } as HttpClient).deleteContent?.(COMMENT);
+
+    expect(request).toHaveBeenCalledWith('/comments/c-1', {
+      method: 'DELETE',
+    });
+  });
 });

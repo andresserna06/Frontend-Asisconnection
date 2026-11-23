@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { countComments } from '@/modules/comments/domain/CommentsRepository';
 import type { Comment, NewComment } from '@/modules/comments/domain/models/Comment';
+import type { CreateContentReportInput } from '@/shared/domain/models/ContentReport';
 import { getReactionViewer } from '@/shared/hooks/useReactionToggle';
 
 import { useCommentsRepository } from './CommentsRepositoryProvider';
@@ -73,5 +74,31 @@ export function useToggleCommentLike() {
     const isActive = await repository.toggleLike(commentId);
     void queryClient.invalidateQueries({ queryKey: ['comments'] });
     return isActive;
+  };
+}
+
+export function useDeleteComment() {
+  const repository = useCommentsRepository();
+  const queryClient = useQueryClient();
+
+  return async (commentId: string): Promise<boolean> => {
+    if (!repository?.deleteComment) {
+      throw new Error('Comments service is not configured.');
+    }
+    const deleted = await repository.deleteComment(commentId);
+    await queryClient.invalidateQueries({ queryKey: ['comments'] });
+    await queryClient.invalidateQueries({ queryKey: ['forum', 'feed'] });
+    return deleted;
+  };
+}
+
+export function useReportComment() {
+  const repository = useCommentsRepository();
+
+  return async (input: CreateContentReportInput): Promise<void> => {
+    if (!repository?.reportComment) {
+      throw new Error('Comments service is not configured.');
+    }
+    await repository.reportComment(input);
   };
 }

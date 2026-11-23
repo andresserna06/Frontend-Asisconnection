@@ -16,6 +16,7 @@ import { useAdminService } from '../useAdminService';
 import { ADMIN_STRINGS } from './strings';
 import { ModerationSection } from './components/ModerationSection';
 import { ModeratorManagementSection } from './components/ModeratorManagementSection';
+import { ReportsSection } from './components/ReportsSection';
 
 const HEADER_ROW_HEIGHT = 66;
 
@@ -80,21 +81,32 @@ export function AdminScreen({ service: serviceOverride }: AdminScreenProps = {})
           <Text style={styles.introText}>{ADMIN_STRINGS.intro}</Text>
         </View>
 
-        {isAdmin ? (
-          <View style={styles.tabs}>
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityLabel={ADMIN_STRINGS.moderationTab}
-              accessibilityState={{ selected: dashboard.section === 'moderation' }}
-              onPress={() => dashboard.setSection('moderation')}
-              style={[styles.tab, dashboard.section === 'moderation' && styles.activeTab]}
+        <View style={styles.tabs}>
+          <Pressable
+            accessibilityRole="tab"
+            accessibilityLabel={ADMIN_STRINGS.moderationTab}
+            accessibilityState={{ selected: dashboard.section === 'moderation' }}
+            onPress={() => dashboard.setSection('moderation')}
+            style={[styles.tab, dashboard.section === 'moderation' && styles.activeTab]}
+          >
+            <Text
+              style={[styles.tabText, dashboard.section === 'moderation' && styles.activeTabText]}
             >
-              <Text
-                style={[styles.tabText, dashboard.section === 'moderation' && styles.activeTabText]}
-              >
-                {ADMIN_STRINGS.moderationTab}
-              </Text>
-            </Pressable>
+              {ADMIN_STRINGS.moderationTab}
+            </Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="tab"
+            accessibilityLabel={ADMIN_STRINGS.reportsTab}
+            accessibilityState={{ selected: dashboard.section === 'reports' }}
+            onPress={() => dashboard.setSection('reports')}
+            style={[styles.tab, dashboard.section === 'reports' && styles.activeTab]}
+          >
+            <Text style={[styles.tabText, dashboard.section === 'reports' && styles.activeTabText]}>
+              {ADMIN_STRINGS.reportsTab}
+            </Text>
+          </Pressable>
+          {isAdmin ? (
             <Pressable
               accessibilityRole="tab"
               accessibilityLabel={ADMIN_STRINGS.moderatorsTab}
@@ -108,10 +120,20 @@ export function AdminScreen({ service: serviceOverride }: AdminScreenProps = {})
                 {ADMIN_STRINGS.moderatorsTab}
               </Text>
             </Pressable>
-          </View>
-        ) : null}
+          ) : null}
+        </View>
 
-        {dashboard.section === 'moderation' || !isAdmin ? (
+        {dashboard.section === 'reports' ? (
+          <ReportsSection
+            reports={dashboard.reports}
+            statusFilter={dashboard.reportFilter}
+            busyReportId={dashboard.busyReportId}
+            operationError={dashboard.operationError}
+            onStatusFilterChange={dashboard.setReportFilter}
+            onRetry={() => void dashboard.loadReports()}
+            onResolve={(report, decision) => void dashboard.resolveReport(report, decision)}
+          />
+        ) : dashboard.section === 'moderation' || !isAdmin ? (
           <ModerationSection
             queue={dashboard.queue}
             filter={dashboard.filter}

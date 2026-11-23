@@ -2,6 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { AdminService } from '@/modules/admin/domain/AdminService';
 import { AdminError } from '@/modules/admin/domain/models/AdminError';
+import type {
+  ContentReportDecision,
+  ContentReportItem,
+  ContentReportsPage,
+  ContentReportStatus,
+} from '@/modules/admin/domain/models/ContentReportItem';
 import type { ModeratorAccount } from '@/modules/admin/domain/models/ModeratorAccount';
 import type {
   ModerationDecision,
@@ -13,7 +19,7 @@ import type {
 export type AdminResource<T> =
   { status: 'loading' } | { status: 'success'; data: T } | { status: 'error'; error: AdminError };
 
-export type AdminSection = 'moderation' | 'moderators';
+export type AdminSection = 'moderation' | 'reports' | 'moderators';
 
 function toAdminError(error: unknown): AdminError {
   return error instanceof AdminError ? error : new AdminError('unknown');
@@ -31,7 +37,16 @@ export function useAdminDashboard(
 ) {
   const [section, setSection] = useState<AdminSection>('moderation');
   const [filter, setFilterValue] = useState<ModerationFilter>('ALL');
+  const [reportFilter, setReportFilterValue] = useState<ContentReportStatus>('OPEN');
   const [queue, setQueue] = useState<AdminResource<ModerationQueuePage>>({ status: 'loading' });
+  const [reports, setReports] = useState<AdminResource<ContentReportsPage>>(() =>
+    service.listReports
+      ? { status: 'loading' }
+      : {
+          status: 'success',
+          data: { items: [], page: 1, totalItems: 0, totalPages: 1, hasNextPage: false },
+        },
+  );
   const [moderators, setModerators] = useState<AdminResource<ModeratorAccount[]>>({
     status: 'loading',
   });
@@ -41,6 +56,7 @@ export function useAdminDashboard(
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState<AdminError | null>(null);
   const [busyModeratorId, setBusyModeratorId] = useState<string | null>(null);
+  const [busyReportId, setBusyReportId] = useState<string | null>(null);
   const [isAssigningModerator, setIsAssigningModerator] = useState(false);
   const [operationError, setOperationError] = useState<AdminError | null>(null);
   // Only the latest listing counts, so a slow response cannot overwrite a newer one.
@@ -71,6 +87,11 @@ export function useAdminDashboard(
     setFilterValue(nextFilter);
   }, []);
 
+  const setReportFilter = useCallback((nextStatus: ContentReportStatus) => {
+    setReports({ status: 'loading' });
+    setReportFilterValue(nextStatus);
+  }, []);
+
   const loadQueue = useCallback(
     async (page = 1) => {
       queueRequestRef.current += 1;
@@ -89,6 +110,25 @@ export function useAdminDashboard(
       }
     },
     [filter, service, withoutDecided],
+  );
+
+  const loadReports = useCallback(
+    async (page = 1) => {
+      if (!service.listReports) {
+        setReports({
+          status: 'success',
+          data: { items: [], page: 1, totalItems: 0, totalPages: 1, hasNextPage: false },
+        });
+        return;
+      }
+      setReports({ status: 'loading' });
+      try {
+        setReports({ status: 'success', data: await service.listReports(page, reportFilter) });
+      } catch (error) {
+        setReports({ status: 'error', error: toAdminError(error) });
+      }
+    },
+    [reportFilter, service],
   );
 
   const loadModerators = useCallback(async () => {
@@ -140,6 +180,30 @@ export function useAdminDashboard(
       queueRequestRef.current += 1;
     };
   }, [filter, isEnabled, service, withoutDecided]);
+
+  useEffect(() => {
+    if (!isEnabled || section !== 'reports' || !service.listReports) {
+      return;
+    }
+
+    let isActive = true;
+    service
+      .listReports(1, reportFilter)
+      .then((data) => {
+        if (isActive) {
+          setReports({ status: 'success', data });
+        }
+      })
+      .catch((error: unknown) => {
+        if (isActive) {
+          setReports({ status: 'error', error: toAdminError(error) });
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [isEnabled, reportFilter, section, service]);
 
   // Deciding every visible item leaves the next page to be fetched, without a spinner.
   const hasEmptiedPage =
@@ -288,6 +352,28 @@ export function useAdminDashboard(
     [decideItem, service],
   );
 
+  const resolveReport = useCallback(
+    async (report: ContentReportItem, decision: ContentReportDecision) => {
+      if (!service.resolveReport) {
+        return false;
+      }
+      setOperationError(null);
+      setBusyReportId(report.id);
+      try {
+        await service.resolveReport(report.id, decision);
+        onContentChanged?.();
+        await loadReports();
+        return true;
+      } catch (error) {
+        setOperationError(toAdminError(error));
+        return false;
+      } finally {
+        setBusyReportId(null);
+      }
+    },
+    [loadReports, onContentChanged, service],
+  );
+
   const assignModerator = useCallback(
     async (userAccountId: string) => {
       setOperationError(null);
@@ -329,20 +415,26 @@ export function useAdminDashboard(
     setSection,
     filter,
     setFilter,
+    reportFilter,
+    setReportFilter,
     queue,
+    reports,
     moderators,
     searchResults,
     isLoadingMore,
     loadMoreError,
     busyModeratorId,
+    busyReportId,
     isAssigningModerator,
     operationError,
     loadQueue,
+    loadReports,
     loadModerators,
     searchAccounts,
     loadMore,
     updateModerationStatus,
     resolveRemovalRequest,
+    resolveReport,
     assignModerator,
     revokeModerator,
   };

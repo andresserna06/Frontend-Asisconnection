@@ -1,3 +1,8 @@
+import type {
+  ContentReportDecision,
+  ContentReportsPage,
+  ContentReportStatus,
+} from './models/ContentReportItem';
 import type { ModeratorAccount } from './models/ModeratorAccount';
 import type {
   ModerationDecision,
@@ -20,6 +25,8 @@ export type AdminService = {
     status: ModerationDecision,
   ): Promise<void>;
   getRemovalTarget?(item: ModerationItem): Promise<RemovalTargetPreview>;
+  listReports?(page: number, status?: ContentReportStatus): Promise<ContentReportsPage>;
+  resolveReport?(id: string, decision: ContentReportDecision): Promise<void>;
   listModerators(): Promise<ModeratorAccount[]>;
   searchAccounts?(query: string): Promise<ModeratorAccount[]>;
   assignModerator(userAccountId: string): Promise<void>;

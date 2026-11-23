@@ -46,6 +46,11 @@ type ToggleCommentReactionResponse = {
   active: boolean;
 };
 
+type DeletedResourceResponse = {
+  id: string;
+  deleted: boolean;
+};
+
 function toInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) {
@@ -174,6 +179,35 @@ export function createCommentsService(client: HttpClient): CommentsRepository {
         },
       );
       return response.active;
+    },
+
+    async deleteComment(commentId) {
+      const response = await client.request<DeletedResourceResponse>(
+        `/comments/${encodeURIComponent(commentId)}`,
+        {
+          method: 'DELETE',
+        },
+      );
+      return response.deleted;
+    },
+
+    async reportComment(input) {
+      try {
+        await client.request('/reports', {
+          method: 'POST',
+          body: {
+            target_type: input.targetType,
+            target_id: input.targetId,
+            reason: input.reason,
+            ...(input.details ? { details: input.details } : {}),
+          },
+        });
+      } catch (error) {
+        if (error instanceof HttpError && error.status === 409) {
+          throw new Error('reportConflict');
+        }
+        throw error;
+      }
     },
   };
 }

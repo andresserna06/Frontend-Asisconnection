@@ -75,4 +75,32 @@ describe('createPostsService', () => {
       new PostsError('rateLimited', 'Límite diario'),
     );
   });
+
+  it('edits an own post via PATCH /posts/:id and deletes via DELETE /posts/:id', async () => {
+    const service = createPostsService(createHttpClient(BASE_URL));
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse(200, {
+          id: 'p-1',
+          status: 'PENDING',
+          message: 'Contenido recibido y enviado a moderación humana antes de su publicación.',
+          created_at: '2026-11-23T05:00:00.000Z',
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse(200, { id: 'p-1', deleted: true }));
+
+    await expect(
+      service.updatePost?.('p-1', { content: 'Texto corregido de mi publicación.' }),
+    ).resolves.toEqual({
+      id: 'p-1',
+      status: 'PENDING',
+      message: 'Contenido recibido y enviado a moderación humana antes de su publicación.',
+    });
+    expect(fetchMock.mock.calls[0][0]).toBe(`${BASE_URL}/posts/p-1`);
+    expect(fetchMock.mock.calls[0][1]?.method).toBe('PATCH');
+
+    await expect(service.deletePost?.('p-1')).resolves.toBe(true);
+    expect(fetchMock.mock.calls[1][0]).toBe(`${BASE_URL}/posts/p-1`);
+    expect(fetchMock.mock.calls[1][1]?.method).toBe('DELETE');
+  });
 });

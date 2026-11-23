@@ -1,11 +1,17 @@
 import { ROLES } from '@/modules/auth';
 import { ProfileError } from '@/modules/profile/domain/models/ProfileError';
 import type { MyProfile } from '@/modules/profile/domain/models/MyProfile';
-import type { ProfileService, UpdateProfileInput } from '@/modules/profile/domain/ProfileService';
+import type {
+  MyPostSubmission,
+  MySubmissionStatus,
+  ProfileService,
+  UpdateProfileInput,
+} from '@/modules/profile/domain/ProfileService';
 import type { LocalMediaFile } from '@/shared/domain/models/LocalMediaFile';
 import { type CategoryCode, toCategoryCode } from '@/shared/domain/models/CategoryCode';
-import type { Post } from '@/shared/domain/models/Post';
+import type { Post, PostReactionType } from '@/shared/domain/models/Post';
 import type { RoleCode } from '@/shared/domain/models/RoleCode';
+import { rememberReaction } from '@/shared/hooks/useReactionToggle';
 import {
   countPostsRemovedByAuthor,
   getAvatarPhotoUrl,
@@ -72,11 +78,45 @@ type PublicPostItemResponse = {
     THANKS: number;
   };
   comments_count: number;
+  viewer_reactions?: PostReactionType[];
+  is_bookmarked?: boolean;
   created_at: string;
 };
 
 type PostsPageResponse = {
   data: PublicPostItemResponse[];
+};
+
+type MyPostSubmissionItemResponse = {
+  id: string;
+  category_id: string;
+  content: string;
+  image_url: string | null;
+  media_urls?: string[];
+  status: MySubmissionStatus;
+  rejection_reason?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type MyPostSubmissionsPageResponse = {
+  data: MyPostSubmissionItemResponse[];
+};
+
+type PendingSubmissionResponse = {
+  id: string;
+  status: MySubmissionStatus;
+  message: string;
+};
+
+type DeletedResourceResponse = {
+  id: string;
+  deleted: boolean;
+};
+
+type ToggleBookmarkResponse = {
+  post_id: string;
+  bookmarked: boolean;
 };
 
 function isRoleCode(value: string): value is RoleCode {
@@ -139,6 +179,10 @@ function toPost(item: PublicPostItemResponse, categoriesById: Record<string, Cat
     (item.reactions_summary?.SUPPORT ?? 0) +
     (item.reactions_summary?.THANKS ?? 0);
 
+  if (Array.isArray(item.viewer_reactions)) {
+    rememberReaction(`post:${item.id}`, item.viewer_reactions.includes('LIKE'));
+  }
+
   return {
     id: item.id,
     category: categoriesById[item.category_id] ?? 'guides',
@@ -154,6 +198,26 @@ function toPost(item: PublicPostItemResponse, categoriesById: Record<string, Cat
       roles: toRoleCodes(item.author.role_label),
       photoUrl: normalizeAvatarUrl(item.author.avatar_url),
     },
+    ...(item.viewer_reactions !== undefined ? { viewerReactions: item.viewer_reactions } : {}),
+    ...(item.is_bookmarked !== undefined ? { isBookmarked: item.is_bookmarked } : {}),
+  };
+}
+
+function toMySubmission(
+  item: MyPostSubmissionItemResponse,
+  categoriesById: Record<string, CategoryCode>,
+): MyPostSubmission {
+  const mediaUrls = item.media_urls ?? (item.image_url ? [item.image_url] : []);
+  return {
+    id: item.id,
+    category: categoriesById[item.category_id] ?? 'guides',
+    content: item.content,
+    imageUrl: mediaUrls[0] ?? item.image_url,
+    mediaUrls,
+    status: item.status,
+    rejectionReason: item.rejection_reason ?? null,
+    createdAt: item.created_at,
+    updatedAt: item.updated_at,
   };
 }
 
@@ -295,6 +359,91 @@ export function createProfileService(client: HttpClient): ProfileService {
         if (error instanceof HttpError && error.status === 404) {
           return [];
         }
+        throw toProfileError(error);
+      }
+    },
+
+    async getMySavedPosts() {
+      try {
+        const [categoriesById, page] = await Promise.all([
+          loadCategoriesById(),
+          client.request<PostsPageResponse>('/bookmarks?page=1&limit=20'),
+        ]);
+        return page.data
+          .filter((item) => !isRemovedByAuthor(item.author.avatar_url, 'post', item.id))
+          .map((item) => toPost(item, categoriesById));
+      } catch (error) {
+        if (error instanceof HttpError && error.status === 404) {
+          return [];
+        }
+        throw toProfileError(error);
+      }
+    },
+
+    async getMySubmissions(status) {
+      try {
+        const statusParam = status ? `&status=${encodeURIComponent(status)}` : '';
+        const [categoriesById, page] = await Promise.all([
+          loadCategoriesById(),
+          client.request<MyPostSubmissionsPageResponse>(
+            `/actors/me/submissions?page=1&limit=20${statusParam}`,
+          ),
+        ]);
+        return page.data.map((item) => toMySubmission(item, categoriesById));
+      } catch (error) {
+        if (error instanceof HttpError && error.status === 404) {
+          return [];
+        }
+        throw toProfileError(error);
+      }
+    },
+
+    async updatePost(postId, { content, mediaUrls }) {
+      try {
+        const response = await client.request<PendingSubmissionResponse>(
+          `/posts/${encodeURIComponent(postId)}`,
+          {
+            method: 'PATCH',
+            body: {
+              content,
+              ...(mediaUrls !== undefined ? { media_urls: mediaUrls } : {}),
+            },
+          },
+        );
+        return {
+          id: response.id,
+          status: response.status,
+          message: response.message,
+        };
+      } catch (error) {
+        throw toProfileError(error);
+      }
+    },
+
+    async deletePost(postId) {
+      try {
+        const response = await client.request<DeletedResourceResponse>(
+          `/posts/${encodeURIComponent(postId)}`,
+          {
+            method: 'DELETE',
+          },
+        );
+        return response.deleted;
+      } catch (error) {
+        throw toProfileError(error);
+      }
+    },
+
+    async toggleBookmark(postId) {
+      try {
+        const response = await client.request<ToggleBookmarkResponse>(
+          `/posts/${encodeURIComponent(postId)}/bookmarks`,
+          {
+            method: 'POST',
+          },
+        );
+        return response.bookmarked;
+      } catch (error) {
         throw toProfileError(error);
       }
     },

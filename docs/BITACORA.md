@@ -15,6 +15,19 @@ Formato de cada entrada:
 
 ---
 
+## 2026-11-23 · T-40 Integración de CU-01 a CU-05 (Descubrimiento y Conexiones, Feed «Siguiendo» y Búsqueda, Edición/Eliminación y Mis Envíos, Guardados y Reportes)
+
+- Qué se hizo:
+  - **CU-01 (Perfiles, Seguidores/Seguidos y Conexiones)**: directorio y buscador de perfiles (`GET /actors?search=...&role=...`), lectura de `viewer_connection` en `GET /actors/:id` con acciones para *Seguir* (`POST /connections`), *Solicitado / Cancelar* (`DELETE /connections/:id`), *Aceptar solicitud* (`PATCH /connections/:id`) y *Dejar de seguir* (`DELETE /connections/:id`), listas de seguidores y seguidos por perfil (`GET /actors/:id/followers`, `GET /actors/:id/following`) y bandeja de solicitudes pendientes con `peer_actor` (`GET /connections?status=PENDING&direction=incoming`).
+  - **CU-02 (Feed «Siguiendo», Búsqueda, Detalle de Post y Estado del Lector)**: filtro de feed `discover | following` y búsqueda por texto o `#hashtags` en `GET /posts`, sincronización de `viewer_reactions` e `is_bookmarked`, y consulta de publicación individual (`GET /posts/:id`).
+  - **CU-03 (Editar / Eliminar Contenido Propio y Mis Envíos en Moderación)**: edición de publicaciones propias (`PATCH /posts/:id`) con modal y aviso de re-moderación (`PENDING`), eliminación nativa (`DELETE /posts/:id` y `DELETE /comments/:id`) integrada en `removalService` y `useContentRemoval`, y pestaña *Mis envíos* en Perfil (`GET /actors/me/submissions` con filtro `PENDING | APPROVED | REJECTED`).
+  - **CU-04 (Publicaciones Guardadas)**: botón de marcador en tarjetas de publicación (`POST /posts/:postId/bookmarks`) y pestaña *Guardados* en Perfil (`GET /bookmarks`).
+  - **CU-05 (Reportes y Denuncias Comunitarias)**: modal reutilizable `ReportContentModal` para reportar publicaciones y comentarios (`POST /reports` con manejo de `409 Conflict`) y pestaña *Reportes* en el panel de moderación (`GET /admin/moderation/reports`, `PATCH /admin/moderation/reports/:id/resolve`) disponible para `ADMIN` y `MODERATOR`.
+- Archivos principales: `src/shared/domain/models/{ContentReport,Post}.ts`, `src/shared/ui/organisms/ReportContentModal.tsx`, `src/modules/removal/**`, `src/modules/posts/**`, `src/modules/forum/**`, `src/modules/comments/**`, `src/modules/admin/**`, `src/modules/profile/**`, `src/app/_layout.tsx`.
+- Decisiones (y por qué): se conservó intacto el lenguaje visual y los tokens de `src/shared/theme`; `useContentRemoval` prioriza `DELETE /posts/:id` y `DELETE /comments/:id` manteniendo el respaldo previo si un entorno devuelve `404/405`; en `ProfileScreen` las pestañas *Guardados* y *Mis envíos* se habilitan cuando el servicio implementa `getMySavedPosts` / `getMySubmissions`, manteniendo compatibilidad con los dobles de prueba existentes.
+- Cómo se probó: `npx tsc --noEmit`, `npx expo lint` y `npm test` (53 suites, 241 pruebas). No se probó en Expo Go físico.
+- Queda pendiente: T-03b (validar visualmente en dispositivo con Expo Go).
+
 ## 2026-11-10 · T-39 Enlaces del Ecosistema
 
 - Qué se hizo: SUMA 21, AULA UP y SAGA-UP abren su sitio publicado.

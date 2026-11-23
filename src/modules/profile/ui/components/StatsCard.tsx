@@ -17,6 +17,8 @@ type StatsCardProps = {
   followingCount: number;
   // When present, the followers figure opens the list of followers.
   onFollowersPress?: () => void;
+  // When present, the following figure opens the list of followed profiles.
+  onFollowingPress?: () => void;
 };
 
 type StatProps = {
@@ -61,6 +63,7 @@ export function StatsCard({
   followerCount,
   followingCount,
   onFollowersPress,
+  onFollowingPress,
 }: StatsCardProps) {
   return (
     <View style={styles.card}>
@@ -71,7 +74,11 @@ export function StatsCard({
         hasDividers
         onPress={onFollowersPress}
       />
-      <Stat value={followingCount} label={PROFILE_STRINGS.stats.following} />
+      <Stat
+        value={followingCount}
+        label={PROFILE_STRINGS.stats.following}
+        onPress={onFollowingPress}
+      />
     </View>
   );
 }

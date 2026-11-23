@@ -6,12 +6,19 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
   useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useForumFeed, useTogglePostLike } from '@/modules/forum/application/useForumFeed';
+import {
+  useForumFeed,
+  useReportPost,
+  useTogglePostBookmark,
+  useTogglePostLike,
+} from '@/modules/forum/application/useForumFeed';
+import type { ForumFeedMode } from '@/modules/forum/domain/ForumRepository';
 import type { ForumFilter } from '@/modules/forum/domain/models/ForumCategory';
 import type { ForumPost } from '@/modules/forum/domain/models/ForumPost';
 import { useContentRemoval } from '@/modules/removal';
@@ -19,6 +26,7 @@ import { STRINGS } from '@/shared/config/strings';
 import { useCollapsingHeader } from '@/shared/hooks/useCollapsingHeader';
 import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
 import {
+  BORDER_WIDTH,
   COLORS,
   DESKTOP_LAYOUT,
   FONT_FAMILY,
@@ -31,6 +39,7 @@ import {
 } from '@/shared/theme';
 import { Icon } from '@/shared/ui/atoms/Icon';
 import { HeaderTeal } from '@/shared/ui/organisms/HeaderTeal';
+import { ReportContentModal } from '@/shared/ui/organisms/ReportContentModal';
 import { ResponsiveScreen } from '@/shared/ui/templates/ResponsiveScreen';
 
 import { ForumPostCard } from './components/ForumPostCard';
@@ -51,8 +60,17 @@ export function ForumScreen({ aside }: ForumScreenProps) {
   const { isDesktop, hasAside } = useResponsiveLayout();
   const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   const [selectedFilter, setSelectedFilter] = useState<ForumFilter>('all');
-  const feed = useForumFeed(selectedFilter);
+  const [selectedFeed, setSelectedFeed] = useState<ForumFeedMode>('discover');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [reportingPostId, setReportingPostId] = useState<string | null>(null);
+  const feedOptions =
+    selectedFeed !== 'discover' || searchQuery.trim().length > 0
+      ? { feed: selectedFeed, search: searchQuery }
+      : undefined;
+  const feed = useForumFeed(selectedFilter, feedOptions);
   const togglePostLike = useTogglePostLike();
+  const togglePostBookmark = useTogglePostBookmark();
+  const reportPost = useReportPost();
   const { isHidden } = useContentRemoval();
   const visiblePosts =
     feed.status === 'success' ? feed.posts.filter((post) => !isHidden(post.id)) : [];
@@ -81,11 +99,13 @@ export function ForumScreen({ aside }: ForumScreenProps) {
                 : undefined
             }
             onLikePress={() => togglePostLike(item.id)}
+            onBookmarkPress={() => togglePostBookmark(item.id)}
+            onReportPress={() => setReportingPostId(item.id)}
           />
         </View>
       );
     },
-    [isDesktop, postHeight, togglePostLike],
+    [isDesktop, postHeight, togglePostBookmark, togglePostLike],
   );
 
   return (
@@ -129,6 +149,55 @@ export function ForumScreen({ aside }: ForumScreenProps) {
         }
       />
 
+      <View style={styles.feedControls}>
+        <View style={styles.feedModeTabs}>
+          {(['discover', 'following'] as const).map((mode) => {
+            const isSelected = selectedFeed === mode;
+            const label = FORUM_STRINGS.feedModes[mode];
+            return (
+              <Pressable
+                key={mode}
+                accessibilityRole="tab"
+                accessibilityLabel={label}
+                accessibilityState={{ selected: isSelected }}
+                onPress={() => setSelectedFeed(mode)}
+                style={({ pressed }) => [
+                  styles.feedModeTab,
+                  isSelected && styles.feedModeTabActive,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={[styles.feedModeText, isSelected && styles.feedModeTextActive]}>
+                  {label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <View style={styles.searchBar}>
+          <Icon name="search" size={SIZE.iconSmall} color={COLORS.textTertiary} />
+          <TextInput
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder={FORUM_STRINGS.searchPlaceholder}
+            placeholderTextColor={COLORS.textTertiary}
+            accessibilityLabel={FORUM_STRINGS.searchLabel}
+            returnKeyType="search"
+            style={styles.searchInput}
+          />
+          {searchQuery.length > 0 ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={FORUM_STRINGS.clearSearch}
+              onPress={() => setSearchQuery('')}
+              style={({ pressed }) => [styles.clearSearchButton, pressed && styles.pressed]}
+            >
+              <Icon name="x" size={SIZE.iconTiny} color={COLORS.textSecondary} />
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
+
       <TopicFilters selected={selectedFilter} onSelect={setSelectedFilter} />
 
       <FlatList
@@ -150,6 +219,14 @@ export function ForumScreen({ aside }: ForumScreenProps) {
         refreshing={feed.status === 'success' && feed.isRefreshing}
         onRefresh={feed.status === 'success' ? feed.refresh : undefined}
         ListEmptyComponent={<FeedState feed={feed} />}
+      />
+
+      <ReportContentModal
+        visible={reportingPostId !== null}
+        targetType="POST"
+        targetId={reportingPostId}
+        onClose={() => setReportingPostId(null)}
+        onSubmit={reportPost}
       />
     </ResponsiveScreen>
   );
@@ -242,6 +319,67 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.75,
+  },
+  feedControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.s8,
+    paddingHorizontal: SPACING.s16,
+    paddingTop: SPACING.s8,
+    backgroundColor: COLORS.background,
+  },
+  feedModeTabs: {
+    flexDirection: 'row',
+    gap: SPACING.s4,
+    padding: SPACING.s2,
+    borderRadius: RADIUS.pill,
+    borderWidth: BORDER_WIDTH.hairline,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+  },
+  feedModeTab: {
+    minHeight: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: SPACING.s12,
+    borderRadius: RADIUS.pill,
+  },
+  feedModeTabActive: {
+    backgroundColor: COLORS.primary,
+  },
+  feedModeText: {
+    fontFamily: FONT_FAMILY.bodyBold,
+    fontSize: FONT_SIZE.s12_5,
+    color: COLORS.textSecondary,
+  },
+  feedModeTextActive: {
+    color: COLORS.onPrimary,
+  },
+  searchBar: {
+    flex: 1,
+    minHeight: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.s6,
+    paddingHorizontal: SPACING.s12,
+    borderRadius: RADIUS.pill,
+    borderWidth: BORDER_WIDTH.hairline,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+  },
+  searchInput: {
+    flex: 1,
+    minWidth: 0,
+    paddingVertical: SPACING.s6,
+    fontFamily: FONT_FAMILY.body,
+    fontSize: FONT_SIZE.s13_5,
+    color: COLORS.text,
+  },
+  clearSearchButton: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   feedContent: {
     flexGrow: 1,

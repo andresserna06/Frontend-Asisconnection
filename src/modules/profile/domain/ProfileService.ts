@@ -1,3 +1,4 @@
+import type { CategoryCode } from '@/shared/domain/models/CategoryCode';
 import type { LocalMediaFile } from '@/shared/domain/models/LocalMediaFile';
 import type { Post } from '@/shared/domain/models/Post';
 import type { MyProfile } from './models/MyProfile';
@@ -20,6 +21,26 @@ export type ActorConnectionResult = {
   status: 'PENDING' | 'ACCEPTED' | 'BLOCKED';
 };
 
+export type MySubmissionStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export type MyPostSubmission = {
+  id: string;
+  category: CategoryCode;
+  content: string;
+  imageUrl: string | null;
+  mediaUrls: string[];
+  status: MySubmissionStatus;
+  rejectionReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PostMutationResult = {
+  id: string;
+  status: MySubmissionStatus;
+  message: string;
+};
+
 // Contract implemented by the services layer (HTTP). Methods reject with ProfileError.
 export type ProfileService = {
   getMyProfile(): Promise<MyProfile>;
@@ -29,5 +50,13 @@ export type ProfileService = {
   // Newest first.
   getMyPosts(): Promise<Post[]>;
   getActorPosts?(actorId: string): Promise<Post[]>;
+  getMySavedPosts?(): Promise<Post[]>;
+  getMySubmissions?(status?: MySubmissionStatus): Promise<MyPostSubmission[]>;
+  updatePost?(
+    postId: string,
+    input: { content: string; mediaUrls?: string[] },
+  ): Promise<PostMutationResult>;
+  deletePost?(postId: string): Promise<boolean>;
+  toggleBookmark?(postId: string): Promise<boolean>;
   uploadAvatar?(media: LocalMediaFile): Promise<string>;
 };

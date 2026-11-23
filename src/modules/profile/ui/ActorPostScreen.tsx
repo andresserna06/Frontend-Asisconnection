@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,9 +10,11 @@ import { usePublicProfileService } from '@/modules/profile/usePublicProfileServi
 import { COLORS, OPACITY, RADIUS, SIZE, SPACING } from '@/shared/theme';
 import { Icon } from '@/shared/ui/atoms/Icon';
 import { HeaderTeal } from '@/shared/ui/organisms/HeaderTeal';
+import { ReportContentModal } from '@/shared/ui/organisms/ReportContentModal';
 import { ResponsiveScreen } from '@/shared/ui/templates/ResponsiveScreen';
 
 import { ActorPostCard } from './components/ActorPostCard';
+import { EditPostModal } from './components/EditPostModal';
 import { StatusMessage } from './components/StatusMessage';
 import { PROFILE_STRINGS } from './strings';
 
@@ -23,9 +26,24 @@ export function ActorPostScreen() {
   const service = usePublicProfileService();
   const post = useActorPost(service, userId, postId);
   const togglePostLike = useTogglePostLike();
-  const { isHidden } = useContentRemoval();
+  const removal = useContentRemoval() as ReturnType<typeof useContentRemoval> & {
+    isOwnContent?: (target: { authorName: string; authorProfileId: string | null }) => boolean;
+  };
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const loadedPost = post.status === 'success' ? post.data : null;
-  const currentPost = loadedPost !== null && !isHidden(loadedPost.id) ? loadedPost : null;
+  const currentPost = loadedPost !== null && !removal.isHidden(loadedPost.id) ? loadedPost : null;
+
+  const canEdit = Boolean(
+    currentPost &&
+    service.updatePost &&
+    (removal.isOwnContent
+      ? removal.isOwnContent({
+          authorName: currentPost.author.fullName,
+          authorProfileId: currentPost.author.id,
+        })
+      : true),
+  );
 
   function handleBack() {
     if (router.canGoBack()) {
@@ -70,10 +88,41 @@ export function ActorPostScreen() {
               post={currentPost}
               onCommentsPress={() => router.push(`/comments/${currentPost.id}`)}
               onLikePress={() => togglePostLike(currentPost.id)}
+              onBookmarkPress={
+                service.toggleBookmark ? () => service.toggleBookmark!(currentPost.id) : undefined
+              }
+              onEditPress={canEdit ? () => setIsEditOpen(true) : undefined}
+              onReportPress={service.reportPost ? () => setIsReportOpen(true) : undefined}
               onRemoved={handleBack}
             />
           </ScrollView>
         )}
+
+        {currentPost !== null && service.updatePost ? (
+          <EditPostModal
+            visible={isEditOpen}
+            initialContent={currentPost.text}
+            onClose={() => setIsEditOpen(false)}
+            onSave={(content) => service.updatePost!(currentPost.id, { content })}
+            onSaved={(result) => {
+              if (result.status === 'APPROVED') {
+                post.refresh();
+              } else {
+                handleBack();
+              }
+            }}
+          />
+        ) : null}
+
+        {currentPost !== null && service.reportPost ? (
+          <ReportContentModal
+            visible={isReportOpen}
+            targetType="POST"
+            targetId={currentPost.id}
+            onClose={() => setIsReportOpen(false)}
+            onSubmit={service.reportPost}
+          />
+        ) : null}
       </View>
     </ResponsiveScreen>
   );

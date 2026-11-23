@@ -27,6 +27,11 @@ type PendingSubmissionResponse = {
   created_at: string;
 };
 
+type DeletedResourceResponse = {
+  id: string;
+  deleted: boolean;
+};
+
 type ProblemDetailsResponse = {
   detail?: string;
 } | null;
@@ -94,6 +99,42 @@ export function createPostsService(client: HttpClient): PostsService {
           status: response.status,
           message: response.message,
         };
+      } catch (error) {
+        throw toPostsHttpError(error);
+      }
+    },
+
+    async updatePost(postId, { content, mediaUrls }) {
+      try {
+        const response = await client.request<PendingSubmissionResponse>(
+          `/posts/${encodeURIComponent(postId)}`,
+          {
+            method: 'PATCH',
+            body: {
+              content,
+              ...(mediaUrls !== undefined ? { media_urls: mediaUrls } : {}),
+            },
+          },
+        );
+        return {
+          id: response.id,
+          status: response.status,
+          message: response.message,
+        };
+      } catch (error) {
+        throw toPostsHttpError(error);
+      }
+    },
+
+    async deletePost(postId) {
+      try {
+        const response = await client.request<DeletedResourceResponse>(
+          `/posts/${encodeURIComponent(postId)}`,
+          {
+            method: 'DELETE',
+          },
+        );
+        return response.deleted;
       } catch (error) {
         throw toPostsHttpError(error);
       }

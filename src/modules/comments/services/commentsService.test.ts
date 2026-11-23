@@ -144,4 +144,23 @@ describe('createCommentsService', () => {
     expect(init?.method).toBe('POST');
     expect(JSON.parse(String(init?.body))).toEqual({ type: 'LIKE' });
   });
+
+  it('deletes a comment via DELETE /comments/:id and reports a comment via POST /reports', async () => {
+    const service = createCommentsService(createHttpClient(BASE_URL));
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(200, { id: 'c-1', deleted: true }))
+      .mockResolvedValueOnce(jsonResponse(409, { detail: 'Duplicado' }));
+
+    await expect(service.deleteComment?.('c-1')).resolves.toBe(true);
+    expect(fetchMock.mock.calls[0][0]).toBe(`${BASE_URL}/comments/c-1`);
+    expect(fetchMock.mock.calls[0][1]?.method).toBe('DELETE');
+
+    await expect(
+      service.reportComment?.({
+        targetType: 'COMMENT',
+        targetId: 'c-1',
+        reason: 'SPAM',
+      }),
+    ).rejects.toThrow('reportConflict');
+  });
 });

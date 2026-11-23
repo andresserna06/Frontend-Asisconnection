@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RoleBadge, useAuth } from '@/modules/auth';
 import { usePublicProfileConnection } from '@/modules/profile/application/usePublicProfileConnection';
 import { usePublicProfile } from '@/modules/profile/application/usePublicProfile';
+import type { ProfileConnectionStatus } from '@/modules/profile/domain/PublicProfileService';
 import type { PublicProfileErrorKind } from '@/modules/profile/domain/models/PublicProfileError';
 import { usePublicProfileService } from '@/modules/profile/usePublicProfileService';
 import { useContentRemoval } from '@/modules/removal';
@@ -64,9 +65,22 @@ export function OtherProfileScreen() {
   }
 
   async function handleUnfollow() {
-    if ((await follow.requestUnfollow()) === 'notFollowing') {
+    const previousRelationship =
+      follow.connection !== null &&
+      follow.connection !== 'signInRequired' &&
+      follow.connection.status === 'ready'
+        ? follow.connection.relationship
+        : null;
+    if (
+      (await follow.requestUnfollow()) === 'notFollowing' &&
+      previousRelationship === 'following'
+    ) {
       adjustFollowerCount(-1);
     }
+  }
+
+  async function handleAcceptFollow() {
+    await follow.acceptFollowRequest();
   }
 
   function handleRetry() {
@@ -143,14 +157,34 @@ export function OtherProfileScreen() {
               postCount={Math.max(0, profile.data.postCount - hiddenPostCount)}
               followerCount={profile.data.followerCount}
               followingCount={profile.data.followingCount}
+              onFollowersPress={
+                typeof service.getActorFollowers === 'function'
+                  ? () =>
+                      router.push({
+                        pathname: '/profile/followers',
+                        params: { actorId: profile.data.id, tab: 'followers' },
+                      })
+                  : undefined
+              }
+              onFollowingPress={
+                typeof service.getActorFollowing === 'function'
+                  ? () =>
+                      router.push({
+                        pathname: '/profile/followers',
+                        params: { actorId: profile.data.id, tab: 'following' },
+                      })
+                  : undefined
+              }
             />
 
             <FollowAction
               connection={follow.connection}
               isRequesting={follow.isRequesting}
+              canCancelPending={follow.canCancelPending}
               operationError={follow.operationError?.kind ?? null}
               onFollow={() => void handleFollow()}
               onUnfollow={() => void handleUnfollow()}
+              onAcceptFollow={() => void handleAcceptFollow()}
               onRetry={() => void follow.retryConnectionStatus()}
               onSignIn={() => void handleSignIn()}
             />
@@ -231,7 +265,7 @@ type FollowActionProps = {
     | {
         status: 'ready';
         actorId: string;
-        relationship: 'notFollowing' | 'pending' | 'following' | 'blocked';
+        relationship: ProfileConnectionStatus;
       }
     | {
         status: 'error';
@@ -240,9 +274,11 @@ type FollowActionProps = {
       }
     | null;
   isRequesting: boolean;
+  canCancelPending: boolean;
   operationError: PublicProfileErrorKind | null;
   onFollow: () => void;
   onUnfollow: () => void;
+  onAcceptFollow: () => void;
   onRetry: () => void;
   onSignIn: () => void;
 };
@@ -250,9 +286,11 @@ type FollowActionProps = {
 function FollowAction({
   connection,
   isRequesting,
+  canCancelPending,
   operationError,
   onFollow,
   onUnfollow,
+  onAcceptFollow,
   onRetry,
   onSignIn,
 }: FollowActionProps) {
@@ -295,23 +333,36 @@ function FollowAction({
 
   const relationship = connection.relationship;
   const isFollowing = relationship === 'following';
+  const isPendingOutgoing = relationship === 'pending';
+  const isPendingIncoming = relationship === 'pendingIncoming';
+  const canCancelOutgoing = isPendingOutgoing && canCancelPending;
+
   const label = isFollowing
     ? PROFILE_STRINGS.publicProfile.unfollow
-    : relationship === 'pending'
-      ? PROFILE_STRINGS.publicProfile.requestSent
-      : relationship === 'blocked'
-        ? PROFILE_STRINGS.publicProfile.blocked
-        : PROFILE_STRINGS.publicProfile.follow;
-  const isDisabled = isRequesting || (relationship !== 'notFollowing' && !isFollowing);
+    : isPendingIncoming
+      ? PROFILE_STRINGS.publicProfile.acceptRequest
+      : isPendingOutgoing
+        ? canCancelOutgoing
+          ? PROFILE_STRINGS.publicProfile.cancelRequest
+          : PROFILE_STRINGS.publicProfile.requestSent
+        : relationship === 'blocked'
+          ? PROFILE_STRINGS.publicProfile.blocked
+          : PROFILE_STRINGS.publicProfile.follow;
+
+  const isDisabled =
+    isRequesting || relationship === 'blocked' || (isPendingOutgoing && !canCancelOutgoing);
+
+  const handlePress =
+    isFollowing || canCancelOutgoing ? onUnfollow : isPendingIncoming ? onAcceptFollow : onFollow;
 
   return (
     <View style={styles.followContainer}>
       <FollowButton
         label={label}
-        variant={isFollowing ? 'following' : 'primary'}
+        variant={isFollowing || canCancelOutgoing ? 'following' : 'primary'}
         isLoading={isRequesting}
         isDisabled={isDisabled}
-        onPress={isFollowing ? onUnfollow : onFollow}
+        onPress={handlePress}
       />
       {operationError !== null ? (
         <Text accessibilityRole="alert" style={styles.followError}>

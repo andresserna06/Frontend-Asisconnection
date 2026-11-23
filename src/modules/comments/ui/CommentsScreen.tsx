@@ -19,6 +19,7 @@ import { useAuth } from '@/modules/auth';
 import {
   useAddComment,
   useComments,
+  useReportComment,
   useToggleCommentLike,
   type CommentsState,
 } from '@/modules/comments/application/useComments';
@@ -39,6 +40,7 @@ import {
 } from '@/shared/theme';
 import { useResponsiveLayout } from '@/shared/hooks/useResponsiveLayout';
 import { Icon } from '@/shared/ui/atoms/Icon';
+import { ReportContentModal } from '@/shared/ui/organisms/ReportContentModal';
 
 import { CommentItem } from './components/CommentItem';
 import { COMMENTS_STRINGS } from './strings';
@@ -71,8 +73,10 @@ export function CommentsScreen({ postId }: CommentsScreenProps) {
   const visibleTotal = countComments(visibleComments);
   const { canComment, addComment, isSending } = useAddComment(postId);
   const toggleCommentLike = useToggleCommentLike();
+  const reportComment = useReportComment();
   const [draft, setDraft] = useState('');
   const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null);
+  const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
   const initials = user?.username.slice(0, 2).toUpperCase() ?? '';
   const canPublish = canComment && !isSending && draft.trim() !== '';
 
@@ -163,6 +167,7 @@ export function CommentsScreen({ postId }: CommentsScreenProps) {
               postId={postId}
               onReply={handleReply}
               onToggleLike={toggleCommentLike}
+              onReport={(commentId) => setReportingCommentId(commentId)}
             />
           )}
           ListHeaderComponent={
@@ -223,6 +228,14 @@ export function CommentsScreen({ postId }: CommentsScreenProps) {
           </Pressable>
         </View>
       </KeyboardAvoidingView>
+
+      <ReportContentModal
+        visible={reportingCommentId !== null}
+        targetType="COMMENT"
+        targetId={reportingCommentId}
+        onClose={() => setReportingCommentId(null)}
+        onSubmit={reportComment}
+      />
     </View>
   );
 }

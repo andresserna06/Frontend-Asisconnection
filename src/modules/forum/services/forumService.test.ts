@@ -177,4 +177,40 @@ describe('createForumService', () => {
     expect(fetchMock.mock.calls[1][0]).toBe(`${BASE_URL}/admin/moderation/posts/pending-1/status`);
     expect(fetchMock.mock.calls[1][1]?.method).toBe('PATCH');
   });
+
+  it('supports feed=following, search query, bookmarks toggle, post detail and content reports', async () => {
+    const service = createForumService(createHttpClient(BASE_URL));
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(200, CATEGORIES_PAGE))
+      .mockResolvedValueOnce(jsonResponse(200, { data: [], meta: {} }))
+      .mockResolvedValueOnce(jsonResponse(200, { post_id: 'post-1', bookmarked: true }))
+      .mockResolvedValueOnce(jsonResponse(201, { id: 'rep-1', status: 'OPEN' }));
+
+    await service.listPosts({
+      filter: 'all',
+      feed: 'following',
+      search: '#InclusionAsisco',
+    });
+
+    expect(fetchMock.mock.calls[1][0]).toBe(
+      `${BASE_URL}/posts?page=1&limit=20&feed=following&search=%23InclusionAsisco`,
+    );
+
+    await expect(service.toggleBookmark?.('post-1')).resolves.toBe(true);
+    expect(fetchMock.mock.calls[2][0]).toBe(`${BASE_URL}/posts/post-1/bookmarks`);
+
+    await service.reportPost?.({
+      targetType: 'POST',
+      targetId: 'post-1',
+      reason: 'INAPPROPRIATE_CONTENT',
+      details: 'Detalle opcional',
+    });
+    expect(fetchMock.mock.calls[3][0]).toBe(`${BASE_URL}/reports`);
+    expect(JSON.parse(String(fetchMock.mock.calls[3][1]?.body))).toEqual({
+      target_type: 'POST',
+      target_id: 'post-1',
+      reason: 'INAPPROPRIATE_CONTENT',
+      details: 'Detalle opcional',
+    });
+  });
 });

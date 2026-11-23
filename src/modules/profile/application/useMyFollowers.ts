@@ -4,11 +4,13 @@ import type { PublicProfile } from '@/modules/profile/domain/models/PublicProfil
 import type { PublicProfileService } from '@/modules/profile/domain/PublicProfileService';
 import { useAsyncData } from '@/shared/hooks/useAsyncData';
 
-export function useMyFollowers(service: PublicProfileService) {
-  const load = useCallback(
-    async (): Promise<PublicProfile[]> => (service.getMyFollowers ? service.getMyFollowers() : []),
-    [service],
-  );
+export function useMyFollowers(service: PublicProfileService, actorId?: string) {
+  const load = useCallback(async (): Promise<PublicProfile[]> => {
+    if (actorId && service.getActorFollowers) {
+      return service.getActorFollowers(actorId);
+    }
+    return service.getMyFollowers ? service.getMyFollowers() : [];
+  }, [actorId, service]);
 
   return useAsyncData(load);
 }

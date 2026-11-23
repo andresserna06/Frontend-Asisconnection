@@ -27,6 +27,7 @@ type CommentItemProps = {
   onReply: (threadId: string, authorName: string) => void;
   // Resolves with whether the viewer's like is active after the toggle.
   onToggleLike?: (commentId: string) => Promise<boolean>;
+  onReport?: (commentId: string) => void;
 };
 
 export function CommentItem({
@@ -35,6 +36,7 @@ export function CommentItem({
   threadId,
   onReply,
   onToggleLike,
+  onReport,
 }: CommentItemProps) {
   const isReply = threadId !== undefined;
   const [isExpanded, setIsExpanded] = useState(false);
@@ -96,6 +98,16 @@ export function CommentItem({
             >
               <Text style={styles.replyLabel}>{COMMENTS_STRINGS.reply}</Text>
             </Pressable>
+            {onReport ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={COMMENTS_STRINGS.reportCommentLabel}
+                onPress={() => onReport(comment.id)}
+                style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}
+              >
+                <Text style={styles.replyLabel}>{COMMENTS_STRINGS.reportComment}</Text>
+              </Pressable>
+            ) : null}
             {hasReplies && (
               <Pressable
                 accessibilityRole="button"
@@ -153,6 +165,7 @@ export function CommentItem({
             threadId={comment.id}
             onReply={onReply}
             onToggleLike={onToggleLike}
+            onReport={onReport}
           />
         ))}
     </View>
@@ -235,6 +248,7 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: SPACING.s4,
     marginTop: SPACING.s2,

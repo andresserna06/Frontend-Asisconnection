@@ -6,6 +6,13 @@ export const FORUM_STRINGS = {
   title: 'ASISCONNECTION',
   createPost: 'Nueva publicación',
   notifications: 'Notificaciones',
+  feedModes: {
+    discover: 'Descubrir',
+    following: 'Siguiendo',
+  },
+  searchPlaceholder: 'Buscar por texto o #hashtag…',
+  searchLabel: 'Buscar publicaciones por texto o hashtag',
+  clearSearch: 'Limpiar búsqueda',
   filters: {
     all: 'Todos',
     announcements: 'Noticias',
@@ -26,6 +33,9 @@ export const FORUM_STRINGS = {
   videoDuration: (duration: string) => `Video, duración ${duration}`,
   likeSummary: (likes: number) => `${likes} Me gusta`,
   openComments: (comments: number) => `Ver comentarios (${comments})`,
+  bookmarkPost: 'Guardar publicación',
+  removeBookmark: 'Quitar de guardados',
+  reportPost: 'Reportar publicación',
   unavailableTitle: 'Estamos preparando el foro',
   unavailableMessage: 'Las publicaciones aparecerán cuando esté conectado el servicio del foro.',
   loading: 'Cargando publicaciones',

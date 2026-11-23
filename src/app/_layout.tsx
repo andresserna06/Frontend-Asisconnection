@@ -65,6 +65,7 @@ function RootNavigator() {
 
   const isSignedIn = status === 'signedIn';
   const isAdmin = user?.roles.includes('ADMIN') ?? false;
+  const isModerator = user?.roles.includes('MODERATOR') ?? false;
   return (
     <DesktopShell
       sidebar={
@@ -95,7 +96,7 @@ function RootNavigator() {
           <Stack.Screen name="profile/settings" />
           <Stack.Screen name="profile/followers" />
         </Stack.Protected>
-        <Stack.Protected guard={isSignedIn && isAdmin}>
+        <Stack.Protected guard={isSignedIn && (isAdmin || isModerator)}>
           <Stack.Screen name="admin/index" />
         </Stack.Protected>
         <Stack.Protected guard={!isSignedIn}>

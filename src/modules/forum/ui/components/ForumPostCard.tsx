@@ -28,6 +28,9 @@ type ForumPostCardProps = {
   onAuthorPress?: () => void;
   // Resolves with whether the viewer's like is active after the toggle.
   onLikePress?: () => Promise<boolean>;
+  // Resolves with whether the post is bookmarked after the toggle.
+  onBookmarkPress?: () => Promise<boolean>;
+  onReportPress?: () => void;
 };
 
 const rejectLike = () => Promise.reject(new Error('Likes are not available.'));
@@ -38,15 +41,41 @@ export function ForumPostCard({
   onCommentsPress,
   onAuthorPress,
   onLikePress,
+  onBookmarkPress,
+  onReportPress,
 }: ForumPostCardProps) {
   const palette = CATEGORY_COLORS[post.category];
   const like = useReactionToggle(post.likeCount, onLikePress ?? rejectLike, `post:${post.id}`);
   const isLiked = like.isActive;
   const likeCount = like.count;
+  const [bookmarkOverride, setBookmarkOverride] = useState<{
+    postId: string;
+    value: boolean;
+  } | null>(null);
+  const [isBookmarkPending, setIsBookmarkPending] = useState(false);
+  const isBookmarked =
+    bookmarkOverride?.postId === post.id ? bookmarkOverride.value : Boolean(post.isBookmarked);
 
   function handleLikePress() {
     if (onLikePress) {
       like.toggle();
+    }
+  }
+
+  async function handleBookmarkPress() {
+    if (!onBookmarkPress || isBookmarkPending) {
+      return;
+    }
+    const previous = isBookmarked;
+    setBookmarkOverride({ postId: post.id, value: !previous });
+    setIsBookmarkPending(true);
+    try {
+      const next = await onBookmarkPress();
+      setBookmarkOverride({ postId: post.id, value: next });
+    } catch {
+      setBookmarkOverride({ postId: post.id, value: previous });
+    } finally {
+      setIsBookmarkPending(false);
     }
   }
 
@@ -172,7 +201,32 @@ export function ForumPostCard({
           <Icon name="message-circle" size={SIZE.iconSmall} color={COLORS.textSecondary} />
           <Text style={styles.count}>{post.commentCount}</Text>
         </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={
+            isBookmarked ? FORUM_STRINGS.removeBookmark : FORUM_STRINGS.bookmarkPost
+          }
+          accessibilityState={{ selected: isBookmarked }}
+          onPress={() => void handleBookmarkPress()}
+          style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}
+        >
+          <Icon
+            name="bookmark"
+            size={SIZE.iconSmall}
+            color={isBookmarked ? COLORS.primary : COLORS.textSecondary}
+          />
+        </Pressable>
         <View style={styles.actionsSpacer} />
+        {onReportPress ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={FORUM_STRINGS.reportPost}
+            onPress={onReportPress}
+            style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}
+          >
+            <Icon name="flag" size={SIZE.iconSmall} color={COLORS.textSecondary} />
+          </Pressable>
+        ) : null}
         <RemoveContentButton
           target={{
             kind: 'post',
@@ -354,7 +408,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.s20,
+    gap: SPACING.s14,
     paddingHorizontal: SPACING.s14,
   },
   actionsSpacer: {
@@ -365,6 +419,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.s6,
+  },
+  iconAction: {
+    width: SIZE.touchTarget,
+    height: SIZE.touchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   pressed: {
     opacity: OPACITY.pressed,
