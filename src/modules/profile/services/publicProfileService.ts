@@ -12,7 +12,6 @@ import { type CategoryCode, toCategoryCode } from '@/shared/domain/models/Catego
 import type { Post, PostReactionType } from '@/shared/domain/models/Post';
 import { rememberReaction } from '@/shared/hooks/useReactionToggle';
 import {
-  countPostsRemovedByAuthor,
   getAvatarPhotoUrl,
   isRemovedByAuthor,
 } from '@/shared/lib/authorRemovalMarks';
@@ -32,6 +31,7 @@ type ActorProfileResponse = {
   id: string;
   username: string;
   primary_role: string;
+  local_role?: string | null;
   first_names: string | null;
   last_names: string | null;
   avatar_url: string | null;
@@ -180,18 +180,25 @@ function toPublicProfile(actor: ActorProfileResponse): PublicProfile {
   const fullName = resolveActorFullName(actor);
   const rawFollowers = actor.followers_count ?? 0;
   const followerCount = isActorUnfollowed(actor.id) ? Math.max(0, rawFollowers - 1) : rawFollowers;
+  const roles: RoleCode[] = [];
+  if (actor.local_role && isRoleCode(actor.local_role)) {
+    roles.push(actor.local_role);
+  }
+  if (isRoleCode(actor.primary_role) && !roles.includes(actor.primary_role)) {
+    roles.push(actor.primary_role);
+  }
 
   return {
     id: actor.id,
     username: actor.username,
     fullName,
-    roles: isRoleCode(actor.primary_role) ? [actor.primary_role] : [],
+    roles,
     photoUrl: normalizeAvatarUrl(actor.avatar_url),
     shortBio: actor.short_bio,
     email: toVisibleValue(actor.email, actor.show_email),
     birthDate: toVisibleValue(actor.birth_date, actor.show_birth_date),
     city: toVisibleValue(actor.city, actor.show_city),
-    postCount: Math.max(0, (actor.posts_count ?? 0) - countPostsRemovedByAuthor(actor.avatar_url)),
+    postCount: Math.max(0, actor.posts_count ?? 0),
     followerCount,
     followingCount: actor.following_count ?? 0,
     ...(actor.viewer_connection !== undefined

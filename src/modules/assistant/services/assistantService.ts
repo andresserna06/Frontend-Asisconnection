@@ -10,8 +10,9 @@ type FaqPageResponse = {
 
 type EscalateResponse = {
   whatsapp_url: string;
-  phone: string;
-  message: string;
+  phone?: string;
+  message?: string;
+  support_message?: string;
 };
 
 export function createAssistantService(client: HttpClient): AssistantService {
@@ -36,8 +37,8 @@ export function createAssistantService(client: HttpClient): AssistantService {
       });
       return {
         whatsappUrl: response.whatsapp_url,
-        phone: response.phone,
-        message: response.message,
+        phone: response.phone ?? '',
+        message: response.message ?? response.support_message ?? '',
       };
     },
   };

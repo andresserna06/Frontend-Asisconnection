@@ -100,29 +100,68 @@ export function NotificationsScreen({ service: serviceOverride }: NotificationsS
           >
             {NOTIFICATION_PERIODS.map((period) => {
               const periodItems = grouped[period];
+              const unreadCount = periodItems.filter((item) => !item.isRead).length;
               return (
                 <View key={period} style={styles.period}>
-                  <Text accessibilityRole="header" style={styles.periodTitle}>
-                    {period}
-                  </Text>
+                  <View style={styles.periodHeaderRow}>
+                    <Text accessibilityRole="header" style={styles.periodTitle}>
+                      {period}
+                    </Text>
+                    {unreadCount > 0 ? (
+                      <Text style={styles.unreadBadge}>
+                        {NOTIFICATION_STRINGS.newCount(unreadCount)}
+                      </Text>
+                    ) : null}
+                  </View>
                   {periodItems.length === 0 ? (
                     <View style={styles.emptyPeriod}>
                       <Text style={styles.emptyText}>{NOTIFICATION_STRINGS.empty}</Text>
                     </View>
                   ) : (
-                    periodItems.map((item) => (
-                      <View
-                        key={item.id}
-                        style={[styles.notificationRow, !item.isRead && styles.unreadRow]}
-                      >
-                        <Text style={styles.notificationTitle}>{item.title}</Text>
-                        <Text style={styles.notificationBody}>{item.body}</Text>
-                      </View>
-                    ))
+                    periodItems.map((item) => {
+                      const handlePress = item.postId
+                        ? () => router.push(`/comments/${item.postId}`)
+                        : item.actorId
+                          ? () =>
+                              router.push({
+                                pathname: '/users/[userId]',
+                                params: { userId: item.actorId! },
+                              })
+                          : undefined;
+
+                      return (
+                        <Pressable
+                          key={item.id}
+                          disabled={!handlePress}
+                          onPress={handlePress}
+                          style={({ pressed }) => [
+                            styles.notificationRow,
+                            !item.isRead && styles.unreadRow,
+                            pressed && handlePress && styles.pressed,
+                          ]}
+                        >
+                          <View style={styles.notificationMainRow}>
+                            <View style={styles.notificationContent}>
+                              <Text style={styles.notificationTitle}>{item.title}</Text>
+                              <Text style={styles.notificationBody}>{item.body}</Text>
+                              {item.snippet ? (
+                                <View style={styles.snippetBox}>
+                                  <Text style={styles.snippetText} numberOfLines={2}>
+                                    {item.snippet}
+                                  </Text>
+                                </View>
+                              ) : null}
+                            </View>
+                            {!item.isRead ? <View style={styles.unreadDot} /> : null}
+                          </View>
+                        </Pressable>
+                      );
+                    })
                   )}
                 </View>
               );
             })}
+            <Text style={styles.retentionNote}>{NOTIFICATION_STRINGS.retentionNote}</Text>
           </ScrollView>
         )}
       </View>
@@ -194,13 +233,28 @@ const styles = StyleSheet.create({
   period: {
     marginBottom: SPACING.s14,
   },
-  periodTitle: {
+  periodHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: SPACING.s20,
     paddingTop: SPACING.s16,
     paddingBottom: SPACING.s6,
+  },
+  periodTitle: {
     color: COLORS.textTitle,
     fontFamily: FONT_FAMILY.heading,
     fontSize: FONT_SIZE.s16,
+  },
+  unreadBadge: {
+    overflow: 'hidden',
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.s8,
+    paddingVertical: SPACING.s2,
+    backgroundColor: COLORS.accent,
+    color: COLORS.text,
+    fontFamily: FONT_FAMILY.bodyBold,
+    fontSize: FONT_SIZE.s11_5,
   },
   emptyPeriod: {
     minHeight: 56,
@@ -222,11 +276,47 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+  },
+  notificationMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.s12,
+  },
+  notificationContent: {
+    flex: 1,
     gap: SPACING.s4,
   },
   unreadRow: {
     borderLeftWidth: 3,
     borderLeftColor: COLORS.primary,
+  },
+  unreadDot: {
+    width: 9,
+    height: 9,
+    borderRadius: RADIUS.pill,
+    backgroundColor: COLORS.accent,
+  },
+  snippetBox: {
+    marginTop: SPACING.s4,
+    paddingLeft: SPACING.s10,
+    paddingVertical: SPACING.s4,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.primary,
+    backgroundColor: COLORS.background,
+    borderRadius: RADIUS.small,
+  },
+  snippetText: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT_FAMILY.body,
+    fontSize: FONT_SIZE.s12_5,
+  },
+  retentionNote: {
+    paddingHorizontal: SPACING.s20,
+    paddingTop: SPACING.s8,
+    textAlign: 'center',
+    color: COLORS.textTertiary,
+    fontFamily: FONT_FAMILY.body,
+    fontSize: FONT_SIZE.s12,
   },
   notificationTitle: {
     color: COLORS.textTitle,

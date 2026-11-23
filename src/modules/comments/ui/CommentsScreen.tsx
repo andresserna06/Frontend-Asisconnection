@@ -77,6 +77,7 @@ export function CommentsScreen({ postId }: CommentsScreenProps) {
   const [draft, setDraft] = useState('');
   const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null);
   const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
+  const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
   const initials = user?.username.slice(0, 2).toUpperCase() ?? '';
   const canPublish = canComment && !isSending && draft.trim() !== '';
 
@@ -107,17 +108,20 @@ export function CommentsScreen({ postId }: CommentsScreenProps) {
         void rememberGuestContent(result.id);
       }
       if (result.status === 'REJECTED') {
-        Alert.alert(
-          COMMENTS_STRINGS.rejectedTitle,
-          result.message || COMMENTS_STRINGS.rejectedMessage,
-        );
+        const msg = result.message || COMMENTS_STRINGS.rejectedMessage;
+        setNoticeMessage(msg);
+        Alert.alert(COMMENTS_STRINGS.rejectedTitle, msg);
+      } else if (result.status === 'APPROVED') {
+        const msg = result.message || COMMENTS_STRINGS.approvedMessage;
+        setNoticeMessage(msg);
+        Alert.alert(COMMENTS_STRINGS.approvedTitle, msg);
       } else {
-        Alert.alert(
-          COMMENTS_STRINGS.submittedTitle,
-          result.message || COMMENTS_STRINGS.submittedMessage,
-        );
+        const msg = result.message || COMMENTS_STRINGS.submittedMessage;
+        setNoticeMessage(msg);
+        Alert.alert(COMMENTS_STRINGS.submittedTitle, msg);
       }
     } catch {
+      setNoticeMessage(COMMENTS_STRINGS.sendErrorMessage);
       Alert.alert(COMMENTS_STRINGS.sendErrorTitle, COMMENTS_STRINGS.sendErrorMessage);
     }
   }
@@ -180,6 +184,22 @@ export function CommentsScreen({ postId }: CommentsScreenProps) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         />
+
+        {noticeMessage !== null && (
+          <View style={styles.replyBanner}>
+            <Text accessibilityRole="alert" style={styles.replyBannerText} numberOfLines={2}>
+              {noticeMessage}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={COMMENTS_STRINGS.close}
+              onPress={() => setNoticeMessage(null)}
+              style={({ pressed }) => [styles.cancelReply, pressed && styles.pressed]}
+            >
+              <Icon name="x" size={SIZE.iconSmall} color={COLORS.textSecondary} />
+            </Pressable>
+          </View>
+        )}
 
         {replyTarget !== null && (
           <View style={styles.replyBanner}>

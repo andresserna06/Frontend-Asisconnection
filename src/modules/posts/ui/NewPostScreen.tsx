@@ -109,7 +109,9 @@ export function NewPostScreen() {
     }
 
     if (result.status === 'REJECTED') {
-      Alert.alert(POST_STRINGS.rejectedTitle, result.message || POST_STRINGS.rejectedMessage);
+      const rejectedText = result.message || POST_STRINGS.rejectedMessage;
+      setPhotoError(rejectedText);
+      Alert.alert(POST_STRINGS.rejectedTitle, rejectedText);
       return;
     }
 

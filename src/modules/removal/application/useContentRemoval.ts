@@ -43,11 +43,19 @@ export function useContentRemoval() {
   const isModerator =
     !isAnonymous && (user?.roles.some((role) => role === 'ADMIN' || role === 'MODERATOR') ?? false);
 
-  function isOwnContent(target: { authorName: string; authorProfileId: string | null }): boolean {
+  function isOwnContent(target: {
+    authorName: string;
+    authorProfileId: string | null;
+    authorUsername?: string | null;
+  }): boolean {
     if (status !== 'signedIn' || isAnonymous) {
       return false;
     }
-    return target.authorProfileId !== null && target.authorName === user?.username;
+    return (
+      target.authorProfileId !== null &&
+      (target.authorName === user?.username ||
+        (Boolean(target.authorUsername) && target.authorUsername === user?.username))
+    );
   }
 
   function canRemove(target: RemovalTarget): boolean {

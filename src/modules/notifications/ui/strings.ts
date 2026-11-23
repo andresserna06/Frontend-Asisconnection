@@ -17,4 +17,6 @@ export const NOTIFICATION_STRINGS = {
   recentEmpty: 'No tienes notificaciones recientes.',
   unread: 'Sin leer',
   loading: 'Cargando notificaciones',
+  retentionNote: 'Solo mostramos las notificaciones de los últimos 30 días.',
+  newCount: (count: number) => (count === 1 ? '1 nueva' : `${count} nuevas`),
 } as const;

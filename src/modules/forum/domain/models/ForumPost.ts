@@ -12,9 +12,11 @@ export type ForumPost = {
   author: {
     id: string;
     profileId: string | null;
+    username?: string | null;
     name: string;
     initials: string;
     roleLabel: string;
+    isFoundation?: boolean;
     avatarUri: string | null;
   };
   publishedAtLabel: string;

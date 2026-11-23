@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,20 +10,23 @@ import { Icon } from '@/shared/ui/atoms/Icon';
 import { ResponsiveScreen } from '@/shared/ui/templates/ResponsiveScreen';
 import { ASSISTANT_STRINGS } from './strings';
 
-function showAssistantUnavailable() {
-  Alert.alert(ASSISTANT_STRINGS.contentPendingTitle, ASSISTANT_STRINGS.contentPendingMessage);
-}
-
 export function AssistantScreen() {
   const insets = useSafeAreaInsets();
   const { isDesktop } = useResponsiveLayout();
   const service = useAssistantService();
   const { disclaimer, faqs, turns, selectOption, reset, escalate } = useAssistant(service);
+  const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
 
   const optionLabels =
     faqs.length > 0 ? faqs.map((item) => item.question) : [...ASSISTANT_STRINGS.faqOptions];
 
+  function showAssistantUnavailable() {
+    setNoticeMessage(ASSISTANT_STRINGS.contentPendingMessage);
+    Alert.alert(ASSISTANT_STRINGS.contentPendingTitle, ASSISTANT_STRINGS.contentPendingMessage);
+  }
+
   function handleOptionPress(option: string) {
+    setNoticeMessage(null);
     const matched = selectOption(option);
     if (!matched) {
       showAssistantUnavailable();
@@ -30,6 +34,7 @@ export function AssistantScreen() {
   }
 
   async function handleEscalate() {
+    setNoticeMessage(null);
     try {
       const link = await escalate();
       await Linking.openURL(link.whatsappUrl);
@@ -87,6 +92,11 @@ export function AssistantScreen() {
               </View>
             </View>
           ))}
+          {noticeMessage !== null && (
+            <Text accessibilityRole="alert" style={styles.pendingNote}>
+              {noticeMessage}
+            </Text>
+          )}
         </ScrollView>
 
         <View style={styles.optionsPanel}>

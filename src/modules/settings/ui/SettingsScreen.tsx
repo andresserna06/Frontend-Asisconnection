@@ -63,6 +63,20 @@ export function SettingsScreen({
             <Text accessibilityRole="header" style={styles.sectionTitle}>
               {SETTINGS_STRINGS.previewTitle}
             </Text>
+            <View style={styles.previewPillsRow}>
+              {SETTINGS_STRINGS.alwaysVisiblePills.map((pill) => (
+                <View key={pill} style={styles.previewPill}>
+                  <Text style={styles.previewPillText}>{pill}</Text>
+                </View>
+              ))}
+              {visibleItems.map((pill) => (
+                <View key={pill} style={[styles.previewPill, styles.previewPillActive]}>
+                  <Text style={[styles.previewPillText, styles.previewPillTextActive]}>
+                    {pill}
+                  </Text>
+                </View>
+              ))}
+            </View>
             <Text style={styles.previewText}>
               {visibleItems.length === 0
                 ? SETTINGS_STRINGS.previewEmpty
@@ -106,13 +120,55 @@ export function SettingsScreen({
             <Text accessibilityRole="header" style={styles.sectionTitle}>
               {SETTINGS_STRINGS.followTitle}
             </Text>
+            <View style={styles.radioOptionsGroup}>
+              <Pressable
+                accessibilityRole="radio"
+                accessibilityState={{ checked: !settings.requireFollowApproval }}
+                onPress={() => {
+                  if (settings.requireFollowApproval) {
+                    toggleSetting('requireFollowApproval');
+                  }
+                }}
+                style={[
+                  styles.radioCard,
+                  !settings.requireFollowApproval && styles.radioCardSelected,
+                ]}
+              >
+                <View style={styles.radioTextCol}>
+                  <Text style={styles.radioTitle}>{SETTINGS_STRINGS.followAnyMemberTitle}</Text>
+                  <Text style={styles.radioSubtitle}>
+                    {SETTINGS_STRINGS.followAnyMemberSubtitle}
+                  </Text>
+                </View>
+              </Pressable>
+              <Pressable
+                accessibilityRole="radio"
+                accessibilityState={{ checked: settings.requireFollowApproval }}
+                onPress={() => {
+                  if (!settings.requireFollowApproval) {
+                    toggleSetting('requireFollowApproval');
+                  }
+                }}
+                style={[
+                  styles.radioCard,
+                  settings.requireFollowApproval && styles.radioCardSelected,
+                ]}
+              >
+                <View style={styles.radioTextCol}>
+                  <Text style={styles.radioTitle}>{SETTINGS_STRINGS.followApprovalTitle}</Text>
+                  <Text style={styles.radioSubtitle}>
+                    {SETTINGS_STRINGS.followApprovalSubtitle}
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
             <ToggleRow
               label={SETTINGS_STRINGS.requireApprovalLabel}
               isEnabled={settings.requireFollowApproval}
               valueLabel={
                 settings.requireFollowApproval
-                  ? SETTINGS_STRINGS.visibleToCommunity
-                  : SETTINGS_STRINGS.onlyMe
+                  ? SETTINGS_STRINGS.followApprovalTitle
+                  : SETTINGS_STRINGS.followAnyMemberTitle
               }
               onToggle={() => toggleSetting('requireFollowApproval')}
             />
@@ -126,6 +182,7 @@ export function SettingsScreen({
             }}
             style={({ pressed }) => [styles.signOutButton, pressed && styles.pressed]}
           >
+            <Icon name="log-out" size={SIZE.iconSmall} color={COLORS.danger} />
             <Text style={styles.signOutText}>{SETTINGS_STRINGS.signOut}</Text>
           </Pressable>
         </ScrollView>
@@ -189,16 +246,69 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.body,
     fontSize: FONT_SIZE.s14,
   },
+  previewPillsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.s6,
+  },
+  previewPill: {
+    paddingHorizontal: SPACING.s10,
+    paddingVertical: SPACING.s4,
+    borderRadius: RADIUS.pill,
+    backgroundColor: COLORS.surfaceMuted,
+  },
+  previewPillActive: {
+    backgroundColor: COLORS.secondarySoft,
+  },
+  previewPillText: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT_FAMILY.bodySemiBold,
+    fontSize: FONT_SIZE.s12,
+  },
+  previewPillTextActive: {
+    color: COLORS.primary,
+  },
+  radioOptionsGroup: {
+    gap: SPACING.s8,
+  },
+  radioCard: {
+    padding: SPACING.s12,
+    borderRadius: RADIUS.button,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.background,
+  },
+  radioCardSelected: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.surface,
+  },
+  radioTextCol: {
+    gap: SPACING.s2,
+  },
+  radioTitle: {
+    color: COLORS.textTitle,
+    fontFamily: FONT_FAMILY.heading,
+    fontSize: FONT_SIZE.s14_5,
+  },
+  radioSubtitle: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT_FAMILY.body,
+    fontSize: FONT_SIZE.s12_5,
+  },
   signOutButton: {
     minHeight: SIZE.touchTarget,
+    flexDirection: 'row',
+    gap: SPACING.s8,
     borderRadius: RADIUS.card,
-    backgroundColor: COLORS.danger,
+    borderWidth: 1.5,
+    borderColor: COLORS.danger,
+    backgroundColor: COLORS.surface,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: SPACING.s12,
   },
   signOutText: {
-    color: COLORS.onPrimary,
+    color: COLORS.danger,
     fontFamily: FONT_FAMILY.bodyBold,
     fontSize: FONT_SIZE.s15,
   },

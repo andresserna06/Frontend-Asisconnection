@@ -11,5 +11,10 @@ export const SETTINGS_STRINGS = {
   visibleToCommunity: 'Visible en la comunidad',
   followTitle: 'Quién puede seguirte',
   requireApprovalLabel: 'Requerir aprobación para seguirme',
+  followAnyMemberTitle: 'Cualquier miembro',
+  followAnyMemberSubtitle: 'Las personas registradas pueden seguirte directamente.',
+  followApprovalTitle: 'Con mi aprobación',
+  followApprovalSubtitle: 'Revisas y apruebas cada solicitud antes de que te sigan.',
+  alwaysVisiblePills: ['Nombre y rol', 'Publicaciones'],
   signOut: 'Cerrar sesión',
 } as const;

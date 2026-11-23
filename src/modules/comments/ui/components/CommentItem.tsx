@@ -1,3 +1,5 @@
+import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -61,29 +63,54 @@ export function CommentItem({
   return (
     <View>
       <View style={[styles.row, isReply && styles.replyRow]}>
-        <View
-          style={[
-            styles.avatar,
-            isReply && styles.replyAvatar,
-            comment.author.isFoundation && styles.foundationAvatar,
-          ]}
-        >
-          <Text
+        {comment.author.avatarUrl ? (
+          <Image
+            source={{ uri: comment.author.avatarUrl }}
+            style={[styles.avatar, isReply && styles.replyAvatar]}
+            contentFit="cover"
+          />
+        ) : (
+          <View
             style={[
-              styles.initials,
-              isReply && styles.replyInitials,
-              comment.author.isFoundation && styles.foundationInitials,
+              styles.avatar,
+              isReply && styles.replyAvatar,
+              comment.author.isFoundation && styles.foundationAvatar,
             ]}
           >
-            {comment.author.initials}
-          </Text>
-        </View>
+            <Text
+              style={[
+                styles.initials,
+                isReply && styles.replyInitials,
+                comment.author.isFoundation && styles.foundationInitials,
+              ]}
+            >
+              {comment.author.initials}
+            </Text>
+          </View>
+        )}
 
         <View style={styles.body}>
           <View style={styles.meta}>
-            <Text style={styles.name} numberOfLines={1}>
-              {comment.author.name}
-            </Text>
+            {comment.author.profileId ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() =>
+                  router.push({
+                    pathname: '/users/[userId]',
+                    params: { userId: comment.author.profileId! },
+                  })
+                }
+                style={({ pressed }) => [pressed && styles.pressed]}
+              >
+                <Text style={styles.name} numberOfLines={1}>
+                  {comment.author.name}
+                </Text>
+              </Pressable>
+            ) : (
+              <Text style={styles.name} numberOfLines={1}>
+                {comment.author.name}
+              </Text>
+            )}
             <Text style={styles.time}>{comment.publishedAtLabel}</Text>
             {comment.author.isFoundation && (
               <Text style={styles.badge}>{COMMENTS_STRINGS.foundationBadge}</Text>
@@ -134,6 +161,7 @@ export function CommentItem({
                 postId,
                 authorName: comment.author.name,
                 authorProfileId: comment.author.profileId,
+                authorUsername: comment.author.username,
               }}
             />
           </View>

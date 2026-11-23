@@ -22,6 +22,7 @@ type CategoriesPageResponse = {
 
 type AuthorBadgeResponse = {
   actor_id?: string | null;
+  username?: string | null;
   display_name: string;
   role_label: string;
   avatar_url?: string | null;
@@ -161,9 +162,13 @@ function toForumPost(item: PublicPostItemResponse, lookup: CategoryLookup): Foru
     author: {
       id: item.author.actor_id ?? item.author.display_name,
       profileId: item.author.actor_id ?? null,
+      ...(item.author.username ? { username: item.author.username } : {}),
       name: item.author.display_name,
       initials: toInitials(item.author.display_name),
       roleLabel: ROLE_LABELS[item.author.role_label] ?? item.author.role_label,
+      ...(item.author.role_label === 'ADMIN' || item.author.role_label === 'MODERATOR'
+        ? { isFoundation: true }
+        : {}),
       avatarUri: getAvatarPhotoUrl(item.author.avatar_url),
     },
     publishedAtLabel: formatRelativeTime(item.created_at),

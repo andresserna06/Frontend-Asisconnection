@@ -13,7 +13,6 @@ import type { Post, PostReactionType } from '@/shared/domain/models/Post';
 import type { RoleCode } from '@/shared/domain/models/RoleCode';
 import { rememberReaction } from '@/shared/hooks/useReactionToggle';
 import {
-  countPostsRemovedByAuthor,
   getAvatarPhotoUrl,
   isRemovedByAuthor,
   replaceAvatarPhoto,
@@ -21,14 +20,13 @@ import {
 import { type HttpClient, HttpError } from '@/shared/lib/http';
 import { uploadMedia } from '@/shared/lib/uploadMedia';
 
-import { countUnfollowedActors } from './localUnfollowState';
-
 type ActorProfileResponse = {
   id: string;
   user_account_id: string;
   username: string;
   email?: string | null;
   primary_role: string;
+  local_role?: string | null;
   first_names: string | null;
   last_names: string | null;
   avatar_url: string | null;
@@ -123,8 +121,15 @@ function isRoleCode(value: string): value is RoleCode {
   return Object.prototype.hasOwnProperty.call(ROLES, value);
 }
 
-function toRoleCodes(primaryRole: string): RoleCode[] {
-  return isRoleCode(primaryRole) ? [primaryRole] : ['ACUDIENTE'];
+function toRoleCodes(primaryRole: string, localRole?: string | null): RoleCode[] {
+  const roles: RoleCode[] = [];
+  if (localRole && isRoleCode(localRole)) {
+    roles.push(localRole);
+  }
+  if (isRoleCode(primaryRole) && !roles.includes(primaryRole)) {
+    roles.push(primaryRole);
+  }
+  return roles.length > 0 ? roles : ['ACUDIENTE'];
 }
 
 function toProfileError(error: unknown): ProfileError {
@@ -246,18 +251,15 @@ export function createProfileService(client: HttpClient): ProfileService {
     return {
       id: actor.id,
       fullName,
-      roles: toRoleCodes(actor.primary_role),
+      roles: toRoleCodes(actor.primary_role, actor.local_role),
       photoUrl: normalizeAvatarUrl(actor.avatar_url),
       email: actor.email ?? 'Sin agregar',
       birthDate: actor.birth_date ?? null,
       city: actor.city ?? null,
       memberSince: actor.created_at,
-      postCount: Math.max(
-        0,
-        (actor.posts_count ?? 0) - countPostsRemovedByAuthor(actor.avatar_url),
-      ),
+      postCount: Math.max(0, actor.posts_count ?? 0),
       followerCount: actor.followers_count ?? 0,
-      followingCount: Math.max(0, (actor.following_count ?? 0) - countUnfollowedActors()),
+      followingCount: Math.max(0, actor.following_count ?? 0),
       shortBio: actor.short_bio ?? null,
       showEmail: actor.show_email ?? false,
       showBirthDate: actor.show_birth_date ?? false,

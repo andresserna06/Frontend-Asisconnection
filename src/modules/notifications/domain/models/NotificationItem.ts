@@ -2,6 +2,7 @@ export type NotificationType =
   | 'COMMENT_ON_POST'
   | 'REPLY_TO_COMMENT'
   | 'LIKE_ON_POST'
+  | 'LIKE_ON_COMMENT'
   | 'FOUNDATION_ANNOUNCEMENT'
   | 'NEW_FOLLOWER';
 
@@ -19,6 +20,15 @@ export type NotificationItem = {
   type: NotificationType;
   title: string;
   body: string;
+  actorId?: string | null;
+  actorName?: string | null;
+  actorAvatarUrl?: string | null;
+  postId?: string | null;
+  commentId?: string | null;
+  connectionId?: string | null;
+  connectionStatus?: string | null;
+  categoryName?: string | null;
+  snippet?: string | null;
   isRead: boolean;
   createdAt: string;
 };

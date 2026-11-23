@@ -26,6 +26,8 @@ export const COMMENTS_STRINGS = {
   retry: 'Intentar de nuevo',
   submittedTitle: 'Comentario enviado',
   submittedMessage: 'Tu comentario fue recibido y se mostrará cuando sea aprobado por moderación.',
+  approvedTitle: 'Comentario publicado',
+  approvedMessage: 'Tu comentario ya es visible en la conversación.',
   rejectedTitle: 'Comentario no permitido',
   rejectedMessage:
     'Tu comentario fue rechazado automáticamente por las reglas de protección comunitaria.',

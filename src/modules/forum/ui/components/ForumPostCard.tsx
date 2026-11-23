@@ -119,6 +119,9 @@ export function ForumPostCard({
           )}
           <View style={styles.authorMeta}>
             <Text style={styles.roleLabel}>{post.author.roleLabel}</Text>
+            {post.author.isFoundation ? (
+              <Text style={styles.foundationBadge}>Fundación</Text>
+            ) : null}
             <Text style={styles.publishedAt}>{post.publishedAtLabel}</Text>
           </View>
         </View>
@@ -143,6 +146,9 @@ export function ForumPostCard({
             { backgroundColor: palette.soft },
           ]}
         >
+          <Text accessible={false} style={[styles.quoteMark, { color: palette.main }]}>
+            “
+          </Text>
           <Text style={[styles.textMediaContent, { color: palette.onSoft }]}>{post.content}</Text>
         </View>
       ) : (
@@ -233,6 +239,7 @@ export function ForumPostCard({
             id: post.id,
             authorName: post.author.name,
             authorProfileId: post.author.profileId,
+            authorUsername: post.author.username,
           }}
         />
       </View>
@@ -334,6 +341,21 @@ const styles = StyleSheet.create({
     color: COLORS.onSurfaceMuted,
     fontFamily: FONT_FAMILY.bodySemiBold,
     fontSize: FONT_SIZE.s10_5,
+  },
+  foundationBadge: {
+    overflow: 'hidden',
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.s7,
+    backgroundColor: COLORS.accent,
+    color: COLORS.text,
+    fontFamily: FONT_FAMILY.bodyBold,
+    fontSize: FONT_SIZE.s10_5,
+  },
+  quoteMark: {
+    fontFamily: FONT_FAMILY.headingBold,
+    fontSize: 34,
+    lineHeight: 34,
+    opacity: 0.45,
   },
   publishedAt: {
     color: COLORS.textTertiary,

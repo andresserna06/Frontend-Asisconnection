@@ -1,11 +1,13 @@
 import type { CommentsRepository } from '@/modules/comments/domain/CommentsRepository';
 import type { Comment, CommentSubmissionStatus } from '@/modules/comments/domain/models/Comment';
 import { parseRemovalRequest } from '@/modules/removal';
-import { isRemovedByAuthor } from '@/shared/lib/authorRemovalMarks';
+import { rememberReaction } from '@/shared/hooks/useReactionToggle';
+import { getAvatarPhotoUrl, isRemovedByAuthor } from '@/shared/lib/authorRemovalMarks';
 import { type HttpClient, HttpError } from '@/shared/lib/http';
 
 type AuthorBadgeResponse = {
   actor_id?: string | null;
+  username?: string | null;
   display_name: string;
   role_label: string;
   avatar_url?: string | null;
@@ -18,6 +20,7 @@ type ApprovedCommentItemResponse = {
   content: string;
   author: AuthorBadgeResponse;
   likes_count?: number;
+  liked_by_me?: boolean;
   created_at: string;
 };
 
@@ -85,19 +88,29 @@ function formatRelativeTime(isoDate: string, nowMs = Date.now()): string {
 
 function toCommentNode(item: ApprovedCommentItemResponse): Comment {
   const isFoundation = item.author.role_label === 'ADMIN' || item.author.role_label === 'MODERATOR';
+  const rawAvatar = getAvatarPhotoUrl(item.author.avatar_url);
+  const avatarUrl =
+    rawAvatar && !rawAvatar.includes('cdn.asisco.org/avatars/maria') ? rawAvatar : null;
+
+  if (typeof item.liked_by_me === 'boolean') {
+    rememberReaction(`comment:${item.id}`, item.liked_by_me);
+  }
 
   return {
     id: item.id,
     author: {
       id: item.author.actor_id ?? item.author.display_name,
       profileId: item.author.actor_id ?? null,
+      ...(item.author.username ? { username: item.author.username } : {}),
       name: item.author.display_name,
       initials: toInitials(item.author.display_name),
+      ...(avatarUrl ? { avatarUrl } : {}),
       isFoundation,
     },
     publishedAtLabel: formatRelativeTime(item.created_at),
     content: item.content,
     likeCount: item.likes_count ?? 0,
+    ...(typeof item.liked_by_me === 'boolean' ? { isLiked: item.liked_by_me } : {}),
     replies: [],
   };
 }
