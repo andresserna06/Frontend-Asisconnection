@@ -1,3 +1,5 @@
+import type { AdminEcosystemLink, AdminEcosystemLinkInput } from './models/AdminEcosystemLink';
+import type { AdminFaqInput, AdminFaqItem } from './models/AdminFaqItem';
 import type {
   ContentReportDecision,
   ContentReportsPage,
@@ -31,4 +33,12 @@ export type AdminService = {
   searchAccounts?(query: string): Promise<ModeratorAccount[]>;
   assignModerator(userAccountId: string): Promise<void>;
   revokeModerator(userAccountId: string): Promise<void>;
+  listFaqs?(): Promise<AdminFaqItem[]>;
+  createFaq?(input: AdminFaqInput): Promise<AdminFaqItem>;
+  updateFaq?(id: string, input: AdminFaqInput): Promise<AdminFaqItem>;
+  deleteFaq?(id: string): Promise<void>;
+  listEcosystemLinks?(): Promise<AdminEcosystemLink[]>;
+  createEcosystemLink?(input: AdminEcosystemLinkInput): Promise<AdminEcosystemLink>;
+  updateEcosystemLink?(id: string, input: AdminEcosystemLinkInput): Promise<AdminEcosystemLink>;
+  deleteEcosystemLink?(id: string): Promise<void>;
 };

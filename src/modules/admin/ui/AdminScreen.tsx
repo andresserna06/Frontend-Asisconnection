@@ -14,6 +14,8 @@ import { ResponsiveScreen } from '@/shared/ui/templates/ResponsiveScreen';
 
 import { useAdminService } from '../useAdminService';
 import { ADMIN_STRINGS } from './strings';
+import { EcosystemManagementSection } from './components/EcosystemManagementSection';
+import { FaqManagementSection } from './components/FaqManagementSection';
 import { ModerationSection } from './components/ModerationSection';
 import { ModeratorManagementSection } from './components/ModeratorManagementSection';
 import { ReportsSection } from './components/ReportsSection';
@@ -107,19 +109,53 @@ export function AdminScreen({ service: serviceOverride }: AdminScreenProps = {})
             </Text>
           </Pressable>
           {isAdmin ? (
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityLabel={ADMIN_STRINGS.moderatorsTab}
-              accessibilityState={{ selected: dashboard.section === 'moderators' }}
-              onPress={() => dashboard.setSection('moderators')}
-              style={[styles.tab, dashboard.section === 'moderators' && styles.activeTab]}
-            >
-              <Text
-                style={[styles.tabText, dashboard.section === 'moderators' && styles.activeTabText]}
+            <>
+              <Pressable
+                accessibilityRole="tab"
+                accessibilityLabel={ADMIN_STRINGS.moderatorsTab}
+                accessibilityState={{ selected: dashboard.section === 'moderators' }}
+                onPress={() => dashboard.setSection('moderators')}
+                style={[styles.tab, dashboard.section === 'moderators' && styles.activeTab]}
               >
-                {ADMIN_STRINGS.moderatorsTab}
-              </Text>
-            </Pressable>
+                <Text
+                  style={[
+                    styles.tabText,
+                    dashboard.section === 'moderators' && styles.activeTabText,
+                  ]}
+                >
+                  {ADMIN_STRINGS.moderatorsTab}
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="tab"
+                accessibilityLabel={ADMIN_STRINGS.faqsTab}
+                accessibilityState={{ selected: dashboard.section === 'faqs' }}
+                onPress={() => dashboard.setSection('faqs')}
+                style={[styles.tab, dashboard.section === 'faqs' && styles.activeTab]}
+              >
+                <Text
+                  style={[styles.tabText, dashboard.section === 'faqs' && styles.activeTabText]}
+                >
+                  {ADMIN_STRINGS.faqsTab}
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="tab"
+                accessibilityLabel={ADMIN_STRINGS.ecosystemTab}
+                accessibilityState={{ selected: dashboard.section === 'ecosystem' }}
+                onPress={() => dashboard.setSection('ecosystem')}
+                style={[styles.tab, dashboard.section === 'ecosystem' && styles.activeTab]}
+              >
+                <Text
+                  style={[
+                    styles.tabText,
+                    dashboard.section === 'ecosystem' && styles.activeTabText,
+                  ]}
+                >
+                  {ADMIN_STRINGS.ecosystemTab}
+                </Text>
+              </Pressable>
+            </>
           ) : null}
         </View>
 
@@ -133,6 +169,38 @@ export function AdminScreen({ service: serviceOverride }: AdminScreenProps = {})
             onRetry={() => void dashboard.loadReports()}
             onResolve={(report, decision) => void dashboard.resolveReport(report, decision)}
           />
+        ) : dashboard.section === 'faqs' && isAdmin ? (
+          <ScrollView
+            contentContainerStyle={styles.moderatorScroll}
+            showsVerticalScrollIndicator={false}
+          >
+            <FaqManagementSection
+              faqs={dashboard.faqs}
+              busyFaqId={dashboard.busyFaqId}
+              isSavingFaq={dashboard.isSavingFaq}
+              operationError={dashboard.operationError}
+              onCreate={dashboard.createFaq}
+              onUpdate={dashboard.updateFaq}
+              onDelete={dashboard.deleteFaq}
+              onRetry={() => void dashboard.loadFaqs()}
+            />
+          </ScrollView>
+        ) : dashboard.section === 'ecosystem' && isAdmin ? (
+          <ScrollView
+            contentContainerStyle={styles.moderatorScroll}
+            showsVerticalScrollIndicator={false}
+          >
+            <EcosystemManagementSection
+              links={dashboard.ecosystemLinks}
+              busyLinkId={dashboard.busyEcosystemLinkId}
+              isSavingLink={dashboard.isSavingEcosystemLink}
+              operationError={dashboard.operationError}
+              onCreate={dashboard.createEcosystemLink}
+              onUpdate={dashboard.updateEcosystemLink}
+              onDelete={dashboard.deleteEcosystemLink}
+              onRetry={() => void dashboard.loadEcosystemLinks()}
+            />
+          </ScrollView>
         ) : dashboard.section === 'moderation' || !isAdmin ? (
           <ModerationSection
             queue={dashboard.queue}
@@ -209,13 +277,16 @@ const styles = StyleSheet.create({
   },
   tabs: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: SPACING.s8,
     paddingHorizontal: SPACING.s20,
     paddingBottom: SPACING.s14,
   },
   tab: {
-    flex: 1,
+    minWidth: 96,
+    flexGrow: 1,
     minHeight: SIZE.touchTarget,
+    paddingHorizontal: SPACING.s10,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: RADIUS.headerButton,

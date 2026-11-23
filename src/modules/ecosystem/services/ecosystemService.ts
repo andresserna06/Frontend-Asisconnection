@@ -1,4 +1,5 @@
 import type { EcosystemService } from '@/modules/ecosystem/domain/EcosystemService';
+import { applyEcosystemLinkOverrides } from '@/shared/lib/adminCatalogOverrides';
 import type { HttpClient } from '@/shared/lib/http';
 
 type RedirectionLinkItemResponse = {
@@ -18,12 +19,14 @@ export function createEcosystemService(client: HttpClient): EcosystemService {
       const page = await client.request<RedirectionLinksPageResponse>(
         '/directory/links?page=1&limit=50',
       );
-      return page.data.map((item) => ({
-        id: item.id,
-        projectName: item.project_name,
-        url: item.url,
-        description: item.description,
-      }));
+      return applyEcosystemLinkOverrides(
+        page.data.map((item) => ({
+          id: item.id,
+          projectName: item.project_name,
+          url: item.url,
+          description: item.description,
+        })),
+      );
     },
   };
 }

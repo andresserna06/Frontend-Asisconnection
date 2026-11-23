@@ -1,4 +1,6 @@
 import { AdminError } from '@/modules/admin/domain/models/AdminError';
+import type { AdminEcosystemLink } from '@/modules/admin/domain/models/AdminEcosystemLink';
+import type { AdminFaqItem } from '@/modules/admin/domain/models/AdminFaqItem';
 import type { ContentReportStatus } from '@/modules/admin/domain/models/ContentReportItem';
 import type { AdminService } from '@/modules/admin/domain/AdminService';
 import { parseRemovalRequest } from '@/modules/removal';
@@ -6,6 +8,15 @@ import type {
   ContentReportReason,
   ContentReportTargetType,
 } from '@/shared/domain/models/ContentReport';
+import {
+  applyEcosystemLinkOverrides,
+  applyFaqOverrides,
+  normalizeProjectKey,
+  removeEcosystemLinkOverride,
+  removeFaqOverride,
+  saveEcosystemLinkOverride,
+  saveFaqOverride,
+} from '@/shared/lib/adminCatalogOverrides';
 import type { HttpClient } from '@/shared/lib/http';
 import { HttpError } from '@/shared/lib/http';
 
@@ -70,6 +81,66 @@ type ApiModeratorDto = {
   local_role?: string | null;
   display_name?: string | null;
 };
+
+type ApiFaqItemDto = {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+};
+
+type ApiFaqPageDto = {
+  disclaimer?: string;
+  data: ApiFaqItemDto[];
+};
+
+type ApiRedirectionLinkItemDto = {
+  id: string;
+  project_name: string;
+  url: string;
+  description: string;
+};
+
+type ApiRedirectionLinksPageDto = {
+  data: ApiRedirectionLinkItemDto[];
+};
+
+const DEFAULT_ECOSYSTEM_PROJECTS: AdminEcosystemLink[] = [
+  {
+    id: 'suma21',
+    projectName: 'SUMA 21',
+    url: 'https://suma21-frontend.onrender.com',
+    description: 'Donaciones y financiación',
+  },
+  {
+    id: 'aulaup',
+    projectName: 'AULA UP',
+    url: 'https://aulaup-bxss.onrender.com/',
+    description: 'Formación y cursos',
+  },
+  {
+    id: 'sagaup',
+    projectName: 'SAGA-UP',
+    url: 'https://saga-up-frontend.onrender.com/login',
+    description: 'Cooperación y alianzas',
+  },
+  {
+    id: 'sonup',
+    projectName: 'SON UP',
+    url: 'https://sonup.fundacionasisco.org',
+    description: 'Seguimiento y desarrollo',
+  },
+  {
+    id: 'lupe',
+    projectName: 'LUPE',
+    url: 'https://lupe.fundacionasisco.org',
+    description: 'Proyectos y convocatorias con IA',
+  },
+];
+
+function isUnsupportedAdminRoute(error: unknown): boolean {
+  return error instanceof HttpError && (error.status === 404 || error.status === 405);
+}
 
 function toAdminError(error: unknown): AdminError {
   if (error instanceof AdminError) {
@@ -270,6 +341,244 @@ export function createAdminService(client: HttpClient): AdminService {
         await client.request(`/admin/moderators/${encodeURIComponent(userAccountId)}`, {
           method: 'DELETE',
         });
+      });
+    },
+
+    listFaqs() {
+      return request(async () => {
+        const page = await client.request<ApiFaqPageDto>('/assistant/faqs?page=1&limit=50');
+        const items: AdminFaqItem[] = page.data.map((item) => ({
+          id: item.id,
+          question: item.question,
+          answer: item.answer,
+          category: item.category,
+        }));
+        return applyFaqOverrides(items);
+      });
+    },
+
+    createFaq(input) {
+      return request(async () => {
+        const trimmed: Omit<AdminFaqItem, 'id'> = {
+          question: input.question.trim(),
+          answer: input.answer.trim(),
+          category: input.category.trim(),
+        };
+        try {
+          const created = await client.request<ApiFaqItemDto>('/admin/faqs', {
+            method: 'POST',
+            body: trimmed,
+          });
+          const item: AdminFaqItem = {
+            id: created.id,
+            question: created.question,
+            answer: created.answer,
+            category: created.category,
+          };
+          await saveFaqOverride(item);
+          return item;
+        } catch (error) {
+          if (isUnsupportedAdminRoute(error)) {
+            return saveFaqOverride({
+              id: `faq-${Date.now()}`,
+              ...trimmed,
+            });
+          }
+          throw error;
+        }
+      });
+    },
+
+    updateFaq(id, input) {
+      return request(async () => {
+        const trimmed: Omit<AdminFaqItem, 'id'> = {
+          question: input.question.trim(),
+          answer: input.answer.trim(),
+          category: input.category.trim(),
+        };
+        try {
+          const updated = await client.request<ApiFaqItemDto>(
+            `/admin/faqs/${encodeURIComponent(id)}`,
+            {
+              method: 'PATCH',
+              body: trimmed,
+            },
+          );
+          const item: AdminFaqItem = {
+            id: updated.id,
+            question: updated.question,
+            answer: updated.answer,
+            category: updated.category,
+          };
+          await saveFaqOverride(item);
+          return item;
+        } catch (error) {
+          if (isUnsupportedAdminRoute(error)) {
+            return saveFaqOverride({
+              id,
+              ...trimmed,
+            });
+          }
+          throw error;
+        }
+      });
+    },
+
+    deleteFaq(id) {
+      return request(async () => {
+        try {
+          await client.request(`/admin/faqs/${encodeURIComponent(id)}`, {
+            method: 'DELETE',
+          });
+          await removeFaqOverride(id);
+        } catch (error) {
+          if (isUnsupportedAdminRoute(error)) {
+            await removeFaqOverride(id);
+            return;
+          }
+          throw error;
+        }
+      });
+    },
+
+    listEcosystemLinks() {
+      return request(async () => {
+        const page = await client.request<ApiRedirectionLinksPageDto>(
+          '/directory/links?page=1&limit=50',
+        );
+        const remoteLinks: AdminEcosystemLink[] = page.data.map((item) => ({
+          id: item.id,
+          projectName: item.project_name,
+          url: item.url,
+          description: item.description,
+        }));
+        const remoteByKey = new Map<string, AdminEcosystemLink>();
+        for (const item of remoteLinks) {
+          remoteByKey.set(normalizeProjectKey(item.projectName), item);
+        }
+        const merged: AdminEcosystemLink[] = [];
+        const seenKeys = new Set<string>();
+        for (const preset of DEFAULT_ECOSYSTEM_PROJECTS) {
+          const key = normalizeProjectKey(preset.projectName);
+          const remote = remoteByKey.get(key);
+          merged.push(
+            remote
+              ? {
+                  id: remote.id,
+                  projectName: remote.projectName,
+                  url:
+                    key === 'suma21' || key === 'aulaup' || key === 'sagaup'
+                      ? preset.url
+                      : remote.url,
+                  description: remote.description || preset.description,
+                }
+              : preset,
+          );
+          seenKeys.add(key);
+        }
+        for (const remote of remoteLinks) {
+          const key = normalizeProjectKey(remote.projectName);
+          if (!seenKeys.has(key)) {
+            merged.push(remote);
+            seenKeys.add(key);
+          }
+        }
+        return applyEcosystemLinkOverrides(merged);
+      });
+    },
+
+    createEcosystemLink(input) {
+      return request(async () => {
+        const trimmed = {
+          projectName: input.projectName.trim(),
+          url: input.url.trim(),
+          description: input.description.trim(),
+        };
+        try {
+          const created = await client.request<ApiRedirectionLinkItemDto>(
+            '/admin/directory/links',
+            {
+              method: 'POST',
+              body: {
+                project_name: trimmed.projectName,
+                url: trimmed.url,
+                description: trimmed.description,
+              },
+            },
+          );
+          const item: AdminEcosystemLink = {
+            id: created.id,
+            projectName: created.project_name,
+            url: created.url,
+            description: created.description,
+          };
+          await saveEcosystemLinkOverride(item);
+          return item;
+        } catch (error) {
+          if (isUnsupportedAdminRoute(error)) {
+            return saveEcosystemLinkOverride({
+              id: `link-${Date.now()}`,
+              ...trimmed,
+            });
+          }
+          throw error;
+        }
+      });
+    },
+
+    updateEcosystemLink(id, input) {
+      return request(async () => {
+        const trimmed = {
+          projectName: input.projectName.trim(),
+          url: input.url.trim(),
+          description: input.description.trim(),
+        };
+        try {
+          const updated = await client.request<ApiRedirectionLinkItemDto>(
+            `/admin/directory/links/${encodeURIComponent(id)}`,
+            {
+              method: 'PATCH',
+              body: {
+                project_name: trimmed.projectName,
+                url: trimmed.url,
+                description: trimmed.description,
+              },
+            },
+          );
+          const item: AdminEcosystemLink = {
+            id: updated.id,
+            projectName: updated.project_name,
+            url: updated.url,
+            description: updated.description,
+          };
+          await saveEcosystemLinkOverride(item);
+          return item;
+        } catch (error) {
+          if (isUnsupportedAdminRoute(error)) {
+            return saveEcosystemLinkOverride({
+              id,
+              ...trimmed,
+            });
+          }
+          throw error;
+        }
+      });
+    },
+
+    deleteEcosystemLink(id) {
+      return request(async () => {
+        try {
+          await client.request(`/admin/directory/links/${encodeURIComponent(id)}`, {
+            method: 'DELETE',
+          });
+          await removeEcosystemLinkOverride(id, id);
+        } catch (error) {
+          if (isUnsupportedAdminRoute(error)) {
+            await removeEcosystemLinkOverride(id, id);
+            return;
+          }
+          throw error;
+        }
       });
     },
   };

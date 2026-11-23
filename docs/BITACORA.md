@@ -15,6 +15,14 @@ Formato de cada entrada:
 
 ---
 
+## 2026-11-23 · T-41 CRUD administrativo de FAQs y Enlaces del Ecosistema (solo ADMIN)
+
+- Qué se hizo: se agregaron en el Panel de Administración (`/admin`) las pestañas **FAQs** y **Ecosistema**, visibles únicamente para usuarios con rol `ADMIN`, permitiendo listar, crear, editar y eliminar preguntas frecuentes del Asistente UP y enlaces de los sistemas del Ecosistema.
+- Archivos principales: `src/modules/admin/domain/models/{AdminFaqItem,AdminEcosystemLink}.ts`, `src/modules/admin/domain/AdminService.ts`, `src/modules/admin/services/adminService.ts`, `src/modules/admin/application/useAdminDashboard.ts`, `src/modules/admin/ui/components/{FaqManagementSection,EcosystemManagementSection}.tsx`, `src/modules/admin/ui/{AdminScreen,strings}.ts`, `src/shared/lib/adminCatalogOverrides.ts`, `src/modules/assistant/services/assistantService.ts`, `src/modules/ecosystem/{services/ecosystemService,application/useEcosystemLinks}.ts`.
+- Decisiones (y por qué): se verificó el backend (`../Asisconection`) y actualmente `AssistantController` (`src/modules/assistant/assistant.controller.ts`) y `DirectoryController` (`src/modules/directory/directory.controller.ts`) solo tienen implementados los métodos de lectura (`GET /v1/assistant/faqs` y `GET /v1/directory/links`). Siguiendo la regla 9.5 de `AGENTS.md`, se dejaron anotados en `docs/PENDIENTES.md` los endpoints `POST/PATCH/DELETE` para `/v1/admin/faqs` y `/v1/admin/directory/links`, y se incorporó `adminCatalogOverrides.ts` como respaldo cuando el servidor responde `404/405`, de modo que los cambios hechos por un `ADMIN` se reflejan de inmediato en `AssistantScreen` y `EcosystemScreen` (incluyendo poder cambiar las URLs de SUMA 21, AULA UP, SAGA-UP, SON UP y LUPE).
+- Cómo se probó: `npx tsc --noEmit`, `npx eslint src` y pruebas unitarias con Jest (`adminService.test.ts`, `AdminScreen.test.tsx`, `assistantService.test.ts`, `ecosystemService.test.ts`, `EcosystemScreen.test.tsx`).
+- Queda pendiente: implementar en el repositorio del backend los endpoints `POST/PATCH/DELETE` de `/v1/admin/faqs` y `/v1/admin/directory/links`.
+
 ## 2026-11-23 · T-40 Integración de CU-01 a CU-05 (Descubrimiento y Conexiones, Feed «Siguiendo» y Búsqueda, Edición/Eliminación y Mis Envíos, Guardados y Reportes)
 
 - Qué se hizo:

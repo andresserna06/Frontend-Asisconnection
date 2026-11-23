@@ -1,5 +1,6 @@
 import type { AssistantService } from '@/modules/assistant/domain/AssistantService';
 import type { FaqItem } from '@/modules/assistant/domain/models/Faq';
+import { applyFaqOverrides } from '@/shared/lib/adminCatalogOverrides';
 import type { HttpClient } from '@/shared/lib/http';
 
 type FaqPageResponse = {
@@ -23,7 +24,7 @@ export function createAssistantService(client: HttpClient): AssistantService {
       const page = await client.request<FaqPageResponse>(query);
       return {
         disclaimer: page.disclaimer,
-        items: page.data,
+        items: applyFaqOverrides(page.data),
       };
     },
 

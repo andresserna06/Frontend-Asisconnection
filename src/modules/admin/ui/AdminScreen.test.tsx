@@ -122,4 +122,62 @@ describe('AdminScreen', () => {
     expect(service.listPending).not.toHaveBeenCalled();
     expect(service.listModerators).not.toHaveBeenCalled();
   });
+
+  it('lets admins manage FAQs and Ecosystem links from dedicated tabs', async () => {
+    const service = createService({
+      listFaqs: jest.fn(async () => [
+        {
+          id: 'faq-1',
+          category: 'Inscripciones',
+          question: '¿Cómo inscribo a un beneficiario?',
+          answer: 'En la sede principal.',
+        },
+      ]),
+      createFaq: jest.fn(async (input) => ({ id: 'faq-2', ...input })),
+      listEcosystemLinks: jest.fn(async () => [
+        {
+          id: 'suma21',
+          projectName: 'SUMA 21',
+          url: 'https://suma21-frontend.onrender.com',
+          description: 'Donaciones y financiación',
+        },
+      ]),
+      updateEcosystemLink: jest.fn(async (id, input) => ({ id, ...input })),
+    });
+    configureScreen('ADMIN', service);
+    await render(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <AdminScreen service={service} />
+      </SafeAreaProvider>,
+    );
+
+    await fireEvent.press(await screen.findByRole('tab', { name: 'FAQs' }));
+    expect(await screen.findByText('¿Cómo inscribo a un beneficiario?')).toBeOnTheScreen();
+    await fireEvent.changeText(screen.getByLabelText('Categoría'), 'Programas');
+    await fireEvent.changeText(screen.getByLabelText('Pregunta frecuente'), '¿Qué es SON UP?');
+    await fireEvent.changeText(
+      screen.getByLabelText('Respuesta oficial'),
+      'Programa artístico y musical.',
+    );
+    await fireEvent.press(screen.getByRole('button', { name: 'Guardar pregunta' }));
+    expect(service.createFaq).toHaveBeenCalledWith({
+      category: 'Programas',
+      question: '¿Qué es SON UP?',
+      answer: 'Programa artístico y musical.',
+    });
+
+    await fireEvent.press(screen.getByRole('tab', { name: 'Ecosistema' }));
+    expect(await screen.findByText('https://suma21-frontend.onrender.com')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: 'Editar enlace SUMA 21' }));
+    await fireEvent.changeText(
+      screen.getByLabelText('URL de destino'),
+      'https://suma21-nuevo.onrender.com',
+    );
+    await fireEvent.press(screen.getByRole('button', { name: 'Actualizar enlace' }));
+    expect(service.updateEcosystemLink).toHaveBeenCalledWith('suma21', {
+      projectName: 'SUMA 21',
+      url: 'https://suma21-nuevo.onrender.com',
+      description: 'Donaciones y financiación',
+    });
+  });
 });

@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { AdminService } from '@/modules/admin/domain/AdminService';
+import type {
+  AdminEcosystemLink,
+  AdminEcosystemLinkInput,
+} from '@/modules/admin/domain/models/AdminEcosystemLink';
 import { AdminError } from '@/modules/admin/domain/models/AdminError';
+import type { AdminFaqInput, AdminFaqItem } from '@/modules/admin/domain/models/AdminFaqItem';
 import type {
   ContentReportDecision,
   ContentReportItem,
@@ -19,7 +24,7 @@ import type {
 export type AdminResource<T> =
   { status: 'loading' } | { status: 'success'; data: T } | { status: 'error'; error: AdminError };
 
-export type AdminSection = 'moderation' | 'reports' | 'moderators';
+export type AdminSection = 'moderation' | 'reports' | 'moderators' | 'faqs' | 'ecosystem';
 
 function toAdminError(error: unknown): AdminError {
   return error instanceof AdminError ? error : new AdminError('unknown');
@@ -50,6 +55,12 @@ export function useAdminDashboard(
   const [moderators, setModerators] = useState<AdminResource<ModeratorAccount[]>>({
     status: 'loading',
   });
+  const [faqs, setFaqs] = useState<AdminResource<AdminFaqItem[]>>(() =>
+    service.listFaqs ? { status: 'loading' } : { status: 'success', data: [] },
+  );
+  const [ecosystemLinks, setEcosystemLinks] = useState<AdminResource<AdminEcosystemLink[]>>(() =>
+    service.listEcosystemLinks ? { status: 'loading' } : { status: 'success', data: [] },
+  );
   const [searchResults, setSearchResults] = useState<AdminResource<ModeratorAccount[]> | null>(
     null,
   );
@@ -57,6 +68,10 @@ export function useAdminDashboard(
   const [loadMoreError, setLoadMoreError] = useState<AdminError | null>(null);
   const [busyModeratorId, setBusyModeratorId] = useState<string | null>(null);
   const [busyReportId, setBusyReportId] = useState<string | null>(null);
+  const [busyFaqId, setBusyFaqId] = useState<string | null>(null);
+  const [isSavingFaq, setIsSavingFaq] = useState(false);
+  const [busyEcosystemLinkId, setBusyEcosystemLinkId] = useState<string | null>(null);
+  const [isSavingEcosystemLink, setIsSavingEcosystemLink] = useState(false);
   const [isAssigningModerator, setIsAssigningModerator] = useState(false);
   const [operationError, setOperationError] = useState<AdminError | null>(null);
   // Only the latest listing counts, so a slow response cannot overwrite a newer one.
@@ -137,6 +152,32 @@ export function useAdminDashboard(
       setModerators({ status: 'success', data: await service.listModerators() });
     } catch (error) {
       setModerators({ status: 'error', error: toAdminError(error) });
+    }
+  }, [service]);
+
+  const loadFaqs = useCallback(async () => {
+    if (!service.listFaqs) {
+      setFaqs({ status: 'success', data: [] });
+      return;
+    }
+    setFaqs({ status: 'loading' });
+    try {
+      setFaqs({ status: 'success', data: await service.listFaqs() });
+    } catch (error) {
+      setFaqs({ status: 'error', error: toAdminError(error) });
+    }
+  }, [service]);
+
+  const loadEcosystemLinks = useCallback(async () => {
+    if (!service.listEcosystemLinks) {
+      setEcosystemLinks({ status: 'success', data: [] });
+      return;
+    }
+    setEcosystemLinks({ status: 'loading' });
+    try {
+      setEcosystemLinks({ status: 'success', data: await service.listEcosystemLinks() });
+    } catch (error) {
+      setEcosystemLinks({ status: 'error', error: toAdminError(error) });
     }
   }, [service]);
 
@@ -249,6 +290,59 @@ export function useAdminDashboard(
       isActive = false;
     };
   }, [canManageModerators, isEnabled, service]);
+
+  useEffect(() => {
+    if (!isEnabled || !canManageModerators || section !== 'faqs' || !service.listFaqs) {
+      return;
+    }
+
+    let isActive = true;
+    service
+      .listFaqs()
+      .then((data) => {
+        if (isActive) {
+          setFaqs({ status: 'success', data });
+        }
+      })
+      .catch((error: unknown) => {
+        if (isActive) {
+          setFaqs({ status: 'error', error: toAdminError(error) });
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [canManageModerators, isEnabled, section, service]);
+
+  useEffect(() => {
+    if (
+      !isEnabled ||
+      !canManageModerators ||
+      section !== 'ecosystem' ||
+      !service.listEcosystemLinks
+    ) {
+      return;
+    }
+
+    let isActive = true;
+    service
+      .listEcosystemLinks()
+      .then((data) => {
+        if (isActive) {
+          setEcosystemLinks({ status: 'success', data });
+        }
+      })
+      .catch((error: unknown) => {
+        if (isActive) {
+          setEcosystemLinks({ status: 'error', error: toAdminError(error) });
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [canManageModerators, isEnabled, section, service]);
 
   const loadMore = useCallback(async () => {
     if (queue.status !== 'success' || !queue.data.hasNextPage || isLoadingMore) {
@@ -410,6 +504,132 @@ export function useAdminDashboard(
     [loadModerators, service],
   );
 
+  const createFaq = useCallback(
+    async (input: AdminFaqInput) => {
+      if (!service.createFaq) {
+        return false;
+      }
+      setOperationError(null);
+      setIsSavingFaq(true);
+      try {
+        await service.createFaq(input);
+        await loadFaqs();
+        return true;
+      } catch (error) {
+        setOperationError(toAdminError(error));
+        return false;
+      } finally {
+        setIsSavingFaq(false);
+      }
+    },
+    [loadFaqs, service],
+  );
+
+  const updateFaq = useCallback(
+    async (id: string, input: AdminFaqInput) => {
+      if (!service.updateFaq) {
+        return false;
+      }
+      setOperationError(null);
+      setIsSavingFaq(true);
+      try {
+        await service.updateFaq(id, input);
+        await loadFaqs();
+        return true;
+      } catch (error) {
+        setOperationError(toAdminError(error));
+        return false;
+      } finally {
+        setIsSavingFaq(false);
+      }
+    },
+    [loadFaqs, service],
+  );
+
+  const deleteFaq = useCallback(
+    async (id: string) => {
+      if (!service.deleteFaq) {
+        return false;
+      }
+      setOperationError(null);
+      setBusyFaqId(id);
+      try {
+        await service.deleteFaq(id);
+        await loadFaqs();
+        return true;
+      } catch (error) {
+        setOperationError(toAdminError(error));
+        return false;
+      } finally {
+        setBusyFaqId(null);
+      }
+    },
+    [loadFaqs, service],
+  );
+
+  const createEcosystemLink = useCallback(
+    async (input: AdminEcosystemLinkInput) => {
+      if (!service.createEcosystemLink) {
+        return false;
+      }
+      setOperationError(null);
+      setIsSavingEcosystemLink(true);
+      try {
+        await service.createEcosystemLink(input);
+        await loadEcosystemLinks();
+        return true;
+      } catch (error) {
+        setOperationError(toAdminError(error));
+        return false;
+      } finally {
+        setIsSavingEcosystemLink(false);
+      }
+    },
+    [loadEcosystemLinks, service],
+  );
+
+  const updateEcosystemLink = useCallback(
+    async (id: string, input: AdminEcosystemLinkInput) => {
+      if (!service.updateEcosystemLink) {
+        return false;
+      }
+      setOperationError(null);
+      setIsSavingEcosystemLink(true);
+      try {
+        await service.updateEcosystemLink(id, input);
+        await loadEcosystemLinks();
+        return true;
+      } catch (error) {
+        setOperationError(toAdminError(error));
+        return false;
+      } finally {
+        setIsSavingEcosystemLink(false);
+      }
+    },
+    [loadEcosystemLinks, service],
+  );
+
+  const deleteEcosystemLink = useCallback(
+    async (id: string) => {
+      if (!service.deleteEcosystemLink) {
+        return false;
+      }
+      setOperationError(null);
+      setBusyEcosystemLinkId(id);
+      try {
+        await service.deleteEcosystemLink(id);
+        await loadEcosystemLinks();
+        return true;
+      } catch (error) {
+        setOperationError(toAdminError(error));
+        return false;
+      } finally {
+        setBusyEcosystemLinkId(null);
+      }
+    },
+    [loadEcosystemLinks, service],
+  );
+
   return {
     section,
     setSection,
@@ -420,16 +640,24 @@ export function useAdminDashboard(
     queue,
     reports,
     moderators,
+    faqs,
+    ecosystemLinks,
     searchResults,
     isLoadingMore,
     loadMoreError,
     busyModeratorId,
     busyReportId,
+    busyFaqId,
+    isSavingFaq,
+    busyEcosystemLinkId,
+    isSavingEcosystemLink,
     isAssigningModerator,
     operationError,
     loadQueue,
     loadReports,
     loadModerators,
+    loadFaqs,
+    loadEcosystemLinks,
     searchAccounts,
     loadMore,
     updateModerationStatus,
@@ -437,5 +665,11 @@ export function useAdminDashboard(
     resolveReport,
     assignModerator,
     revokeModerator,
+    createFaq,
+    updateFaq,
+    deleteFaq,
+    createEcosystemLink,
+    updateEcosystemLink,
+    deleteEcosystemLink,
   };
 }

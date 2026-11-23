@@ -235,4 +235,83 @@ describe('adminService', () => {
       body: { status: 'RESOLVED', reject_target: true },
     });
   });
+
+  it('performs CRUD operations for FAQs and Ecosystem links', async () => {
+    const client: HttpClient = {
+      request: jest
+        .fn()
+        .mockResolvedValueOnce({
+          data: [
+            {
+              id: 'faq-1',
+              category: 'Inscripciones',
+              question: '¿Cómo me inscribo?',
+              answer: 'Diligencia el formulario.',
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          id: 'faq-2',
+          category: 'Programas',
+          question: '¿Qué es AULA UP?',
+          answer: 'Plataforma pedagógica.',
+        })
+        .mockResolvedValueOnce({
+          id: 'faq-2',
+          category: 'Programas',
+          question: '¿Qué es AULA UP?',
+          answer: 'Plataforma pedagógica actualizada.',
+        })
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          data: [
+            {
+              id: 'link-1',
+              project_name: 'SUMA 21',
+              url: 'https://suma21.fundacionasisco.org',
+              description: 'Inclusión social',
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          id: 'link-2',
+          project_name: 'SON UP',
+          url: 'https://sonup-nuevo.org',
+          description: 'Formación musical',
+        })
+        .mockResolvedValueOnce(null),
+    };
+    const service = createAdminService(client);
+
+    const faqs = await service.listFaqs?.();
+    expect(faqs?.[0]?.question).toBe('¿Cómo me inscribo?');
+
+    const createdFaq = await service.createFaq?.({
+      category: 'Programas',
+      question: '¿Qué es AULA UP?',
+      answer: 'Plataforma pedagógica.',
+    });
+    expect(createdFaq?.id).toBe('faq-2');
+
+    const updatedFaq = await service.updateFaq?.('faq-2', {
+      category: 'Programas',
+      question: '¿Qué es AULA UP?',
+      answer: 'Plataforma pedagógica actualizada.',
+    });
+    expect(updatedFaq?.answer).toBe('Plataforma pedagógica actualizada.');
+
+    await service.deleteFaq?.('faq-2');
+
+    const links = await service.listEcosystemLinks?.();
+    expect(links?.some((item) => item.projectName === 'SUMA 21')).toBe(true);
+
+    const updatedLink = await service.updateEcosystemLink?.('link-2', {
+      projectName: 'SON UP',
+      url: 'https://sonup-nuevo.org',
+      description: 'Formación musical',
+    });
+    expect(updatedLink?.url).toBe('https://sonup-nuevo.org');
+
+    await service.deleteEcosystemLink?.('link-2');
+  });
 });
