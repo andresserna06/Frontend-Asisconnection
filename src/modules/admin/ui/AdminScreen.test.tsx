@@ -180,4 +180,45 @@ describe('AdminScreen', () => {
       description: 'Donaciones y financiación',
     });
   });
+
+  it('lets admins list, filter and activate or suspend system users from Usuarios tab', async () => {
+    const service = createService({
+      listUsers: jest.fn(async () => [
+        {
+          id: 'user-1',
+          actorId: 'actor-1',
+          username: 'camila.acudiente',
+          email: 'camila@prueba.com',
+          role: 'ACUDIENTE',
+          localRole: null,
+          displayName: 'Camila Pineda',
+          isActive: false,
+        },
+      ]),
+      updateUserStatus: jest.fn(async (id, isActive) => ({
+        id,
+        actorId: 'actor-1',
+        username: 'camila.acudiente',
+        email: 'camila@prueba.com',
+        role: 'ACUDIENTE',
+        localRole: null,
+        displayName: 'Camila Pineda',
+        isActive,
+      })),
+    });
+    configureScreen('ADMIN', service);
+    await render(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <AdminScreen service={service} />
+      </SafeAreaProvider>,
+    );
+
+    await fireEvent.press(await screen.findByRole('tab', { name: 'Usuarios' }));
+    expect(await screen.findByText('Camila Pineda')).toBeOnTheScreen();
+    expect(screen.getByText('Suspendido')).toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Activar camila.acudiente' }));
+    expect(service.updateUserStatus).toHaveBeenCalledWith('user-1', true);
+    expect(await screen.findByText('Activo')).toBeOnTheScreen();
+  });
 });

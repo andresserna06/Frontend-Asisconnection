@@ -19,6 +19,7 @@ import { FaqManagementSection } from './components/FaqManagementSection';
 import { ModerationSection } from './components/ModerationSection';
 import { ModeratorManagementSection } from './components/ModeratorManagementSection';
 import { ReportsSection } from './components/ReportsSection';
+import { UsersManagementSection } from './components/UsersManagementSection';
 
 const HEADER_ROW_HEIGHT = 66;
 
@@ -112,6 +113,19 @@ export function AdminScreen({ service: serviceOverride }: AdminScreenProps = {})
             <>
               <Pressable
                 accessibilityRole="tab"
+                accessibilityLabel={ADMIN_STRINGS.usersTab}
+                accessibilityState={{ selected: dashboard.section === 'users' }}
+                onPress={() => dashboard.setSection('users')}
+                style={[styles.tab, dashboard.section === 'users' && styles.activeTab]}
+              >
+                <Text
+                  style={[styles.tabText, dashboard.section === 'users' && styles.activeTabText]}
+                >
+                  {ADMIN_STRINGS.usersTab}
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="tab"
                 accessibilityLabel={ADMIN_STRINGS.moderatorsTab}
                 accessibilityState={{ selected: dashboard.section === 'moderators' }}
                 onPress={() => dashboard.setSection('moderators')}
@@ -169,6 +183,21 @@ export function AdminScreen({ service: serviceOverride }: AdminScreenProps = {})
             onRetry={() => void dashboard.loadReports()}
             onResolve={(report, decision) => void dashboard.resolveReport(report, decision)}
           />
+        ) : dashboard.section === 'users' && isAdmin ? (
+          <ScrollView
+            contentContainerStyle={styles.moderatorScroll}
+            showsVerticalScrollIndicator={false}
+          >
+            <UsersManagementSection
+              users={dashboard.users}
+              busyUserId={dashboard.busyUserId}
+              operationError={dashboard.operationError}
+              onSearch={(query) => void dashboard.loadUsers(query)}
+              onUpdateStatus={dashboard.updateUserStatus}
+              onToggleModerator={dashboard.toggleUserModerator}
+              onRetry={() => void dashboard.loadUsers()}
+            />
+          </ScrollView>
         ) : dashboard.section === 'faqs' && isAdmin ? (
           <ScrollView
             contentContainerStyle={styles.moderatorScroll}

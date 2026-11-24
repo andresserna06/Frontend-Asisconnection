@@ -31,6 +31,8 @@ export type AdminService = {
   resolveReport?(id: string, decision: ContentReportDecision): Promise<void>;
   listModerators(): Promise<ModeratorAccount[]>;
   searchAccounts?(query: string): Promise<ModeratorAccount[]>;
+  listUsers?(query?: string): Promise<ModeratorAccount[]>;
+  updateUserStatus?(userAccountId: string, isActive: boolean): Promise<ModeratorAccount>;
   assignModerator(userAccountId: string): Promise<void>;
   revokeModerator(userAccountId: string): Promise<void>;
   listFaqs?(): Promise<AdminFaqItem[]>;

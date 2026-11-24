@@ -1,5 +1,14 @@
 import { useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -53,6 +62,7 @@ export function NewPostScreen() {
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<LocalMediaFile | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [rejectedModalMessage, setRejectedModalMessage] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const isPublishingRef = useRef(false);
   const primaryRole = user === null ? null : getPrimaryRole(user.roles);
@@ -111,7 +121,7 @@ export function NewPostScreen() {
     if (result.status === 'REJECTED') {
       const rejectedText = result.message || POST_STRINGS.rejectedMessage;
       setPhotoError(rejectedText);
-      Alert.alert(POST_STRINGS.rejectedTitle, rejectedText);
+      setRejectedModalMessage(rejectedText);
       return;
     }
 
@@ -296,12 +306,52 @@ export function NewPostScreen() {
     </View>
   );
 
+  function handleDismissRejectedModal() {
+    setRejectedModalMessage(null);
+    router.back();
+  }
+
+  const rejectedModal = (
+    <Modal
+      visible={rejectedModalMessage !== null}
+      transparent
+      animationType="fade"
+      onRequestClose={handleDismissRejectedModal}
+    >
+      <View style={styles.rejectedBackdrop}>
+        <View style={styles.rejectedSheet}>
+          <View style={styles.rejectedIconCircle}>
+            <Icon name="alert-triangle" size={SIZE.icon} color={COLORS.danger} />
+          </View>
+          <Text accessibilityRole="header" style={styles.rejectedTitle}>
+            {POST_STRINGS.rejectedTitle}
+          </Text>
+          <Text accessibilityRole="alert" style={styles.rejectedMessage}>
+            {rejectedModalMessage}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={POST_STRINGS.rejectedAction}
+            onPress={handleDismissRejectedModal}
+            style={({ pressed }) => [styles.rejectedActionButton, pressed && styles.pressed]}
+          >
+            <Text style={styles.rejectedActionLabel}>{POST_STRINGS.rejectedAction}</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+
   return isDesktop ? (
     <View style={styles.desktopOverlay}>
       <View style={styles.desktopDialog}>{editor}</View>
+      {rejectedModal}
     </View>
   ) : (
-    <ResponsiveScreen>{editor}</ResponsiveScreen>
+    <ResponsiveScreen>
+      {editor}
+      {rejectedModal}
+    </ResponsiveScreen>
   );
 }
 
@@ -312,6 +362,60 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.backdrop,
+  },
+  rejectedBackdrop: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: SPACING.s20,
+    backgroundColor: COLORS.backdrop,
+  },
+  rejectedSheet: {
+    width: '100%',
+    maxWidth: 420,
+    alignItems: 'center',
+    gap: SPACING.s12,
+    padding: SPACING.s24,
+    borderRadius: RADIUS.cardLarge,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  rejectedIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: RADIUS.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.accentSoft,
+  },
+  rejectedTitle: {
+    color: COLORS.textTitle,
+    fontFamily: FONT_FAMILY.heading,
+    fontSize: FONT_SIZE.s18,
+    textAlign: 'center',
+  },
+  rejectedMessage: {
+    color: COLORS.textSecondary,
+    fontFamily: FONT_FAMILY.body,
+    fontSize: FONT_SIZE.s14_5,
+    textAlign: 'center',
+    lineHeight: 21,
+  },
+  rejectedActionButton: {
+    marginTop: SPACING.s6,
+    minHeight: SIZE.touchTarget,
+    minWidth: 160,
+    paddingHorizontal: SPACING.s20,
+    borderRadius: RADIUS.button,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rejectedActionLabel: {
+    color: COLORS.onPrimary,
+    fontFamily: FONT_FAMILY.bodyBold,
+    fontSize: FONT_SIZE.s15,
   },
   desktopDialog: {
     width: '100%',

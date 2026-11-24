@@ -17,6 +17,8 @@ import {
   saveEcosystemLinkOverride,
   saveFaqOverride,
 } from '@/shared/lib/adminCatalogOverrides';
+import { getAvatarPhotoUrl } from '@/shared/lib/authorRemovalMarks';
+import { resolveAuthorDisplayName } from '@/shared/lib/formatAuthorName';
 import type { HttpClient } from '@/shared/lib/http';
 import { HttpError } from '@/shared/lib/http';
 
@@ -75,11 +77,14 @@ type ApiContentPageDto = {
 
 type ApiModeratorDto = {
   id: string;
+  actor_id?: string | null;
   username: string;
   email: string;
   rol: string;
   local_role?: string | null;
   display_name?: string | null;
+  avatar_url?: string | null;
+  is_active?: boolean;
 };
 
 type ApiFaqItemDto = {
@@ -184,13 +189,24 @@ async function request<T>(operation: () => Promise<T>): Promise<T> {
 }
 
 function toModeratorAccount(account: ApiModeratorDto) {
+  const normalizedDisplayName =
+    account.display_name !== undefined && account.display_name !== null
+      ? resolveAuthorDisplayName(account.display_name, account.username)
+      : account.display_name;
+  const rawAvatar = getAvatarPhotoUrl(account.avatar_url);
+  const avatarUrl =
+    rawAvatar && !rawAvatar.includes('cdn.asisco.org/avatars/maria') ? rawAvatar : null;
+
   return {
     id: account.id,
+    ...(account.actor_id !== undefined ? { actorId: account.actor_id } : {}),
     username: account.username,
     email: account.email,
     role: account.rol,
     ...(account.local_role !== undefined ? { localRole: account.local_role } : {}),
-    ...(account.display_name !== undefined ? { displayName: account.display_name } : {}),
+    ...(normalizedDisplayName !== undefined ? { displayName: normalizedDisplayName } : {}),
+    ...(account.avatar_url !== undefined ? { avatarUrl } : {}),
+    ...(account.is_active !== undefined ? { isActive: account.is_active } : {}),
   };
 }
 
@@ -333,6 +349,30 @@ export function createAdminService(client: HttpClient): AdminService {
           `/admin/accounts?search=${encodeURIComponent(query.trim())}`,
         );
         return accounts.map(toModeratorAccount);
+      });
+    },
+
+    listUsers(query = '') {
+      return request(async () => {
+        const trimmed = query.trim();
+        const searchPart = trimmed.length > 0 ? `&search=${encodeURIComponent(trimmed)}` : '';
+        const accounts = await client.request<ApiModeratorDto[]>(
+          `/admin/accounts?includeInactive=true${searchPart}`,
+        );
+        return accounts.map(toModeratorAccount);
+      });
+    },
+
+    updateUserStatus(userAccountId, isActive) {
+      return request(async () => {
+        const updated = await client.request<ApiModeratorDto>(
+          `/admin/accounts/${encodeURIComponent(userAccountId)}/status`,
+          {
+            method: 'PATCH',
+            body: { is_active: isActive },
+          },
+        );
+        return toModeratorAccount(updated);
       });
     },
 

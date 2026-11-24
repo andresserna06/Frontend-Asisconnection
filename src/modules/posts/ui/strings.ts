@@ -27,6 +27,7 @@ export const POST_STRINGS = {
   rejectedTitle: 'Publicación no permitida',
   rejectedMessage:
     'Tu publicación fue rechazada automáticamente por las reglas de protección comunitaria.',
+  rejectedAction: 'Entendido',
   galleryUnavailableTitle: 'Galería no disponible',
   mediaUnavailableMessage: 'La selección de fotos se habilitará más adelante.',
   cameraUnavailableTitle: 'Cámara no disponible',

@@ -24,7 +24,7 @@ import type {
 export type AdminResource<T> =
   { status: 'loading' } | { status: 'success'; data: T } | { status: 'error'; error: AdminError };
 
-export type AdminSection = 'moderation' | 'reports' | 'moderators' | 'faqs' | 'ecosystem';
+export type AdminSection = 'moderation' | 'reports' | 'users' | 'moderators' | 'faqs' | 'ecosystem';
 
 function toAdminError(error: unknown): AdminError {
   return error instanceof AdminError ? error : new AdminError('unknown');
@@ -55,6 +55,9 @@ export function useAdminDashboard(
   const [moderators, setModerators] = useState<AdminResource<ModeratorAccount[]>>({
     status: 'loading',
   });
+  const [users, setUsers] = useState<AdminResource<ModeratorAccount[]>>(() =>
+    service.listUsers ? { status: 'loading' } : { status: 'success', data: [] },
+  );
   const [faqs, setFaqs] = useState<AdminResource<AdminFaqItem[]>>(() =>
     service.listFaqs ? { status: 'loading' } : { status: 'success', data: [] },
   );
@@ -67,6 +70,7 @@ export function useAdminDashboard(
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState<AdminError | null>(null);
   const [busyModeratorId, setBusyModeratorId] = useState<string | null>(null);
+  const [busyUserId, setBusyUserId] = useState<string | null>(null);
   const [busyReportId, setBusyReportId] = useState<string | null>(null);
   const [busyFaqId, setBusyFaqId] = useState<string | null>(null);
   const [isSavingFaq, setIsSavingFaq] = useState(false);
@@ -154,6 +158,22 @@ export function useAdminDashboard(
       setModerators({ status: 'error', error: toAdminError(error) });
     }
   }, [service]);
+
+  const loadUsers = useCallback(
+    async (query = '') => {
+      if (!service.listUsers) {
+        setUsers({ status: 'success', data: [] });
+        return;
+      }
+      setUsers({ status: 'loading' });
+      try {
+        setUsers({ status: 'success', data: await service.listUsers(query) });
+      } catch (error) {
+        setUsers({ status: 'error', error: toAdminError(error) });
+      }
+    },
+    [service],
+  );
 
   const loadFaqs = useCallback(async () => {
     if (!service.listFaqs) {
@@ -290,6 +310,30 @@ export function useAdminDashboard(
       isActive = false;
     };
   }, [canManageModerators, isEnabled, service]);
+
+  useEffect(() => {
+    if (!isEnabled || !canManageModerators || section !== 'users' || !service.listUsers) {
+      return;
+    }
+
+    let isActive = true;
+    service
+      .listUsers('')
+      .then((data) => {
+        if (isActive) {
+          setUsers({ status: 'success', data });
+        }
+      })
+      .catch((error: unknown) => {
+        if (isActive) {
+          setUsers({ status: 'error', error: toAdminError(error) });
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [canManageModerators, isEnabled, section, service]);
 
   useEffect(() => {
     if (!isEnabled || !canManageModerators || section !== 'faqs' || !service.listFaqs) {
@@ -630,6 +674,68 @@ export function useAdminDashboard(
     [loadEcosystemLinks, service],
   );
 
+  const updateUserStatus = useCallback(
+    async (userAccountId: string, isActive: boolean) => {
+      if (!service.updateUserStatus) {
+        return false;
+      }
+      setOperationError(null);
+      setBusyUserId(userAccountId);
+      try {
+        const updated = await service.updateUserStatus(userAccountId, isActive);
+        setUsers((current) =>
+          current.status === 'success'
+            ? {
+                status: 'success',
+                data: current.data.map((item) => (item.id === updated.id ? updated : item)),
+              }
+            : current,
+        );
+        return true;
+      } catch (error) {
+        setOperationError(toAdminError(error));
+        return false;
+      } finally {
+        setBusyUserId(null);
+      }
+    },
+    [service],
+  );
+
+  const toggleUserModerator = useCallback(
+    async (userAccountId: string, shouldBeModerator: boolean) => {
+      setOperationError(null);
+      setBusyUserId(userAccountId);
+      try {
+        if (shouldBeModerator) {
+          await service.assignModerator(userAccountId);
+        } else {
+          await service.revokeModerator(userAccountId);
+        }
+        setUsers((current) =>
+          current.status === 'success'
+            ? {
+                status: 'success',
+                data: current.data.map((item) =>
+                  item.id === userAccountId
+                    ? { ...item, localRole: shouldBeModerator ? 'MODERATOR' : null }
+                    : item,
+                ),
+              }
+            : current,
+        );
+        await loadModerators();
+        return true;
+      } catch (error) {
+        setOperationError(toAdminError(error));
+        return false;
+      } finally {
+        setBusyUserId(null);
+      }
+    },
+    [loadModerators, service],
+  );
+
   return {
     section,
     setSection,
@@ -639,6 +745,7 @@ export function useAdminDashboard(
     setReportFilter,
     queue,
     reports,
+    users,
     moderators,
     faqs,
     ecosystemLinks,
@@ -646,6 +753,7 @@ export function useAdminDashboard(
     isLoadingMore,
     loadMoreError,
     busyModeratorId,
+    busyUserId,
     busyReportId,
     busyFaqId,
     isSavingFaq,
@@ -655,6 +763,7 @@ export function useAdminDashboard(
     operationError,
     loadQueue,
     loadReports,
+    loadUsers,
     loadModerators,
     loadFaqs,
     loadEcosystemLinks,
@@ -663,6 +772,8 @@ export function useAdminDashboard(
     updateModerationStatus,
     resolveRemovalRequest,
     resolveReport,
+    updateUserStatus,
+    toggleUserModerator,
     assignModerator,
     revokeModerator,
     createFaq,

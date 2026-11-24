@@ -99,4 +99,35 @@ describe('NewPostScreen', () => {
     expect(router.back).toHaveBeenCalled();
     alertSpy.mockRestore();
   });
+
+  it('shows a rejection modal when the post is rejected and navigates back on dismiss', async () => {
+    jest.mocked(router.back).mockClear();
+    const service = createFakePostsService({
+      createPost: jest.fn(async () => ({
+        id: 'rejected-post-1',
+        status: 'REJECTED' as const,
+        message: 'Contenido rechazado automáticamente por contener enlaces externos.',
+      })),
+    });
+    await renderScreen(service);
+
+    await fireEvent.changeText(
+      screen.getByLabelText('Escribe tu publicación'),
+      'Visita https://spam.example.com',
+    );
+    await fireEvent.press(screen.getByRole('radio', { name: 'Apoyo Pedagógico' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Publicar' }));
+
+    expect(
+      await screen.findByRole('header', { name: 'Publicación no permitida' }),
+    ).toBeOnTheScreen();
+    expect(
+      screen.getAllByText('Contenido rechazado automáticamente por contener enlaces externos.')
+        .length,
+    ).toBeGreaterThan(0);
+    expect(router.back).not.toHaveBeenCalled();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Entendido' }));
+    expect(router.back).toHaveBeenCalledTimes(1);
+  });
 });
