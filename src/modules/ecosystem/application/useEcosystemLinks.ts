@@ -49,6 +49,9 @@ export function useEcosystemLinks(service: EcosystemService) {
     }
     const key = normalizeKey(title);
     const link = linksByKey[key] ?? null;
+    if (link !== null && !link.url.includes('.fundacionasisco.org')) {
+      return link;
+    }
     const publishedUrl = PUBLISHED_PROJECT_URLS[key];
     if (publishedUrl === undefined) {
       return link;

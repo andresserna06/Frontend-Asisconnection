@@ -71,9 +71,7 @@ export function SettingsScreen({
               ))}
               {visibleItems.map((pill) => (
                 <View key={pill} style={[styles.previewPill, styles.previewPillActive]}>
-                  <Text style={[styles.previewPillText, styles.previewPillTextActive]}>
-                    {pill}
-                  </Text>
+                  <Text style={[styles.previewPillText, styles.previewPillTextActive]}>{pill}</Text>
                 </View>
               ))}
             </View>

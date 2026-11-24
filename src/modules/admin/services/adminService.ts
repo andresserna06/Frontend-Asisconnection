@@ -142,6 +142,14 @@ function isUnsupportedAdminRoute(error: unknown): boolean {
   return error instanceof HttpError && (error.status === 404 || error.status === 405);
 }
 
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
+function isSeedPlaceholderUrl(url: string): boolean {
+  return url.includes('.fundacionasisco.org');
+}
+
 function toAdminError(error: unknown): AdminError {
   if (error instanceof AdminError) {
     return error;
@@ -467,7 +475,8 @@ export function createAdminService(client: HttpClient): AdminService {
                   id: remote.id,
                   projectName: remote.projectName,
                   url:
-                    key === 'suma21' || key === 'aulaup' || key === 'sagaup'
+                    (key === 'suma21' || key === 'aulaup' || key === 'sagaup') &&
+                    isSeedPlaceholderUrl(remote.url)
                       ? preset.url
                       : remote.url,
                   description: remote.description || preset.description,
@@ -534,17 +543,18 @@ export function createAdminService(client: HttpClient): AdminService {
           description: input.description.trim(),
         };
         try {
-          const updated = await client.request<ApiRedirectionLinkItemDto>(
-            `/admin/directory/links/${encodeURIComponent(id)}`,
-            {
-              method: 'PATCH',
-              body: {
-                project_name: trimmed.projectName,
-                url: trimmed.url,
-                description: trimmed.description,
-              },
+          const endpoint = isUuid(id)
+            ? `/admin/directory/links/${encodeURIComponent(id)}`
+            : '/admin/directory/links';
+          const method = isUuid(id) ? 'PATCH' : 'POST';
+          const updated = await client.request<ApiRedirectionLinkItemDto>(endpoint, {
+            method,
+            body: {
+              project_name: trimmed.projectName,
+              url: trimmed.url,
+              description: trimmed.description,
             },
-          );
+          });
           const item: AdminEcosystemLink = {
             id: updated.id,
             projectName: updated.project_name,
@@ -567,6 +577,10 @@ export function createAdminService(client: HttpClient): AdminService {
 
     deleteEcosystemLink(id) {
       return request(async () => {
+        if (!isUuid(id)) {
+          await removeEcosystemLinkOverride(id, id);
+          return;
+        }
         try {
           await client.request(`/admin/directory/links/${encodeURIComponent(id)}`, {
             method: 'DELETE',

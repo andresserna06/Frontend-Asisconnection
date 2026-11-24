@@ -11,10 +11,7 @@ import type {
 import { type CategoryCode, toCategoryCode } from '@/shared/domain/models/CategoryCode';
 import type { Post, PostReactionType } from '@/shared/domain/models/Post';
 import { rememberReaction } from '@/shared/hooks/useReactionToggle';
-import {
-  getAvatarPhotoUrl,
-  isRemovedByAuthor,
-} from '@/shared/lib/authorRemovalMarks';
+import { getAvatarPhotoUrl, isRemovedByAuthor } from '@/shared/lib/authorRemovalMarks';
 import { HttpError, type HttpClient } from '@/shared/lib/http';
 
 import { isActorUnfollowed, markActorUnfollowed } from './localUnfollowState';
