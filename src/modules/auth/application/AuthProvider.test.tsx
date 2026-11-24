@@ -101,17 +101,30 @@ describe('signIn', () => {
 });
 
 describe('signOut', () => {
-  it('clears the saved token and signs out', async () => {
-    const { result, storage } = await renderAuth(
-      createFakeAuthService(),
-      createMemoryStorage(TEST_TOKEN),
-    );
+  it('revokes or purges the session on the backend, clears the saved token, and signs out', async () => {
+    const service = createFakeAuthService();
+    const { result, storage } = await renderAuth(service, createMemoryStorage(TEST_TOKEN));
     expect(result.current.status).toBe('signedIn');
 
     await act(() => result.current.signOut());
+    expect(service.logout).toHaveBeenCalledWith(TEST_TOKEN);
     expect(result.current.status).toBe('signedOut');
     expect(storage.peek()).toBeNull();
     expect(storage.isAnonymous()).toBe(false);
+  });
+
+  it('still signs out locally if the backend logout request fails', async () => {
+    const service = createFakeAuthService({
+      logout: jest.fn(async () => {
+        throw new Error('offline');
+      }),
+    });
+    const { result, storage } = await renderAuth(service, createMemoryStorage(TEST_TOKEN));
+
+    await act(() => result.current.signOut());
+    expect(service.logout).toHaveBeenCalledWith(TEST_TOKEN);
+    expect(result.current.status).toBe('signedOut');
+    expect(storage.peek()).toBeNull();
   });
 
   it('persists and exposes an anonymous session', async () => {

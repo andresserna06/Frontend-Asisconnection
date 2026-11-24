@@ -30,7 +30,10 @@ type RegisterModalProps = {
   onClearError?: () => void;
 };
 
-const REGISTRATION_ROLES: { code: Exclude<RoleCode, 'MODERATOR' | 'ADMIN'>; label: string }[] = [
+const REGISTRATION_ROLES: {
+  code: Exclude<RoleCode, 'MODERATOR' | 'ADMIN' | 'VISITANTE'>;
+  label: string;
+}[] = [
   { code: 'ACUDIENTE', label: 'Acudiente' },
   { code: 'VOLUNTARIO', label: 'Voluntario' },
   { code: 'INVERSOR', label: 'Inversor' },
@@ -49,7 +52,8 @@ export function RegisterModal({
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<Exclude<RoleCode, 'MODERATOR' | 'ADMIN'>>('ACUDIENTE');
+  const [role, setRole] =
+    useState<Exclude<RoleCode, 'MODERATOR' | 'ADMIN' | 'VISITANTE'>>('ACUDIENTE');
   const [acceptConsent, setAcceptConsent] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 

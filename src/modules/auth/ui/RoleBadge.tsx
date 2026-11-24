@@ -9,6 +9,7 @@ const ROLE_TONES: Record<RoleCode, BadgeTone> = {
   ACUDIENTE: 'neutral',
   BENEFICIARIO: 'neutral',
   INVERSOR: 'neutral',
+  VISITANTE: 'neutral',
 };
 
 type RoleBadgeProps = {

@@ -105,11 +105,26 @@ describe('LoginScreen', () => {
     expect(screen.getByText('Crear nueva cuenta')).toBeOnTheScreen();
   });
 
-  it('logs in as guest when pressing Ingresar como invitado', async () => {
+  it('requires Ley 1581 consent before entering as guest', async () => {
     const service = await renderScreen();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Ingresar como invitado' }));
 
-    expect(service.loginAnonymous).toHaveBeenCalled();
+    expect(service.loginAnonymous).not.toHaveBeenCalled();
+    expect(
+      screen.getByText('Debes aceptar el tratamiento de datos para ingresar.'),
+    ).toBeOnTheScreen();
+  });
+
+  it('logs in as guest when consent is accepted and pressing Ingresar como invitado', async () => {
+    const service = await renderScreen();
+
+    await fireEvent.press(screen.getByRole('checkbox'));
+    await fireEvent.press(screen.getByRole('button', { name: 'Ingresar como invitado' }));
+
+    expect(service.loginAnonymous).toHaveBeenCalledWith({
+      acceptConsent: true,
+      roleTag: 'VISITANTE',
+    });
   });
 });

@@ -25,6 +25,8 @@ type AuthSessionResponse = {
 type AnonymousSessionResponse = {
   device_token: string;
   session_id: string;
+  nickname?: string;
+  role_tag?: string;
 };
 type ActorProfileResponse = {
   id: string;
@@ -181,28 +183,32 @@ export function createAuthService(client: HttpClient): AuthService {
 
     async loginAnonymous({ acceptConsent, nickname, roleTag }) {
       try {
-        const { device_token } = await client.request<AnonymousSessionResponse>(
-          '/sessions/anonymous',
-          {
-            method: 'POST',
-            body: {
-              accept_consent: acceptConsent,
-              ...(nickname ? { nickname } : {}),
-              ...(roleTag ? { role_tag: roleTag } : {}),
-            },
+        const response = await client.request<AnonymousSessionResponse>('/sessions/anonymous', {
+          method: 'POST',
+          body: {
+            accept_consent: acceptConsent,
+            ...(nickname ? { nickname } : {}),
+            ...(roleTag ? { role_tag: roleTag } : {}),
           },
-        );
+        });
         return {
-          token: device_token,
+          token: response.device_token,
           isAnonymous: true,
           user: {
-            username: nickname ?? 'Invitado',
-            roles: toRoles([roleTag ?? 'BENEFICIARIO']),
+            username: response.nickname ?? nickname ?? 'Visitante',
+            roles: toRoles([response.role_tag ?? roleTag ?? 'VISITANTE']),
           },
         };
       } catch (error) {
         throw toAuthError(error, 'invalidCredentials');
       }
+    },
+
+    async logout(token) {
+      await client.request<unknown>('/sessions/logout', {
+        method: 'POST',
+        token,
+      });
     },
   };
 }

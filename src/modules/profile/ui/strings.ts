@@ -10,7 +10,9 @@ export const PROFILE_STRINGS = {
   signOut: 'Cerrar sesión',
   guest: {
     title: 'Estás como invitado',
-    message: 'Inicia sesión con tu cuenta para ver tu perfil y tus publicaciones.',
+    nicknamePrefix: 'Tu nombre temporal en la comunidad:',
+    message:
+      'Tu sesión de invitado dura 24 horas. Inicia sesión con tu cuenta para ver tu perfil y tus publicaciones.',
   },
   editProfile: {
     birthDatePlaceholder: 'Elige tu fecha',

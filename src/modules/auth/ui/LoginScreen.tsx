@@ -75,7 +75,7 @@ export function LoginScreen() {
   }
 
   function handleGuestLogin() {
-    submitAnonymous(acceptConsent || true);
+    submitAnonymous(acceptConsent);
   }
 
   function handleConsentToggle() {

@@ -7,7 +7,7 @@ export type RegisterCredentials = {
   username: string;
   email: string;
   password: string;
-  role: Exclude<RoleCode, 'MODERATOR'>;
+  role: Exclude<RoleCode, 'MODERATOR' | 'VISITANTE'>;
   acceptConsent: boolean;
 };
 
@@ -18,12 +18,12 @@ export type AnonymousCredentials = {
 };
 
 // Contract implemented by the services layer (HTTP). Methods reject with AuthError.
-// There is no logout endpoint: the device token is local, so signing out only clears it.
 export type AuthService = {
   // Returns the device session token and the user.
   login(credentials: LoginCredentials): Promise<Session>;
   register?(credentials: RegisterCredentials): Promise<Session>;
   loginAnonymous?(credentials: AnonymousCredentials): Promise<Session>;
+  logout?(token: string): Promise<void>;
   getProfile(token: string): Promise<User>;
 };
 

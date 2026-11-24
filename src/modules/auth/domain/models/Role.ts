@@ -19,6 +19,7 @@ export const ROLES: Record<RoleCode, Role> = {
   ACUDIENTE: { code: 'ACUDIENTE', label: 'Acudiente', priority: 4 },
   BENEFICIARIO: { code: 'BENEFICIARIO', label: 'Beneficiario', priority: 5 },
   INVERSOR: { code: 'INVERSOR', label: 'Inversor', priority: 6 },
+  VISITANTE: { code: 'VISITANTE', label: 'Visitante', priority: 7 },
 };
 
 // Narrows a role string sent by the backend to a known code.

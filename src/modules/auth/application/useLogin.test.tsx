@@ -94,4 +94,20 @@ describe('useLogin', () => {
     expect(result.current.formIssues.email).toBeUndefined();
     expect(result.current.formIssues.password).toBe('passwordRequired');
   });
+
+  it('requests a VISITANTE anonymous session without hardcoding Invitado when consent is accepted', async () => {
+    const { result, service } = await renderLogin();
+    await act(() => result.current.submitAnonymous(true));
+    expect(service.loginAnonymous).toHaveBeenCalledWith({
+      acceptConsent: true,
+      roleTag: 'VISITANTE',
+    });
+  });
+
+  it('blocks anonymous login when consent is not accepted', async () => {
+    const { result, service } = await renderLogin();
+    await act(() => result.current.submitAnonymous(false));
+    expect(result.current.formIssues.acceptConsent).toBe('consentRequired');
+    expect(service.loginAnonymous).not.toHaveBeenCalled();
+  });
 });

@@ -226,4 +226,43 @@ describe('createAuthService', () => {
     expect(url).toBe(`${BASE_URL}/sessions/anonymous`);
     expect(init?.method).toBe('POST');
   });
+
+  it('uses the backend-generated friendly nickname and VISITANTE role for anonymous sessions', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(201, {
+        device_token: 'anon-tok-2',
+        session_id: 'sess-anon-2',
+        nickname: 'Colibrí Alegre',
+        role_tag: 'VISITANTE',
+      }),
+    );
+
+    await expect(
+      service.loginAnonymous?.({
+        acceptConsent: true,
+        roleTag: 'VISITANTE',
+      }),
+    ).resolves.toEqual({
+      token: 'anon-tok-2',
+      user: { username: 'Colibrí Alegre', roles: ['VISITANTE'] },
+      isAnonymous: true,
+    });
+  });
+
+  it('notifies POST /sessions/logout when signing out', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(200, {
+        logged_out: true,
+        session_id: 'sess-anon-2',
+        purged: true,
+      }),
+    );
+
+    await expect(service.logout?.('anon-tok-2')).resolves.toBeUndefined();
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(`${BASE_URL}/sessions/logout`);
+    expect(init?.method).toBe('POST');
+    expect(init?.headers).toMatchObject({ Authorization: 'Bearer anon-tok-2' });
+  });
 });

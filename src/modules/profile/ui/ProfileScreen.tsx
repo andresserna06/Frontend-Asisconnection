@@ -57,7 +57,7 @@ const SUBMISSION_FILTERS: { key: MySubmissionStatus | undefined; label: string }
 
 export function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { isAnonymous, signOut } = useAuth();
+  const { user, isAnonymous, signOut } = useAuth();
   const service = useProfileService();
   const refreshMyPhotoUrl = useRefreshMyPhotoUrl();
   const {
@@ -148,6 +148,11 @@ export function ProfileScreen() {
               <Text accessibilityRole="header" style={styles.guestTitle}>
                 {PROFILE_STRINGS.guest.title}
               </Text>
+              {user?.username ? (
+                <Text style={styles.guestNickname}>
+                  {`${PROFILE_STRINGS.guest.nicknamePrefix} ${user.username}`}
+                </Text>
+              ) : null}
               <Text style={styles.guestMessage}>{PROFILE_STRINGS.guest.message}</Text>
               <Button
                 label={PROFILE_STRINGS.signIn}
@@ -544,6 +549,11 @@ const styles = StyleSheet.create({
     color: COLORS.textTitle,
     fontFamily: FONT_FAMILY.heading,
     fontSize: FONT_SIZE.s20,
+  },
+  guestNickname: {
+    color: COLORS.primary,
+    fontFamily: FONT_FAMILY.bodySemiBold,
+    fontSize: FONT_SIZE.s15,
   },
   guestMessage: {
     color: COLORS.textSecondary,

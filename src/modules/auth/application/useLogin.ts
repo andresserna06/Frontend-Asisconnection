@@ -53,10 +53,11 @@ export function useLogin() {
     setError(null);
     try {
       if (signInAnonymous) {
+        const trimmedNickname = nickname?.trim();
         await signInAnonymous({
           acceptConsent: true,
-          nickname: nickname?.trim() || 'Invitado',
-          roleTag: 'BENEFICIARIO',
+          ...(trimmedNickname ? { nickname: trimmedNickname } : {}),
+          roleTag: 'VISITANTE',
         });
       }
     } catch (caught) {

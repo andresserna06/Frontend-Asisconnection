@@ -136,12 +136,19 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
     [service, storage],
   );
 
-  // The device token is local (no logout endpoint): signing out only forgets it.
-  const signOut = useCallback(async () => {
+  const clearLocalSession = useCallback(async () => {
     await storage.clearToken().catch(() => undefined);
     setReactionViewer(null);
     setState({ status: 'signedOut' });
   }, [storage]);
+
+  // Notifies the backend so idle anonymous sessions are purged and active tokens are revoked.
+  const signOut = useCallback(async () => {
+    if (token !== null && service.logout) {
+      await service.logout(token).catch(() => undefined);
+    }
+    await clearLocalSession();
+  }, [clearLocalSession, service, token]);
 
   // Stable while the session does not change, so services built on it can be memoized.
   const authorizedClient = useMemo<HttpClient>(
@@ -156,7 +163,7 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
             token !== null &&
             options.signOutOnUnauthorized !== false
           ) {
-            await signOut();
+            await clearLocalSession();
           }
           throw error;
         }
@@ -169,13 +176,13 @@ export function AuthProvider({ service, storage, httpClient, children }: AuthPro
           return await httpClient.uploadFile<T>(path, formData, token ?? undefined);
         } catch (error) {
           if (error instanceof HttpError && error.status === 401 && token !== null) {
-            await signOut();
+            await clearLocalSession();
           }
           throw error;
         }
       },
     }),
-    [httpClient, token, signOut],
+    [httpClient, token, clearLocalSession],
   );
 
   const value: AuthContextValue = {
