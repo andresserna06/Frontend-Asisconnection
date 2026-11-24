@@ -17,6 +17,7 @@ import {
   isRemovedByAuthor,
   replaceAvatarPhoto,
 } from '@/shared/lib/authorRemovalMarks';
+import { resolveAuthorDisplayName } from '@/shared/lib/formatAuthorName';
 import { type HttpClient, HttpError } from '@/shared/lib/http';
 import { uploadMedia } from '@/shared/lib/uploadMedia';
 
@@ -66,6 +67,7 @@ type PublicPostItemResponse = {
   media_urls?: string[];
   author: {
     actor_id?: string | null;
+    username?: string | null;
     display_name: string;
     role_label: string;
     avatar_url?: string | null;
@@ -198,8 +200,10 @@ function toPost(item: PublicPostItemResponse, categoriesById: Record<string, Cat
     likeCount,
     commentCount: item.comments_count,
     author: {
-      id: item.author.actor_id ?? item.author.display_name,
-      fullName: item.author.display_name,
+      id:
+        item.author.actor_id ??
+        resolveAuthorDisplayName(item.author.display_name, item.author.username),
+      fullName: resolveAuthorDisplayName(item.author.display_name, item.author.username),
       roles: toRoleCodes(item.author.role_label),
       photoUrl: normalizeAvatarUrl(item.author.avatar_url),
     },

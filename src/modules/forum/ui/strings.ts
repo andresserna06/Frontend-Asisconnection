@@ -41,6 +41,12 @@ export const FORUM_STRINGS = {
   loading: 'Cargando publicaciones',
   emptyTitle: 'Aún no hay publicaciones',
   emptyMessage: 'Prueba otro tema o vuelve más tarde.',
+  followingEmptyTitle: 'Aún no hay publicaciones de tus conexiones',
+  followingEmptyMessage:
+    'Sigue o conéctate con miembros de la comunidad para ver aquí sus últimas publicaciones.',
+  followingExploreDirectory: 'Explorar directorio',
+  followingRequiresAccount:
+    'Inicia sesión con una cuenta registrada para ver las publicaciones de las personas a las que sigues.',
   errorTitle: 'No pudimos cargar el foro',
   sessionExpired: 'Tu sesión terminó. Inicia sesión de nuevo para ver el foro.',
   forbidden: 'No tienes permiso para ver estas publicaciones.',

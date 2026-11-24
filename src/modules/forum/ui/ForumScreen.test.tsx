@@ -116,6 +116,25 @@ describe('ForumScreen', () => {
     });
   });
 
+  it('switches to Siguiendo feed, loads followed posts, and links to directory when empty', async () => {
+    const listPosts = jest.fn().mockResolvedValueOnce([TEST_POST]).mockResolvedValueOnce([]);
+    const repository: ForumRepository = { listPosts };
+    await renderScreen(repository);
+
+    await fireEvent.press(screen.getByRole('tab', { name: 'Siguiendo' }));
+
+    expect(
+      await screen.findByRole('header', { name: 'Aún no hay publicaciones de tus conexiones' }),
+    ).toBeOnTheScreen();
+    expect(listPosts).toHaveBeenLastCalledWith({ filter: 'all', feed: 'following' });
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Explorar directorio' }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/profile/followers',
+      params: { tab: 'directory' },
+    });
+  });
+
   it('does not make an author without an actor ID appear navigable', async () => {
     const repository: ForumRepository = {
       listPosts: jest.fn(async () => [

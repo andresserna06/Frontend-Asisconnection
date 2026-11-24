@@ -3,6 +3,7 @@ import type { Comment, CommentSubmissionStatus } from '@/modules/comments/domain
 import { parseRemovalRequest } from '@/modules/removal';
 import { rememberReaction } from '@/shared/hooks/useReactionToggle';
 import { getAvatarPhotoUrl, isRemovedByAuthor } from '@/shared/lib/authorRemovalMarks';
+import { resolveAuthorDisplayName } from '@/shared/lib/formatAuthorName';
 import { type HttpClient, HttpError } from '@/shared/lib/http';
 
 type AuthorBadgeResponse = {
@@ -88,6 +89,7 @@ function formatRelativeTime(isoDate: string, nowMs = Date.now()): string {
 
 function toCommentNode(item: ApprovedCommentItemResponse): Comment {
   const isFoundation = item.author.role_label === 'ADMIN' || item.author.role_label === 'MODERATOR';
+  const authorName = resolveAuthorDisplayName(item.author.display_name, item.author.username);
   const rawAvatar = getAvatarPhotoUrl(item.author.avatar_url);
   const avatarUrl =
     rawAvatar && !rawAvatar.includes('cdn.asisco.org/avatars/maria') ? rawAvatar : null;
@@ -99,11 +101,11 @@ function toCommentNode(item: ApprovedCommentItemResponse): Comment {
   return {
     id: item.id,
     author: {
-      id: item.author.actor_id ?? item.author.display_name,
+      id: item.author.actor_id ?? authorName,
       profileId: item.author.actor_id ?? null,
       ...(item.author.username ? { username: item.author.username } : {}),
-      name: item.author.display_name,
-      initials: toInitials(item.author.display_name),
+      name: authorName,
+      initials: toInitials(authorName),
       ...(avatarUrl ? { avatarUrl } : {}),
       isFoundation,
     },

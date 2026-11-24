@@ -115,6 +115,7 @@ export function FollowersScreen() {
       await service.acceptConnection(connectionId);
       requests.refresh();
       followers.refresh();
+      following.refresh();
     } catch {
       // Ignore transient action failure.
     }
@@ -127,6 +128,8 @@ export function FollowersScreen() {
     try {
       await service.deleteConnection(connectionId);
       requests.refresh();
+      followers.refresh();
+      following.refresh();
     } catch {
       // Ignore transient action failure.
     }

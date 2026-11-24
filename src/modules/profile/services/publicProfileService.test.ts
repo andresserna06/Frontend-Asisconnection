@@ -315,7 +315,7 @@ describe('publicProfileService', () => {
       direction: 'INCOMING',
     });
     await expect(service.getConnectionStatus('actor-10')).resolves.toBe('pendingIncoming');
-    await expect(service.acceptFollowRequest?.('actor-10')).resolves.toBe('following');
+    await expect(service.acceptFollowRequest?.('actor-10')).resolves.toBe('notFollowing');
 
     const directory = await service.searchActors?.({ search: 'andres', role: 'VOLUNTARIO' });
     expect(directory).toHaveLength(1);

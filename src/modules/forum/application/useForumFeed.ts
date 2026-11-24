@@ -28,6 +28,7 @@ export function useForumFeed(filter: ForumFilter, options?: ForumFeedOptions): F
   const query = useQuery({
     queryKey: ['forum', 'feed', viewerKey, filter, feed ?? 'discover', trimmedSearch],
     enabled: repository !== null,
+    refetchOnMount: 'always',
     queryFn: async () => {
       if (repository === null) {
         throw new Error('Forum service is not configured.');

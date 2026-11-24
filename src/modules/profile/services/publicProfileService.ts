@@ -12,6 +12,7 @@ import { type CategoryCode, toCategoryCode } from '@/shared/domain/models/Catego
 import type { Post, PostReactionType } from '@/shared/domain/models/Post';
 import { rememberReaction } from '@/shared/hooks/useReactionToggle';
 import { getAvatarPhotoUrl, isRemovedByAuthor } from '@/shared/lib/authorRemovalMarks';
+import { resolveAuthorDisplayName } from '@/shared/lib/formatAuthorName';
 import { HttpError, type HttpClient } from '@/shared/lib/http';
 
 import { isActorUnfollowed, markActorUnfollowed } from './localUnfollowState';
@@ -97,6 +98,7 @@ type PublicPostItemResponse = {
   media_urls?: string[];
   author: {
     actor_id?: string | null;
+    username?: string | null;
     display_name: string;
     role_label: string;
     avatar_url?: string | null;
@@ -224,7 +226,10 @@ function toConnectionItem(item: ActorConnectionResponse): ActorConnectionItem {
       ? {
           actorId: item.peer_actor.actor_id,
           username: item.peer_actor.username,
-          displayName: item.peer_actor.display_name,
+          displayName: resolveAuthorDisplayName(
+            item.peer_actor.display_name,
+            item.peer_actor.username,
+          ),
           roles: isRoleCode(item.peer_actor.primary_role) ? [item.peer_actor.primary_role] : [],
           photoUrl: normalizeAvatarUrl(item.peer_actor.avatar_url),
         }
@@ -259,7 +264,8 @@ function toConnectionStatus(
 ): ProfileConnectionStatus {
   switch (status) {
     case 'ACCEPTED':
-      return 'following';
+      // An incoming ACCEPTED connection means the other person follows me, not that I follow them.
+      return direction === 'INCOMING' ? 'notFollowing' : 'following';
     case 'PENDING':
       return direction === 'INCOMING' ? 'pendingIncoming' : 'pending';
     case 'BLOCKED':
@@ -269,6 +275,7 @@ function toConnectionStatus(
 
 function toPost(item: PublicPostItemResponse, categoriesById: Record<string, CategoryCode>): Post {
   const imageUrl = item.media_urls?.[0] ?? item.image_url;
+  const authorName = resolveAuthorDisplayName(item.author.display_name, item.author.username);
   const likeCount =
     (item.reactions_summary?.LIKE ?? 0) +
     (item.reactions_summary?.SUPPORT ?? 0) +
@@ -286,13 +293,13 @@ function toPost(item: PublicPostItemResponse, categoriesById: Record<string, Cat
     category: categoriesById[item.category_id] ?? 'guides',
     text: item.content,
     imageUrl,
-    imageDescription: imageUrl ? `Imagen de ${item.author.display_name}` : null,
+    imageDescription: imageUrl ? `Imagen de ${authorName}` : null,
     createdAt: item.created_at,
     likeCount,
     commentCount: item.comments_count,
     author: {
-      id: item.author.actor_id ?? item.author.display_name,
-      fullName: item.author.display_name,
+      id: item.author.actor_id ?? authorName,
+      fullName: authorName,
       roles,
       photoUrl: normalizeAvatarUrl(item.author.avatar_url),
     },
@@ -369,17 +376,25 @@ export function createPublicProfileService(client: HttpClient): PublicProfileSer
           const response = await client.request<ActorConnectionsPageResponse>(
             `/connections?page=${page}&limit=50`,
           );
-          const connection = response.data.find(
-            (item) => item.requester_actor_id === actorId || item.receiver_actor_id === actorId,
+          const outgoingConnection = response.data.find(
+            (item) => item.receiver_actor_id === actorId,
           );
-
-          if (connection !== undefined) {
-            connectionIdsByActor.set(actorId, connection.id);
-            const direction = connection.requester_actor_id === actorId ? 'INCOMING' : 'OUTGOING';
-            const status = toConnectionStatus(connection.status, direction);
+          if (outgoingConnection !== undefined) {
+            connectionIdsByActor.set(actorId, outgoingConnection.id);
+            const status = toConnectionStatus(outgoingConnection.status, 'OUTGOING');
             if (status === 'following' || matchedStatus === null) {
               matchedStatus = status;
             }
+          }
+
+          const incomingConnection = response.data.find(
+            (item) =>
+              item.requester_actor_id === actorId &&
+              (item.status === 'PENDING' || item.status === 'BLOCKED'),
+          );
+          if (incomingConnection !== undefined && matchedStatus === null) {
+            connectionIdsByActor.set(actorId, incomingConnection.id);
+            matchedStatus = toConnectionStatus(incomingConnection.status, 'INCOMING');
           }
 
           if (matchedStatus === 'following') {
@@ -466,12 +481,10 @@ export function createPublicProfileService(client: HttpClient): PublicProfileSer
             body: { status: 'ACCEPTED' },
           },
         );
-        connectionIdsByActor.set(actorId, response.id);
-        viewerConnectionsByActor.set(actorId, {
-          connection_id: response.id,
-          status: response.status,
-          direction: 'INCOMING',
-        });
+        // Accepting an incoming follow request means they now follow me;
+        // I am not following them yet unless I independently send a follow request.
+        connectionIdsByActor.delete(actorId);
+        viewerConnectionsByActor.set(actorId, null);
         return toConnectionStatus(response.status, 'INCOMING');
       } catch (error) {
         throw toPublicProfileError(error);

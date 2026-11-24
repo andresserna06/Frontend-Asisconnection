@@ -36,8 +36,12 @@ export const ADMIN_STRINGS = {
     previewLabel: 'Contenido reportado:',
     detailsLabel: 'Detalle del reporte:',
     resolveAndRemove: 'Retirar contenido',
+    resolveAndRemoveTitle: 'Retirar contenido reportado',
+    resolveAndRemoveMessage:
+      'El contenido dejará de ser visible en la comunidad y se cerrarán los reportes abiertos asociados.',
     resolveKeep: 'Resolver (conservar)',
     dismiss: 'Descartar',
+    resolvedAt: 'Atendido:',
   },
   post: 'Publicación',
   comment: 'Comentario',

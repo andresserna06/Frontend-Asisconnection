@@ -7,6 +7,7 @@ import type { ForumPost, ForumReactionType } from '@/modules/forum/domain/models
 import { toCategoryCode } from '@/shared/domain/models/CategoryCode';
 import { rememberReaction } from '@/shared/hooks/useReactionToggle';
 import { getAvatarPhotoUrl, isRemovedByAuthor } from '@/shared/lib/authorRemovalMarks';
+import { resolveAuthorDisplayName } from '@/shared/lib/formatAuthorName';
 import { type HttpClient, HttpError } from '@/shared/lib/http';
 
 // Response bodies as the AsisConexión backend sends them (contracts/openapi.yaml).
@@ -147,6 +148,7 @@ function toForumError(error: unknown): Error {
 function toForumPost(item: PublicPostItemResponse, lookup: CategoryLookup): ForumPost {
   const category = lookup.byId[item.category_id] ?? 'guides';
   const imageUri = item.media_urls?.[0] ?? item.image_url;
+  const authorName = resolveAuthorDisplayName(item.author.display_name, item.author.username);
   const likeCount =
     (item.reactions_summary?.LIKE ?? 0) +
     (item.reactions_summary?.SUPPORT ?? 0) +
@@ -160,11 +162,11 @@ function toForumPost(item: PublicPostItemResponse, lookup: CategoryLookup): Foru
     id: item.id,
     category,
     author: {
-      id: item.author.actor_id ?? item.author.display_name,
+      id: item.author.actor_id ?? authorName,
       profileId: item.author.actor_id ?? null,
       ...(item.author.username ? { username: item.author.username } : {}),
-      name: item.author.display_name,
-      initials: toInitials(item.author.display_name),
+      name: authorName,
+      initials: toInitials(authorName),
       roleLabel: ROLE_LABELS[item.author.role_label] ?? item.author.role_label,
       ...(item.author.role_label === 'ADMIN' || item.author.role_label === 'MODERATOR'
         ? { isFoundation: true }
@@ -177,7 +179,7 @@ function toForumPost(item: PublicPostItemResponse, lookup: CategoryLookup): Foru
       ? {
           kind: 'image',
           uri: imageUri,
-          accessibilityLabel: `Imagen publicada por ${item.author.display_name}`,
+          accessibilityLabel: `Imagen publicada por ${authorName}`,
         }
       : null,
     likeCount,

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { AdminResource } from '@/modules/admin/application/useAdminDashboard';
@@ -19,6 +20,7 @@ import {
 } from '@/shared/theme';
 import { Button } from '@/shared/ui/atoms/Button';
 import { TextButton } from '@/shared/ui/atoms/TextButton';
+import { ConfirmDialog } from '@/shared/ui/organisms/ConfirmDialog';
 
 import { ADMIN_STRINGS } from '../strings';
 
@@ -55,6 +57,8 @@ export function ReportsSection({
   onRetry,
   onResolve,
 }: ReportsSectionProps) {
+  const [reportToRemove, setReportToRemove] = useState<ContentReportItem | null>(null);
+
   return (
     <View style={styles.container}>
       {operationError !== null ? (
@@ -147,9 +151,7 @@ export function ReportsSection({
                     <View style={styles.actionsColumn}>
                       <Button
                         label={ADMIN_STRINGS.reports.resolveAndRemove}
-                        onPress={() =>
-                          onResolve(report, { status: 'RESOLVED', rejectTarget: true })
-                        }
+                        onPress={() => setReportToRemove(report)}
                         isLoading={isBusy}
                         isDisabled={isBusy}
                       />
@@ -174,6 +176,10 @@ export function ReportsSection({
                         </View>
                       </View>
                     </View>
+                  ) : report.resolvedAt ? (
+                    <Text style={styles.date}>
+                      {ADMIN_STRINGS.reports.resolvedAt} {formatCreatedAt(report.resolvedAt)}
+                    </Text>
                   ) : null}
                 </View>
               );
@@ -181,6 +187,21 @@ export function ReportsSection({
           </ScrollView>
         )
       ) : null}
+
+      <ConfirmDialog
+        visible={reportToRemove !== null}
+        title={ADMIN_STRINGS.reports.resolveAndRemoveTitle}
+        message={ADMIN_STRINGS.reports.resolveAndRemoveMessage}
+        confirmLabel={ADMIN_STRINGS.reports.resolveAndRemove}
+        cancelLabel={ADMIN_STRINGS.cancel}
+        onConfirm={() => {
+          if (reportToRemove !== null) {
+            onResolve(reportToRemove, { status: 'RESOLVED', rejectTarget: true });
+          }
+          setReportToRemove(null);
+        }}
+        onCancel={() => setReportToRemove(null)}
+      />
     </View>
   );
 }

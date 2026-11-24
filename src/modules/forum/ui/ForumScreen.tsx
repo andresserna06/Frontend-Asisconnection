@@ -218,7 +218,7 @@ export function ForumScreen({ aside }: ForumScreenProps) {
         ItemSeparatorComponent={() => <View style={{ height: POST_GAP }} />}
         refreshing={feed.status === 'success' && feed.isRefreshing}
         onRefresh={feed.status === 'success' ? feed.refresh : undefined}
-        ListEmptyComponent={<FeedState feed={feed} />}
+        ListEmptyComponent={<FeedState feed={feed} selectedFeed={selectedFeed} />}
       />
 
       <ReportContentModal
@@ -234,9 +234,10 @@ export function ForumScreen({ aside }: ForumScreenProps) {
 
 type FeedStateProps = {
   feed: ReturnType<typeof useForumFeed>;
+  selectedFeed: ForumFeedMode;
 };
 
-function FeedState({ feed }: FeedStateProps) {
+function FeedState({ feed, selectedFeed }: FeedStateProps) {
   if (feed.status === 'loading') {
     return (
       <View style={styles.stateContainer}>
@@ -252,7 +253,7 @@ function FeedState({ feed }: FeedStateProps) {
         <Text accessibilityRole="header" style={styles.stateTitle}>
           {FORUM_STRINGS.errorTitle}
         </Text>
-        <Text style={styles.stateMessage}>{errorMessage(feed.error)}</Text>
+        <Text style={styles.stateMessage}>{errorMessage(feed.error, selectedFeed)}</Text>
         {feed.error.message !== 'sessionExpired' && (
           <Pressable
             accessibilityRole="button"
@@ -279,12 +280,27 @@ function FeedState({ feed }: FeedStateProps) {
   }
 
   if (feed.posts.length === 0) {
+    const isFollowingFeed = selectedFeed === 'following';
     return (
       <View style={styles.stateContainer}>
         <Text accessibilityRole="header" style={styles.stateTitle}>
-          {FORUM_STRINGS.emptyTitle}
+          {isFollowingFeed ? FORUM_STRINGS.followingEmptyTitle : FORUM_STRINGS.emptyTitle}
         </Text>
-        <Text style={styles.stateMessage}>{FORUM_STRINGS.emptyMessage}</Text>
+        <Text style={styles.stateMessage}>
+          {isFollowingFeed ? FORUM_STRINGS.followingEmptyMessage : FORUM_STRINGS.emptyMessage}
+        </Text>
+        {isFollowingFeed ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={FORUM_STRINGS.followingExploreDirectory}
+            onPress={() =>
+              router.push({ pathname: '/profile/followers', params: { tab: 'directory' } })
+            }
+            style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
+          >
+            <Text style={styles.retryLabel}>{FORUM_STRINGS.followingExploreDirectory}</Text>
+          </Pressable>
+        ) : null}
       </View>
     );
   }
@@ -292,12 +308,14 @@ function FeedState({ feed }: FeedStateProps) {
   return null;
 }
 
-function errorMessage(error: Error): string {
+function errorMessage(error: Error, selectedFeed: ForumFeedMode): string {
   if (error.message === 'sessionExpired') {
     return FORUM_STRINGS.sessionExpired;
   }
   if (error.message === 'forbidden') {
-    return FORUM_STRINGS.forbidden;
+    return selectedFeed === 'following'
+      ? FORUM_STRINGS.followingRequiresAccount
+      : FORUM_STRINGS.forbidden;
   }
   return FORUM_STRINGS.connectionError;
 }
