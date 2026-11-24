@@ -15,6 +15,16 @@ Formato de cada entrada:
 
 ---
 
+## 2026-11-23 · T-43 Persistencia de sesión con tiempo de vida (TTL) en Móvil y Web (`T-29`)
+
+- Qué se hizo:
+  - **Móvil (`src/modules/auth/services/secureTokenStorage.ts`)**: se añadió control de expiración deslizante (`asisconnection.session-expires-at`) en `expo-secure-store` con duración de **7 días** para cuentas registradas y **24 horas** para sesiones de invitado. Mientras la persona use la app dentro de esa ventana, la sesión se renueva automáticamente; si supera el tiempo sin uso, se limpia el token.
+  - **Web (`src/modules/auth/services/secureTokenStorage.web.ts`)**: antes el token vivía solo en una variable en memoria RAM y se perdía al recargar la pestaña (`F5`) o cerrar el navegador. Ahora se persiste de forma cifrada/ofuscada (AES-GCM con Web Crypto API + IndexedDB / máscara aleatoria por sesión, sin guardar nunca el JWT en texto plano) con la misma ventana de **7 días** (cuentas registradas) y **24 horas** (invitados).
+- Archivos principales: `src/modules/auth/services/{secureTokenStorage,secureTokenStorage.web,secureTokenStorage.test}.ts`.
+- Decisiones (y por qué): se cumple la regla de seguridad de la sección 7 de `AGENTS.md` (no usar `AsyncStorage` ni persistir el token en claro) resolviendo a la vez `T-29` para que en Web y Móvil la sesión sobreviva recargas y reinicios durante un tiempo promedio razonable sin obligar al usuario a iniciar sesión o registrarse cada vez.
+- Cómo se probó: `npx tsc --noEmit`, `npx eslint src` y pruebas unitarias en `secureTokenStorage.test.ts` y `AuthProvider.test.tsx`.
+- Queda pendiente: validar visualmente en dispositivo físico con Expo Go.
+
 ## 2026-11-23 · T-42 Alineación Full-Stack (AL-01 a AL-05), Depuración UI (FE-01 a FE-07) y Aprobación Directa de Publicaciones y Comentarios
 
 - Qué se hizo:
